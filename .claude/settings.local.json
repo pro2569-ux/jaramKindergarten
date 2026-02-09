@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(if [ -f \"package.json\" ])",
+      "Bash(then cat package.json)",
+      "Bash(else echo \"No package.json found\")",
+      "Bash(fi)",
+      "Bash(pnpm create:*)",
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
