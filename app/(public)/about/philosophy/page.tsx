@@ -19,9 +19,12 @@ export default async function PhilosophyPage() {
   // 페이지가 없으면 기본 콘텐츠 표시
   const pageTitle = page?.title || '교육이념 및 원훈'
   const pageContent = page?.content || `
-    <div class="text-center py-12">
-      <p class="text-gray-500 mb-4">아직 작성된 내용이 없습니다.</p>
-      <p class="text-sm text-gray-400">관리자 페이지에서 콘텐츠를 작성해주세요.</p>
+    <div class="flex justify-center">
+      <img
+        src="/images/bbb.jpg"
+        alt="교육이념 및 원훈"
+        class="w-full max-w-4xl rounded-lg shadow-xl"
+      />
     </div>
   `
 
