@@ -20,16 +20,13 @@ export default async function GreetingPage() {
   // 페이지가 없으면 기본 콘텐츠 표시
   const pageTitle = page?.title || '원장 인사말'
   const pageContent = page?.content || `
-    <div class="relative rounded-2xl overflow-hidden shadow-xl">
-      <!-- 배경 이미지 -->
+    <div class="relative rounded-2xl overflow-hidden shadow-xl min-h-[800px]">
       <div class="absolute inset-0 z-0">
         <img src="/images/aaa.png" alt="배경" class="w-full h-full object-cover opacity-20" />
       </div>
 
-      <!-- 오버레이 (텍스트 가독성 향상) -->
       <div class="absolute inset-0 z-0 bg-gradient-to-b from-white/80 via-white/90 to-white/95"></div>
 
-      <!-- 콘텐츠 -->
       <div class="relative z-10 p-8 md:p-12 space-y-6">
         <p class="text-xl md:text-2xl font-bold text-center text-primary mb-8">
           자람동산 어린이집에 오신 것을 환영합니다.
