@@ -2,7 +2,6 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { menuData } from '@/lib/menu-items'
 
 export default function GreetingPage() {
@@ -49,20 +48,17 @@ export default function GreetingPage() {
 
           {/* 오른쪽 콘텐츠 영역 - 배경 이미지 */}
           <main className="lg:col-span-3">
-            <div className="relative rounded-xl overflow-hidden shadow-xl min-h-[900px]">
-              {/* 배경 이미지 */}
-              <div className="absolute inset-0 z-0">
-                <Image
-                  src="/images/aaa.png"
-                  alt="배경"
-                  fill
-                  className="object-cover opacity-30"
-                  priority
-                />
-              </div>
-
+            <div
+              className="relative rounded-xl overflow-hidden shadow-xl min-h-[900px]"
+              style={{
+                backgroundImage: 'url(/images/aaa.png)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
+            >
               {/* 오버레이 */}
-              <div className="absolute inset-0 z-10 bg-gradient-to-b from-white/70 via-white/80 to-white/90"></div>
+              <div className="absolute inset-0 z-10 bg-gradient-to-b from-white/60 via-white/70 to-white/80"></div>
 
               {/* 콘텐츠 */}
               <div className="relative z-20 p-8 md:p-12">
