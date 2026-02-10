@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
+import SubPageLayout from '@/components/layout/SubPageLayout'
+import { menuData } from '@/lib/menu-items'
 
 export const metadata = {
   title: '숲유치원 프로그램',
@@ -20,18 +22,14 @@ export default async function ForestPage() {
   }
 
   return (
-    <div className="py-16 bg-gray-50">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-xl shadow-sm p-8 md:p-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">
-            {page.title}
-          </h1>
-          <div
-            className="prose prose-lg max-w-none"
-            dangerouslySetInnerHTML={{ __html: page.content || '' }}
-          />
-        </div>
-      </div>
-    </div>
+    <SubPageLayout title={menuData.curriculum.title} menuItems={menuData.curriculum.items}>
+      <h2 className="text-3xl font-bold text-gray-900 mb-6">
+        {page.title}
+      </h2>
+      <div
+        className="prose prose-lg max-w-none"
+        dangerouslySetInnerHTML={{ __html: page.content || '' }}
+      />
+    </SubPageLayout>
   )
 }
