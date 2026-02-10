@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState } from 'react'
 import { Menu, X } from 'lucide-react'
 
@@ -56,9 +57,15 @@ export default function Header() {
         <div className="flex h-20 items-center justify-between">
           {/* 로고 */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-white font-bold text-xl">자</span>
+            <Link href="/" className="flex items-center space-x-3">
+              <div className="relative h-14 w-14">
+                <Image
+                  src="/images/1.jaramlogo.png"
+                  alt="자람동산어린이집 로고"
+                  fill
+                  className="object-contain"
+                  priority
+                />
               </div>
               <span className="text-xl font-bold text-gray-900 hidden sm:block">
                 자람동산어린이집

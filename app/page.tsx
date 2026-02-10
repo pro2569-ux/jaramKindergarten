@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
+import ImageSlider from '@/components/ui/ImageSlider'
 import {
   Calendar,
   FileText,
@@ -46,62 +47,74 @@ export default async function Home() {
   return (
     <div className="flex flex-col">
       {/* 히어로 배너 섹션 */}
-      <section className="relative h-[600px] bg-gradient-to-r from-primary to-primary-light overflow-hidden">
-        {/* 배경 이미지 (이미지가 있으면 표시) */}
-        <div className="absolute inset-0">
-          <div className="relative w-full h-full">
-            {/* TODO: public/images/hero/main-banner.jpg 파일을 추가하면 아래 주석을 해제하세요 */}
-            {/* <Image
-              src="/images/hero/main-banner.jpg"
-              alt="자람동산어린이집"
-              fill
-              className="object-cover"
-              priority
-            /> */}
-            {/* 이미지가 없을 때는 그라데이션 패턴 */}
-            <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-green-400 to-blue-400 opacity-90" />
-            <div className="absolute inset-0" style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }} />
+      <section className="relative bg-gradient-to-b from-green-50 to-white py-8 md:py-0">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center md:min-h-[600px]">
+            {/* 왼쪽: Welcome 배너 이미지 */}
+            <div className="relative order-2 md:order-1">
+              <div className="relative aspect-[4/3] md:aspect-auto md:h-[500px] rounded-2xl overflow-hidden shadow-2xl">
+                <Image
+                  src="/images/welcomebanner.jpg"
+                  alt="자람동산어린이집에 오신 것을 환영합니다"
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              </div>
+              {/* 장식 요소 */}
+              <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-yellow-300 rounded-full opacity-20 blur-3xl" />
+              <div className="absolute -top-4 -left-4 w-24 h-24 bg-green-300 rounded-full opacity-20 blur-3xl" />
+            </div>
+
+            {/* 오른쪽: 슬라이더 */}
+            <div className="relative order-1 md:order-2">
+              <div className="mb-6 md:mb-8">
+                <div className="inline-block mb-4 px-4 py-2 bg-primary/10 rounded-full text-primary font-semibold text-sm">
+                  🌱 건강한 성장, 행복한 배움
+                </div>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight text-gray-900">
+                  아이들이 건강하게<br />
+                  <span className="text-primary">자라는 곳</span>
+                </h1>
+                <p className="text-lg md:text-xl mb-6 md:mb-8 text-gray-600 leading-relaxed">
+                  자람동산어린이집에서<br />
+                  우리 아이의 밝은 미래를 시작하세요
+                </p>
+                <div className="flex flex-wrap gap-4 mb-8">
+                  <Link href="/about/greeting">
+                    <Button size="lg" className="shadow-lg">
+                      어린이집 소개
+                    </Button>
+                  </Link>
+                  <Link href="/community/inquiry">
+                    <Button size="lg" variant="outline">
+                      문의하기
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              {/* 이미지 슬라이더 */}
+              <div className="relative h-[300px] md:h-[350px]">
+                <ImageSlider
+                  images={[
+                    '/images/main1.jpg',
+                    '/images/main2.jpg',
+                    '/images/main3.jpg',
+                    '/images/main4.jpg',
+                    '/images/main5.jpg',
+                  ]}
+                  interval={3000}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* 오버레이 */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-black/10" />
-
-        {/* 콘텐츠 */}
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-full flex items-center">
-          <div className="text-white max-w-2xl">
-            <div className="inline-block mb-4 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold">
-              🌱 건강한 성장, 행복한 배움
-            </div>
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-              아이들이 건강하게<br />
-              <span className="text-yellow-300">자라는 곳</span>
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 text-white/90 leading-relaxed">
-              자람동산어린이집에서<br />
-              우리 아이의 밝은 미래를 시작하세요
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Link href="/about/greeting">
-                <Button size="lg" className="bg-white text-primary hover:bg-gray-100 shadow-lg">
-                  어린이집 소개
-                </Button>
-              </Link>
-              <Link href="/community/inquiry">
-                <Button size="lg" variant="outline" className="bg-white/10 text-white border-2 border-white hover:bg-white hover:text-primary backdrop-blur-sm">
-                  문의하기
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* 하단 웨이브 */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
-            <path d="M0 120L60 105C120 90 240 60 360 45C480 30 600 30 720 37.5C840 45 960 60 1080 67.5C1200 75 1320 75 1380 75L1440 75V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="white"/>
+        {/* 하단 웨이브 (선택사항) */}
+        <div className="hidden md:block absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+            <path d="M0 60L60 52.5C120 45 240 30 360 22.5C480 15 600 15 720 18.75C840 22.5 960 30 1080 33.75C1200 37.5 1320 37.5 1380 37.5L1440 37.5V60H1380C1320 60 1200 60 1080 60C960 60 840 60 720 60C600 60 480 60 360 60C240 60 120 60 60 60H0Z" fill="white"/>
           </svg>
         </div>
       </section>
