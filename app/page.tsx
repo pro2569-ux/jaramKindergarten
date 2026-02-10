@@ -46,29 +46,63 @@ export default async function Home() {
   return (
     <div className="flex flex-col">
       {/* 히어로 배너 섹션 */}
-      <section className="relative h-[500px] bg-gradient-to-r from-primary to-primary-light">
-        <div className="absolute inset-0 bg-black/10" />
+      <section className="relative h-[600px] bg-gradient-to-r from-primary to-primary-light overflow-hidden">
+        {/* 배경 이미지 (이미지가 있으면 표시) */}
+        <div className="absolute inset-0">
+          <div className="relative w-full h-full">
+            {/* TODO: public/images/hero/main-banner.jpg 파일을 추가하면 아래 주석을 해제하세요 */}
+            {/* <Image
+              src="/images/hero/main-banner.jpg"
+              alt="자람동산어린이집"
+              fill
+              className="object-cover"
+              priority
+            /> */}
+            {/* 이미지가 없을 때는 그라데이션 패턴 */}
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-green-400 to-blue-400 opacity-90" />
+            <div className="absolute inset-0" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }} />
+          </div>
+        </div>
+
+        {/* 오버레이 */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-black/10" />
+
+        {/* 콘텐츠 */}
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-full flex items-center">
-          <div className="text-white">
-            <h1 className="text-5xl font-bold mb-4">
-              아이들이 건강하게 자라는 곳
+          <div className="text-white max-w-2xl">
+            <div className="inline-block mb-4 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold">
+              🌱 건강한 성장, 행복한 배움
+            </div>
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+              아이들이 건강하게<br />
+              <span className="text-yellow-300">자라는 곳</span>
             </h1>
-            <p className="text-xl mb-8 text-white/90">
-              자람동산어린이집에서 우리 아이의 밝은 미래를 시작하세요
+            <p className="text-xl md:text-2xl mb-8 text-white/90 leading-relaxed">
+              자람동산어린이집에서<br />
+              우리 아이의 밝은 미래를 시작하세요
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               <Link href="/about/greeting">
-                <Button size="lg" variant="secondary">
+                <Button size="lg" className="bg-white text-primary hover:bg-gray-100 shadow-lg">
                   어린이집 소개
                 </Button>
               </Link>
               <Link href="/community/inquiry">
-                <Button size="lg" variant="outline" className="bg-white/10 text-white border-white hover:bg-white/20">
+                <Button size="lg" variant="outline" className="bg-white/10 text-white border-2 border-white hover:bg-white hover:text-primary backdrop-blur-sm">
                   문의하기
                 </Button>
               </Link>
             </div>
           </div>
+        </div>
+
+        {/* 하단 웨이브 */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+            <path d="M0 120L60 105C120 90 240 60 360 45C480 30 600 30 720 37.5C840 45 960 60 1080 67.5C1200 75 1320 75 1380 75L1440 75V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="white"/>
+          </svg>
         </div>
       </section>
 
@@ -115,6 +149,134 @@ export default async function Home() {
               </div>
               <span className="font-semibold text-gray-900">교직원</span>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 어린이집 소개 섹션 */}
+      <section className="py-20 bg-gradient-to-b from-white to-green-50">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* 이미지 */}
+            <div className="relative">
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
+                {/* TODO: public/images/about/kindergarten.jpg 파일을 추가하면 아래 주석을 해제하세요 */}
+                {/* <Image
+                  src="/images/about/kindergarten.jpg"
+                  alt="자람동산어린이집"
+                  fill
+                  className="object-cover"
+                /> */}
+                {/* Placeholder */}
+                <div className="w-full h-full bg-gradient-to-br from-green-200 via-blue-200 to-purple-200 flex items-center justify-center">
+                  <div className="text-center text-green-700">
+                    <ImageIcon className="w-24 h-24 mx-auto mb-4 opacity-50" />
+                    <p className="text-sm font-medium">어린이집 사진</p>
+                  </div>
+                </div>
+              </div>
+              {/* 장식 요소 */}
+              <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-yellow-300 rounded-full opacity-20 blur-2xl" />
+              <div className="absolute -top-6 -left-6 w-24 h-24 bg-green-300 rounded-full opacity-20 blur-2xl" />
+            </div>
+
+            {/* 텍스트 */}
+            <div>
+              <div className="inline-block px-4 py-2 bg-primary/10 rounded-full text-primary font-semibold text-sm mb-4">
+                ABOUT US
+              </div>
+              <h2 className="text-4xl font-bold text-gray-900 mb-6">
+                자람동산어린이집을<br />
+                소개합니다
+              </h2>
+              <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                아이들의 건강한 성장과 행복한 배움을 위해<br />
+                최선을 다하는 자람동산어린이집입니다.
+              </p>
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-white text-sm">✓</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">자연주의 교육</h3>
+                    <p className="text-gray-600">자연 속에서 건강하게 성장하는 교육 프로그램</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-white text-sm">✓</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">전문 교사진</h3>
+                    <p className="text-gray-600">아이들을 사랑으로 돌보는 경험 많은 선생님들</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-white text-sm">✓</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">안전한 환경</h3>
+                    <p className="text-gray-600">쾌적하고 안전한 교육 시설과 환경</p>
+                  </div>
+                </div>
+              </div>
+              <Link href="/about/greeting">
+                <Button size="lg" className="gap-2">
+                  자세히 보기 <ArrowRight className="w-5 h-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 특징 섹션 */}
+      <section className="py-20 bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              자람동산만의 특별함
+            </h2>
+            <p className="text-lg text-gray-600">
+              우리 아이들을 위한 최고의 교육 환경을 제공합니다
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* 특징 1 */}
+            <div className="group p-8 rounded-2xl bg-gradient-to-br from-green-50 to-green-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+              <div className="w-16 h-16 rounded-2xl bg-green-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <span className="text-3xl">🌳</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">숲 유치원</h3>
+              <p className="text-gray-600 leading-relaxed">
+                자연 속에서 오감을 깨우는 숲 체험 프로그램으로 건강한 신체와 정서 발달을 돕습니다.
+              </p>
+            </div>
+
+            {/* 특징 2 */}
+            <div className="group p-8 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+              <div className="w-16 h-16 rounded-2xl bg-blue-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <span className="text-3xl">📚</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">누리과정</h3>
+              <p className="text-gray-600 leading-relaxed">
+                국가 수준의 교육과정인 누리과정을 바탕으로 체계적인 교육을 제공합니다.
+              </p>
+            </div>
+
+            {/* 특징 3 */}
+            <div className="group p-8 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+              <div className="w-16 h-16 rounded-2xl bg-orange-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <span className="text-3xl">🍎</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">영양 급식</h3>
+              <p className="text-gray-600 leading-relaxed">
+                신선한 재료로 만든 영양 만점 급식과 간식으로 건강한 성장을 지원합니다.
+              </p>
+            </div>
           </div>
         </div>
       </section>

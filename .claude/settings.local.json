@@ -13,7 +13,11 @@
       "Bash(git commit:*)",
       "Bash(git remote add origin https://github.com/pro2569-ux/jaramKindergarten.git)",
       "Bash(git push -u origin master)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(if not exist \"public\\\\images\" mkdir \"public\\\\images\")",
+      "Bash(if not exist \"public\\\\images\\\\hero\" mkdir \"public\\\\images\\\\hero\")",
+      "Bash(if not exist \"public\\\\images\\\\about\" mkdir \"public\\\\images\\\\about\")",
+      "Bash(if not exist \"public\\\\images\\\\curriculum\" mkdir \"public\\\\images\\\\curriculum\")"
     ]
   }
 }
