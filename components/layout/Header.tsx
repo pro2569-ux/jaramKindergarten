@@ -62,11 +62,11 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white shadow-md">
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-20 items-center justify-between">
+        <div className="flex h-28 items-center justify-between">
           {/* 로고 */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
-              <div className="relative h-20 w-20">
+              <div className="relative h-28 w-28">
                 <Image
                   src="/images/jaramlogo.png"
                   alt="자람동산어린이집 로고"
@@ -89,7 +89,8 @@ export default function Header() {
               >
                 <Link
                   href={item.href}
-                  className="text-gray-700 hover:text-primary font-medium transition-colors py-2 block"
+                  className="text-gray-700 hover:text-primary font-semibold transition-all py-2 px-3 block rounded-lg hover:bg-green-50"
+                  style={{ fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif" }}
                 >
                   {item.name}
                 </Link>

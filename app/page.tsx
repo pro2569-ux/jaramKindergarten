@@ -51,7 +51,7 @@ export default async function Home() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
             {/* 왼쪽: 텍스트 콘텐츠 */}
-            <div className="order-2 md:order-1">
+            <div className="order-1 md:order-1">
               <div className="inline-block mb-4 px-4 py-2 bg-primary/10 rounded-full text-primary font-semibold text-sm">
                 🌱 건강한 성장, 행복한 배움
               </div>
@@ -78,7 +78,7 @@ export default async function Home() {
             </div>
 
             {/* 오른쪽: 이미지 슬라이더 */}
-            <div className="order-1 md:order-2">
+            <div className="order-2 md:order-2">
               <div className="relative w-full h-[400px] md:h-[500px] lg:h-[600px]">
                 <ImageSlider
                   images={[
