@@ -7,7 +7,7 @@ import { Menu, X } from 'lucide-react'
 
 const navigation = [
   {
-    name: '소개',
+    name: '어린이집소개',
     href: '/about',
     children: [
       { name: '원장 인사말', href: '/about/greeting' },
@@ -19,7 +19,7 @@ const navigation = [
     ],
   },
   {
-    name: '보육과정',
+    name: '교육프로그램',
     href: '/curriculum',
     children: [
       { name: '표준보육과정', href: '/curriculum/standard' },
@@ -29,7 +29,15 @@ const navigation = [
     ],
   },
   {
-    name: '알림마당',
+    name: '입학안내',
+    href: '/admission',
+    children: [
+      { name: '입학안내', href: '/admission/guide' },
+      { name: '모집요강', href: '/admission/recruitment' },
+    ],
+  },
+  {
+    name: '교육활동이야기',
     href: '/board',
     children: [
       { name: '공지사항', href: '/board/notice' },
@@ -57,8 +65,8 @@ export default function Header() {
         <div className="flex h-20 items-center justify-between">
           {/* 로고 */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-3">
-              <div className="relative h-16 w-16">
+            <Link href="/" className="flex items-center">
+              <div className="relative h-20 w-20">
                 <Image
                   src="/images/jaramlogo.png"
                   alt="자람동산어린이집 로고"
@@ -67,9 +75,6 @@ export default function Header() {
                   priority
                 />
               </div>
-              <span className="text-xl font-bold text-gray-900 hidden sm:block">
-                자람동산어린이집
-              </span>
             </Link>
           </div>
 
@@ -78,18 +83,26 @@ export default function Header() {
             {navigation.map((item, index) => (
               <div
                 key={item.name}
-                className="relative"
+                className="relative group"
                 onMouseEnter={() => setActiveDropdown(index)}
                 onMouseLeave={() => setActiveDropdown(null)}
               >
                 <Link
                   href={item.href}
-                  className="text-gray-700 hover:text-primary font-medium transition-colors"
+                  className="text-gray-700 hover:text-primary font-medium transition-colors py-2 block"
                 >
                   {item.name}
                 </Link>
-                {item.children && activeDropdown === index && (
-                  <div className="absolute left-0 top-full mt-2 w-56 rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5">
+                {item.children && (
+                  <div
+                    className={`absolute left-0 top-full mt-0 w-56 rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-200 ${
+                      activeDropdown === index
+                        ? 'opacity-100 visible translate-y-0'
+                        : 'opacity-0 invisible -translate-y-2'
+                    }`}
+                    onMouseEnter={() => setActiveDropdown(index)}
+                    onMouseLeave={() => setActiveDropdown(null)}
+                  >
                     <div className="py-2">
                       {item.children.map((child) => (
                         <Link
