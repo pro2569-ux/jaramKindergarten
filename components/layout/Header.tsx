@@ -58,9 +58,9 @@ export default function Header() {
           {/* 로고 */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-3">
-              <div className="relative h-14 w-14">
+              <div className="relative h-16 w-16">
                 <Image
-                  src="/images/1.jaramlogo.png"
+                  src="/images/jaramlogo.png"
                   alt="자람동산어린이집 로고"
                   fill
                   className="object-contain"

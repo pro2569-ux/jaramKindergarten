@@ -20,7 +20,7 @@ export default function ImageSlider({ images, interval = 3000 }: ImageSliderProp
   }, [images.length, interval])
 
   return (
-    <div className="relative w-full h-full overflow-hidden rounded-2xl shadow-2xl">
+    <div className="relative w-full h-full overflow-hidden rounded-2xl shadow-2xl bg-gray-100">
       {images.map((image, index) => (
         <div
           key={index}
@@ -32,7 +32,7 @@ export default function ImageSlider({ images, interval = 3000 }: ImageSliderProp
             src={image}
             alt={`슬라이드 ${index + 1}`}
             fill
-            className="object-cover"
+            className="object-contain"
             priority={index === 0}
           />
         </div>
