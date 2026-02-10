@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button'
 import { ArrowLeft, Save } from 'lucide-react'
 import Link from 'next/link'
 
-export default function CreatePostPage() {
+function CreatePostForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const boardType = searchParams.get('type') || 'notice'
@@ -154,5 +154,17 @@ export default function CreatePostPage() {
         </Card>
       </form>
     </div>
+  )
+}
+
+export default function CreatePostPage() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-6">
+        <div className="text-gray-600">로딩 중...</div>
+      </div>
+    }>
+      <CreatePostForm />
+    </Suspense>
   )
 }
