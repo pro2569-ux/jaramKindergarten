@@ -10,7 +10,10 @@
       "Bash(npm install:*)",
       "Bash(npm run dev:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git remote add origin https://github.com/pro2569-ux/jaramKindergarten.git)",
+      "Bash(git push -u origin master)",
+      "Bash(git push:*)"
     ]
   }
 }
