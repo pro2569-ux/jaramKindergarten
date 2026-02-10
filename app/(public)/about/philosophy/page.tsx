@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
 import SubPageLayout from '@/components/layout/SubPageLayout'
 import { menuData } from '@/lib/menu-items'
 
@@ -17,16 +16,21 @@ export default async function PhilosophyPage() {
     .eq('is_published', true)
     .single()
 
-  if (!page) {
-    notFound()
-  }
+  // 페이지가 없으면 기본 콘텐츠 표시
+  const pageTitle = page?.title || '교육이념 및 원훈'
+  const pageContent = page?.content || `
+    <div class="text-center py-12">
+      <p class="text-gray-500 mb-4">아직 작성된 내용이 없습니다.</p>
+      <p class="text-sm text-gray-400">관리자 페이지에서 콘텐츠를 작성해주세요.</p>
+    </div>
+  `
 
   return (
     <SubPageLayout title={menuData.about.title} menuItems={menuData.about.items}>
-      <h2 className="text-3xl font-bold text-gray-900 mb-6">{page.title}</h2>
+      <h2 className="text-3xl font-bold text-gray-900 mb-6">{pageTitle}</h2>
       <div
         className="prose prose-lg max-w-none"
-        dangerouslySetInnerHTML={{ __html: page.content || '' }}
+        dangerouslySetInnerHTML={{ __html: pageContent }}
       />
     </SubPageLayout>
   )
