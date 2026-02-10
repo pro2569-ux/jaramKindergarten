@@ -66,7 +66,8 @@ export default function GreetingPage() {
 
                 <div className="space-y-6">
                   <p className="text-lg md:text-xl lg:text-2xl font-bold text-center text-primary mb-8 leading-relaxed">
-                    자람동산 어린이집에 오신 것을 환영합니다.
+                    자람동산 어린이집에 오신 것을<br/>
+                    환영합니다.
                   </p>
 
                   <p className="text-gray-800 leading-relaxed text-base md:text-lg">
