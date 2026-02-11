@@ -71,8 +71,8 @@ function LoginForm() {
     setErrorMessage('')
 
     try {
-      // ID를 이메일 형식으로 변환 (admin -> admin@jaramk.local)
-      const email = `${formData.username}@jaramk.local`
+      // ID를 이메일 형식으로 변환 (admin -> admin@jaramk.com)
+      const email = `${formData.username}@jaramk.com`
 
       const response = await fetch('/api/auth/login', {
         method: 'POST',

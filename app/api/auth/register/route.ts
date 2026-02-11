@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const { name, username, password } = await request.json()
 
     // 아이디를 이메일 형식으로 변환
-    const email = `${username}@jaramk.local`
+    const email = `${username}@jaramk.com`
 
     const supabase = await createClient()
 
