@@ -108,9 +108,9 @@ function LoginForm() {
           <div className="inline-flex h-16 w-16 rounded-full bg-primary items-center justify-center mb-4">
             <span className="text-white font-bold text-2xl">자</span>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">관리자 로그인</h2>
+          <h2 className="text-3xl font-bold text-gray-900">로그인</h2>
           <p className="mt-2 text-sm text-gray-600">
-            자람동산어린이집 관리자 페이지
+            자람동산어린이집에 오신 것을 환영합니다
           </p>
         </div>
 
@@ -175,9 +175,6 @@ function LoginForm() {
             <Link href="/register" className="text-primary hover:text-primary-dark font-medium">
               회원가입
             </Link>
-          </p>
-          <p className="text-xs text-gray-500">
-            관리자 계정 문의: info@jaramk.com
           </p>
         </div>
       </div>

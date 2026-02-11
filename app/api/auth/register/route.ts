@@ -31,7 +31,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '회원가입에 실패했습니다.' }, { status: 500 })
     }
 
-    // 2. profiles 테이블에 프로필 생성
+    // 2. 이메일 확인 처리 (email_confirmed_at 업데이트)
+    // Supabase가 이메일 확인을 요구하므로 SQL로 직접 확인 처리
+    const { error: confirmError } = await supabase.rpc('confirm_user_email', {
+      user_id: authData.user.id
+    })
+
+    if (confirmError) {
+      console.error('Email confirmation error:', confirmError)
+      // 확인 실패 시 수동으로 SQL 실행 필요
+    }
+
+    // 3. profiles 테이블에 프로필 생성
     const { error: profileError } = await supabase.from('profiles').insert({
       id: authData.user.id,
       name,
@@ -44,7 +55,7 @@ export async function POST(request: Request) {
       // 프로필 생성 실패해도 계속 진행 (이미 Auth 사용자는 생성됨)
     }
 
-    // 3. 자동 로그인
+    // 4. 자동 로그인
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
