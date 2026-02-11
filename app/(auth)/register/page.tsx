@@ -107,10 +107,9 @@ export default function RegisterPage() {
 
       setSuccessMessage(result.message)
 
-      // 2초 후 메인 페이지로 이동
+      // 2초 후 메인 페이지로 강제 새로고침하며 이동
       setTimeout(() => {
-        router.push('/')
-        router.refresh()
+        window.location.href = '/'
       }, 2000)
     } catch (error: any) {
       setErrorMessage(error.message || '회원가입에 실패했습니다.')

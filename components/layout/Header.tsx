@@ -75,13 +75,18 @@ export default function Header() {
 
       if (user) {
         // 사용자 프로필 정보 가져오기
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('name')
           .eq('id', user.id)
           .single()
 
-        setUserName(profile?.name || user.email?.split('@')[0] || '')
+        if (error) {
+          console.error('프로필 조회 오류:', error)
+        }
+
+        const name = profile?.name || user.email?.split('@')[0] || '사용자'
+        setUserName(name)
       } else {
         setUserName('')
       }
@@ -100,7 +105,8 @@ export default function Header() {
           .eq('id', session.user.id)
           .single()
 
-        setUserName(profile?.name || session.user.email?.split('@')[0] || '')
+        const name = profile?.name || session.user.email?.split('@')[0] || '사용자'
+        setUserName(name)
       } else {
         setUserName('')
       }
@@ -114,11 +120,10 @@ export default function Header() {
     setIsLoggingOut(true)
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
-      router.push('/')
-      router.refresh()
+      // 강제 새로고침하며 메인으로 이동
+      window.location.href = '/'
     } catch (error) {
       console.error('로그아웃 실패:', error)
-    } finally {
       setIsLoggingOut(false)
     }
   }

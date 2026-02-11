@@ -101,10 +101,9 @@ function LoginForm() {
       const isAdmin = result.profile?.role === 'admin' || result.profile?.role === 'teacher'
       const destination = isAdmin ? (redirectTo !== '/' ? redirectTo : '/admin') : '/'
 
-      // 1초 후 이동
+      // 1초 후 강제 새로고침하며 이동
       setTimeout(() => {
-        router.push(destination)
-        router.refresh()
+        window.location.href = destination
       }, 1000)
     } catch (error: any) {
       setErrorMessage(error.message || '로그인에 실패했습니다.')
