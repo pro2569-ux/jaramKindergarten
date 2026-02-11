@@ -29,7 +29,14 @@ export async function POST(request: Request) {
 
     console.log('조회된 프로필:', profile)
 
-    const finalProfile = profile || { role: 'parent', name: data.user.email?.split('@')[0] }
+    // user_metadata에서 이름 가져오기 (fallback)
+    const userMetadataName = data.user.user_metadata?.name
+
+    const finalProfile = profile
+      ? { ...profile, name: profile.name || userMetadataName || data.user.email?.split('@')[0] }
+      : { role: 'parent', name: userMetadataName || data.user.email?.split('@')[0] }
+
+    console.log('최종 프로필:', finalProfile)
 
     return NextResponse.json({
       success: true,
