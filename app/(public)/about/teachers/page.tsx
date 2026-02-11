@@ -20,10 +20,20 @@ export default async function TeachersPage() {
   return (
     <SubPageLayout title={menuData.about.title} menuItems={menuData.about.items}>
       <div className="mb-12">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">
+        <h2 className="text-3xl font-bold text-gray-900 mb-6">
           교원 및 반편성
         </h2>
-        <p className="text-lg text-gray-600">
+
+        {/* teacher.png 이미지 */}
+        <div className="mb-8 flex justify-center">
+          <img
+            src="/images/teacher.png"
+            alt="교원 및 반편성"
+            className="w-full max-w-4xl rounded-lg shadow-xl"
+          />
+        </div>
+
+        <p className="text-lg text-gray-600 text-center">
           사랑과 전문성으로 아이들을 가르치는 우리 선생님들을 소개합니다
         </p>
       </div>
