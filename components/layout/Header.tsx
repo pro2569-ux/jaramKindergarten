@@ -62,6 +62,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null)
   const [user, setUser] = useState<User | null>(null)
+  const [userName, setUserName] = useState<string>('')
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const router = useRouter()
   const supabase = createClient()
@@ -71,13 +72,38 @@ export default function Header() {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
+
+      if (user) {
+        // 사용자 프로필 정보 가져오기
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', user.id)
+          .single()
+
+        setUserName(profile?.name || user.email?.split('@')[0] || '')
+      } else {
+        setUserName('')
+      }
     }
 
     getUser()
 
     // 인증 상태 변경 감지
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null)
+
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', session.user.id)
+          .single()
+
+        setUserName(profile?.name || session.user.email?.split('@')[0] || '')
+      } else {
+        setUserName('')
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -162,6 +188,9 @@ export default function Header() {
             <div className="flex items-center gap-2 ml-6 pl-6 border-l border-gray-200">
               {user ? (
                 <>
+                  <span className="text-sm font-medium text-gray-700 px-2">
+                    {userName}님
+                  </span>
                   <Link
                     href="/admin"
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-green-50 rounded-lg transition-colors"
@@ -250,6 +279,9 @@ export default function Header() {
             <div className="border-t border-gray-200 pt-3 mt-3 space-y-2">
               {user ? (
                 <>
+                  <div className="px-3 py-2 text-sm font-medium text-gray-700 bg-green-50 rounded-md">
+                    {userName}님 환영합니다
+                  </div>
                   <Link
                     href="/admin"
                     className="flex items-center gap-2 px-3 py-2 text-base font-medium text-gray-900 hover:bg-green-50 hover:text-primary rounded-md"

@@ -21,6 +21,7 @@ function LoginForm() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -69,6 +70,7 @@ function LoginForm() {
 
     setIsSubmitting(true)
     setErrorMessage('')
+    setSuccessMessage('')
 
     try {
       // ID를 이메일 형식으로 변환 (admin -> admin@jaramk.com)
@@ -91,8 +93,19 @@ function LoginForm() {
         throw new Error(result.error)
       }
 
-      router.push(redirectTo)
-      router.refresh()
+      // 로그인 성공 메시지
+      const userName = result.profile?.name || formData.username
+      setSuccessMessage(`${userName}님, 환영합니다!`)
+
+      // 역할에 따라 다른 페이지로 이동
+      const isAdmin = result.profile?.role === 'admin' || result.profile?.role === 'teacher'
+      const destination = isAdmin ? (redirectTo !== '/' ? redirectTo : '/admin') : '/'
+
+      // 1초 후 이동
+      setTimeout(() => {
+        router.push(destination)
+        router.refresh()
+      }, 1000)
     } catch (error: any) {
       setErrorMessage(error.message || '로그인에 실패했습니다.')
     } finally {
@@ -126,6 +139,13 @@ function LoginForm() {
                 </div>
               )}
 
+              {successMessage && (
+                <div className="p-3 rounded-lg bg-green-50 border border-green-200">
+                  <p className="text-sm text-green-600 font-medium">{successMessage}</p>
+                  <p className="text-xs text-green-500 mt-1">잠시 후 이동합니다...</p>
+                </div>
+              )}
+
               <Input
                 label="아이디"
                 type="text"
@@ -153,11 +173,13 @@ function LoginForm() {
               <Button
                 type="submit"
                 size="lg"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !!successMessage}
                 className="w-full gap-2"
               >
                 {isSubmitting ? (
                   '로그인 중...'
+                ) : successMessage ? (
+                  '로그인 성공!'
                 ) : (
                   <>
                     <LogIn className="w-5 h-5" />
