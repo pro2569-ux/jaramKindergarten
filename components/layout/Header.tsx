@@ -67,50 +67,26 @@ export default function Header() {
   const router = useRouter()
   const supabase = createClient()
 
-  // 인증 상태 확인 - onAuthStateChange만 사용
+  // 로컬스토리지에서 userName 읽기
   useEffect(() => {
-    console.log('📌 Header useEffect 시작')
+    const storedName = localStorage.getItem('userName')
+    if (storedName) {
+      setUserName(storedName)
+    }
+  }, [])
 
-    // 인증 상태 변경 감지 (초기 로드 시에도 실행됨)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔐 Auth 상태 변경:', event, 'user:', session?.user?.email)
-      console.log('📍 session?.user 존재:', !!session?.user)
-
+  // 인증 상태 확인
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
 
-      if (session?.user) {
-        console.log('📍 프로필 조회 시작, user.id:', session.user.id)
-
-        try {
-          // 사용자 프로필 정보 가져오기
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('name')
-            .eq('id', session.user.id)
-            .single()
-
-          console.log('📍 프로필 조회 완료, profile:', profile, 'error:', error)
-
-          if (error) {
-            console.error('❌ 프로필 조회 오류:', error)
-          }
-
-          // profiles 테이블의 name 사용
-          const name = profile?.name || session.user.email?.split('@')[0] || '사용자'
-          console.log('📍 userName 계산 완료:', name)
-
-          setUserName(name)
-          console.log('✅ setUserName 호출 완료:', name)
-        } catch (err) {
-          console.error('❌ 예외 발생:', err)
-        }
-      } else {
-        console.log('❌ 로그아웃 상태')
+      if (!session?.user) {
+        // 로그아웃 시 로컬스토리지도 클리어
+        localStorage.removeItem('userName')
         setUserName('')
       }
     })
 
-    console.log('📌 onAuthStateChange 등록 완료')
     return () => subscription.unsubscribe()
   }, [])
 
@@ -118,6 +94,9 @@ export default function Header() {
   const handleLogout = async () => {
     setIsLoggingOut(true)
     try {
+      // 로컬스토리지에서 userName 삭제
+      localStorage.removeItem('userName')
+
       await fetch('/api/auth/logout', { method: 'POST' })
       // 강제 새로고침하며 메인으로 이동
       window.location.href = '/'

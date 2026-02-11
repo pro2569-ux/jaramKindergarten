@@ -101,6 +101,10 @@ function LoginForm() {
       // 로그인 성공 메시지
       const userName = result.profile?.name || formData.username
       console.log('userName:', userName, 'profile:', result.profile)
+
+      // 로컬스토리지에 userName 저장
+      localStorage.setItem('userName', userName)
+
       setSuccessMessage(`${userName}님, 환영합니다!`)
 
       // 역할에 따라 다른 페이지로 이동
