@@ -2,8 +2,11 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState } from 'react'
-import { Menu, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Menu, X, LogIn, LogOut, Settings } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+import type { User } from '@supabase/supabase-js'
 
 const navigation = [
   {
@@ -58,6 +61,41 @@ const navigation = [
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const router = useRouter()
+  const supabase = createClient()
+
+  // 인증 상태 확인
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
+
+    getUser()
+
+    // 인증 상태 변경 감지
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // 로그아웃 핸들러
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      router.push('/')
+      router.refresh()
+    } catch (error) {
+      console.error('로그아웃 실패:', error)
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-md">
@@ -79,7 +117,7 @@ export default function Header() {
           </div>
 
           {/* 데스크톱 네비게이션 */}
-          <div className="hidden lg:flex lg:items-center lg:space-x-8">
+          <div className="hidden lg:flex lg:items-center lg:space-x-8 lg:flex-1 lg:justify-end">
             {navigation.map((item, index) => (
               <div
                 key={item.name}
@@ -119,6 +157,37 @@ export default function Header() {
                 )}
               </div>
             ))}
+
+            {/* 로그인/로그아웃 버튼 */}
+            <div className="flex items-center gap-2 ml-6 pl-6 border-l border-gray-200">
+              {user ? (
+                <>
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-green-50 rounded-lg transition-colors"
+                  >
+                    <Settings className="w-4 h-4" />
+                    관리자
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors"
+                >
+                  <LogIn className="w-4 h-4" />
+                  로그인
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* 모바일 메뉴 버튼 */}
@@ -168,6 +237,42 @@ export default function Header() {
                 )}
               </div>
             ))}
+
+            {/* 모바일 로그인/로그아웃 버튼 */}
+            <div className="border-t border-gray-200 pt-3 mt-3 space-y-2">
+              {user ? (
+                <>
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-2 px-3 py-2 text-base font-medium text-gray-900 hover:bg-green-50 hover:text-primary rounded-md"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Settings className="w-5 h-5" />
+                    관리자 페이지
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false)
+                      handleLogout()
+                    }}
+                    disabled={isLoggingOut}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-base font-medium text-white bg-primary hover:bg-primary-dark rounded-md disabled:opacity-50"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex items-center gap-2 w-full px-3 py-2 text-base font-medium text-white bg-primary hover:bg-primary-dark rounded-md"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <LogIn className="w-5 h-5" />
+                  로그인
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       )}
