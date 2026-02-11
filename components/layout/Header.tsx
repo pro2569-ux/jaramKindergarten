@@ -89,6 +89,11 @@ export default function Header() {
         const name = profile?.name || user.email?.split('@')[0] || '사용자'
         console.log('헤더 userName 설정:', name, 'from profile.name:', profile?.name)
 
+        // 디버깅: alert로 확인
+        if (profile?.name) {
+          alert(`헤더에서 userName 설정: ${name}`)
+        }
+
         setUserName(name)
       } else {
         setUserName('')
