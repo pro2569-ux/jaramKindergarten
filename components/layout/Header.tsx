@@ -85,7 +85,9 @@ export default function Header() {
           console.error('프로필 조회 오류:', error)
         }
 
+        console.log('프로필 데이터:', profile, 'user.email:', user.email)
         const name = profile?.name || user.email?.split('@')[0] || '사용자'
+        console.log('설정할 userName:', name)
         setUserName(name)
       } else {
         setUserName('')

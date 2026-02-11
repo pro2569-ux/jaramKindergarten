@@ -89,12 +89,15 @@ function LoginForm() {
 
       const result = await response.json()
 
+      console.log('로그인 API 응답:', result)
+
       if (result.error) {
         throw new Error(result.error)
       }
 
       // 로그인 성공 메시지
       const userName = result.profile?.name || formData.username
+      console.log('userName:', userName, 'profile:', result.profile)
       setSuccessMessage(`${userName}님, 환영합니다!`)
 
       // 역할에 따라 다른 페이지로 이동
