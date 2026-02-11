@@ -87,21 +87,20 @@ export default function Header() {
 
         console.log('=== 프로필 조회 결과 ===')
         console.log('profile:', profile)
-        console.log('profile?.name:', profile?.name)
-        console.log('user.email:', user.email)
-        console.log('user.id:', user.id)
+        console.log('user.user_metadata:', user.user_metadata)
 
-        const name = profile?.name || user.email?.split('@')[0] || '사용자'
+        // user_metadata에서 이름 가져오기 (우선순위)
+        const metadataName = user.user_metadata?.name
+        const profileName = profile?.name
+        const emailName = user.email?.split('@')[0]
+
+        console.log('metadataName:', metadataName)
+        console.log('profileName:', profileName)
+        console.log('emailName:', emailName)
+
+        // 우선순위: user_metadata > profile.name > email
+        const name = metadataName || profileName || emailName || '사용자'
         console.log('최종 userName:', name)
-
-        // 디버깅: 헤더에 userName 설정
-        if (!profile) {
-          console.error('❌ 프로필을 찾을 수 없습니다! user.id:', user.id)
-        } else if (!profile.name) {
-          console.warn('⚠️ 프로필에 name이 없습니다:', profile)
-        } else {
-          console.log('✅ userName 설정 성공:', name)
-        }
 
         setUserName(name)
       } else {
@@ -122,7 +121,9 @@ export default function Header() {
           .eq('id', session.user.id)
           .single()
 
-        const name = profile?.name || session.user.email?.split('@')[0] || '사용자'
+        // user_metadata 우선
+        const metadataName = session.user.user_metadata?.name
+        const name = metadataName || profile?.name || session.user.email?.split('@')[0] || '사용자'
         setUserName(name)
       } else {
         setUserName('')
