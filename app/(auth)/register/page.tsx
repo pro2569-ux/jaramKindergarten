@@ -1,26 +1,27 @@
 'use client'
 
-import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
-import { LogIn } from 'lucide-react'
+import { UserPlus, ArrowLeft } from 'lucide-react'
 
-function LoginForm() {
+export default function RegisterPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo') || '/admin'
 
   const [formData, setFormData] = useState({
+    name: '',
     username: '',
     password: '',
+    confirmPassword: '',
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -44,16 +45,30 @@ function LoginForm() {
   const validate = () => {
     const newErrors: Record<string, string> = {}
 
+    if (!formData.name.trim()) {
+      newErrors.name = '이름을 입력해주세요.'
+    } else if (formData.name.length < 2) {
+      newErrors.name = '이름은 최소 2자 이상이어야 합니다.'
+    }
+
     if (!formData.username.trim()) {
       newErrors.username = '아이디를 입력해주세요.'
     } else if (formData.username.length < 3) {
       newErrors.username = '아이디는 최소 3자 이상이어야 합니다.'
+    } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+      newErrors.username = '아이디는 영문, 숫자, 언더바(_)만 사용 가능합니다.'
     }
 
     if (!formData.password.trim()) {
       newErrors.password = '비밀번호를 입력해주세요.'
     } else if (formData.password.length < 6) {
       newErrors.password = '비밀번호는 최소 6자 이상이어야 합니다.'
+    }
+
+    if (!formData.confirmPassword.trim()) {
+      newErrors.confirmPassword = '비밀번호 확인을 입력해주세요.'
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.'
     }
 
     setErrors(newErrors)
@@ -69,18 +84,17 @@ function LoginForm() {
 
     setIsSubmitting(true)
     setErrorMessage('')
+    setSuccessMessage('')
 
     try {
-      // ID를 이메일 형식으로 변환 (admin -> admin@jaramk.local)
-      const email = `${formData.username}@jaramk.local`
-
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email,
+          name: formData.name,
+          username: formData.username,
           password: formData.password,
         }),
       })
@@ -91,10 +105,15 @@ function LoginForm() {
         throw new Error(result.error)
       }
 
-      router.push(redirectTo)
-      router.refresh()
+      setSuccessMessage(result.message)
+
+      // 2초 후 메인 페이지로 이동
+      setTimeout(() => {
+        router.push('/')
+        router.refresh()
+      }, 2000)
     } catch (error: any) {
-      setErrorMessage(error.message || '로그인에 실패했습니다.')
+      setErrorMessage(error.message || '회원가입에 실패했습니다.')
     } finally {
       setIsSubmitting(false)
     }
@@ -108,15 +127,15 @@ function LoginForm() {
           <div className="inline-flex h-16 w-16 rounded-full bg-primary items-center justify-center mb-4">
             <span className="text-white font-bold text-2xl">자</span>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">관리자 로그인</h2>
+          <h2 className="text-3xl font-bold text-gray-900">회원가입</h2>
           <p className="mt-2 text-sm text-gray-600">
-            자람동산어린이집 관리자 페이지
+            자람동산어린이집에 오신 것을 환영합니다
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-center">로그인</CardTitle>
+            <CardTitle className="text-center">회원 정보 입력</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -126,6 +145,24 @@ function LoginForm() {
                 </div>
               )}
 
+              {successMessage && (
+                <div className="p-3 rounded-lg bg-green-50 border border-green-200">
+                  <p className="text-sm text-green-600">{successMessage}</p>
+                  <p className="text-xs text-green-500 mt-1">잠시 후 자동으로 이동합니다...</p>
+                </div>
+              )}
+
+              <Input
+                label="이름"
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                error={errors.name}
+                placeholder="홍길동"
+                required
+              />
+
               <Input
                 label="아이디"
                 type="text"
@@ -133,7 +170,7 @@ function LoginForm() {
                 value={formData.username}
                 onChange={handleChange}
                 error={errors.username}
-                placeholder="admin"
+                placeholder="영문, 숫자 조합 (3자 이상)"
                 autoComplete="username"
                 required
               />
@@ -145,23 +182,35 @@ function LoginForm() {
                 value={formData.password}
                 onChange={handleChange}
                 error={errors.password}
-                placeholder="••••••••"
-                autoComplete="current-password"
+                placeholder="6자 이상"
+                autoComplete="new-password"
+                required
+              />
+
+              <Input
+                label="비밀번호 확인"
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                error={errors.confirmPassword}
+                placeholder="비밀번호를 다시 입력해주세요"
+                autoComplete="new-password"
                 required
               />
 
               <Button
                 type="submit"
                 size="lg"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !!successMessage}
                 className="w-full gap-2"
               >
                 {isSubmitting ? (
-                  '로그인 중...'
+                  '회원가입 중...'
                 ) : (
                   <>
-                    <LogIn className="w-5 h-5" />
-                    로그인
+                    <UserPlus className="w-5 h-5" />
+                    회원가입
                   </>
                 )}
               </Button>
@@ -171,28 +220,20 @@ function LoginForm() {
 
         <div className="mt-4 text-center space-y-2">
           <p className="text-sm text-gray-600">
-            계정이 없으신가요?{' '}
-            <Link href="/register" className="text-primary hover:text-primary-dark font-medium">
-              회원가입
+            이미 계정이 있으신가요?{' '}
+            <Link href="/login" className="text-primary hover:text-primary-dark font-medium">
+              로그인
             </Link>
           </p>
-          <p className="text-xs text-gray-500">
-            관리자 계정 문의: info@jaramk.com
-          </p>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            메인으로 돌아가기
+          </Link>
         </div>
       </div>
     </div>
-  )
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-600">로딩 중...</div>
-      </div>
-    }>
-      <LoginForm />
-    </Suspense>
   )
 }

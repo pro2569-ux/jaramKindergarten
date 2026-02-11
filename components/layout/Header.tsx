@@ -179,13 +179,21 @@ export default function Header() {
                   </button>
                 </>
               ) : (
-                <Link
-                  href="/login"
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors"
-                >
-                  <LogIn className="w-4 h-4" />
-                  로그인
-                </Link>
+                <>
+                  <Link
+                    href="/register"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-green-50 rounded-lg transition-colors"
+                  >
+                    회원가입
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    로그인
+                  </Link>
+                </>
               )}
             </div>
           </div>
@@ -263,14 +271,23 @@ export default function Header() {
                   </button>
                 </>
               ) : (
-                <Link
-                  href="/login"
-                  className="flex items-center gap-2 w-full px-3 py-2 text-base font-medium text-white bg-primary hover:bg-primary-dark rounded-md"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <LogIn className="w-5 h-5" />
-                  로그인
-                </Link>
+                <>
+                  <Link
+                    href="/register"
+                    className="flex items-center gap-2 w-full px-3 py-2 text-base font-medium text-gray-700 hover:bg-green-50 hover:text-primary rounded-md"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    회원가입
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="flex items-center gap-2 w-full px-3 py-2 text-base font-medium text-white bg-primary hover:bg-primary-dark rounded-md"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <LogIn className="w-5 h-5" />
+                    로그인
+                  </Link>
+                </>
               )}
             </div>
           </div>
