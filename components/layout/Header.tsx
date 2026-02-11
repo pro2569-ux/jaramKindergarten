@@ -85,15 +85,22 @@ export default function Header() {
           console.error('프로필 조회 오류:', error)
         }
 
-        console.log('프로필 데이터:', profile, 'user.email:', user.email)
+        console.log('=== 프로필 조회 결과 ===')
+        console.log('profile:', profile)
+        console.log('profile?.name:', profile?.name)
+        console.log('user.email:', user.email)
+        console.log('user.id:', user.id)
+
         const name = profile?.name || user.email?.split('@')[0] || '사용자'
-        console.log('설정할 userName:', name)
+        console.log('최종 userName:', name)
 
         // 디버깅: 헤더에 userName 설정
-        if (name && name !== '사용자') {
-          console.log('✅ userName 설정 성공:', name)
+        if (!profile) {
+          console.error('❌ 프로필을 찾을 수 없습니다! user.id:', user.id)
+        } else if (!profile.name) {
+          console.warn('⚠️ 프로필에 name이 없습니다:', profile)
         } else {
-          console.warn('⚠️ userName이 기본값입니다:', name, 'profile:', profile)
+          console.log('✅ userName 설정 성공:', name)
         }
 
         setUserName(name)
@@ -204,7 +211,7 @@ export default function Header() {
               {user ? (
                 <>
                   <span className="text-sm font-medium text-gray-700 px-2">
-                    {userName}님
+                    {userName || user.email?.split('@')[0] || '사용자'}님
                   </span>
                   <Link
                     href="/admin"
@@ -295,7 +302,7 @@ export default function Header() {
               {user ? (
                 <>
                   <div className="px-3 py-2 text-sm font-medium text-gray-700 bg-green-50 rounded-md">
-                    {userName}님 환영합니다
+                    {userName || user.email?.split('@')[0] || '사용자'}님 환영합니다
                   </div>
                   <Link
                     href="/admin"
