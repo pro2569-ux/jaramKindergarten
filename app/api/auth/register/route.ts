@@ -39,21 +39,11 @@ export async function POST(request: Request) {
 
     if (confirmError) {
       console.error('Email confirmation error:', confirmError)
-      // 확인 실패 시 수동으로 SQL 실행 필요
+      // 확인 실패 시에도 계속 진행 (이메일 확인 설정을 껐으면 문제없음)
     }
 
-    // 3. profiles 테이블에 프로필 생성
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: authData.user.id,
-      name,
-      email,
-      role: 'parent',
-    })
-
-    if (profileError) {
-      console.error('Profile creation error:', profileError)
-      // 프로필 생성 실패해도 계속 진행 (이미 Auth 사용자는 생성됨)
-    }
+    // 3. profiles 테이블은 Database Trigger가 자동으로 생성
+    // (별도의 insert 불필요)
 
     // 4. 자동 로그인
     const { error: signInError } = await supabase.auth.signInWithPassword({
