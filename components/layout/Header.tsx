@@ -69,35 +69,48 @@ export default function Header() {
 
   // 인증 상태 확인 - onAuthStateChange만 사용
   useEffect(() => {
+    console.log('📌 Header useEffect 시작')
+
     // 인증 상태 변경 감지 (초기 로드 시에도 실행됨)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔐 Auth 상태 변경:', event, 'user:', session?.user?.email)
+      console.log('📍 session?.user 존재:', !!session?.user)
 
       setUser(session?.user ?? null)
 
       if (session?.user) {
-        // 사용자 프로필 정보 가져오기
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('name')
-          .eq('id', session.user.id)
-          .single()
+        console.log('📍 프로필 조회 시작, user.id:', session.user.id)
 
-        if (error) {
-          console.error('❌ 프로필 조회 오류:', error)
+        try {
+          // 사용자 프로필 정보 가져오기
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('name')
+            .eq('id', session.user.id)
+            .single()
+
+          console.log('📍 프로필 조회 완료, profile:', profile, 'error:', error)
+
+          if (error) {
+            console.error('❌ 프로필 조회 오류:', error)
+          }
+
+          // profiles 테이블의 name 사용
+          const name = profile?.name || session.user.email?.split('@')[0] || '사용자'
+          console.log('📍 userName 계산 완료:', name)
+
+          setUserName(name)
+          console.log('✅ setUserName 호출 완료:', name)
+        } catch (err) {
+          console.error('❌ 예외 발생:', err)
         }
-
-        // profiles 테이블의 name 사용
-        const name = profile?.name || session.user.email?.split('@')[0] || '사용자'
-        console.log('✅ 헤더 userName 설정:', name, 'profile.name:', profile?.name)
-
-        setUserName(name)
       } else {
         console.log('❌ 로그아웃 상태')
         setUserName('')
       }
     })
 
+    console.log('📌 onAuthStateChange 등록 완료')
     return () => subscription.unsubscribe()
   }, [])
 
