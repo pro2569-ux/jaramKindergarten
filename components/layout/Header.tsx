@@ -197,11 +197,9 @@ export default function Header() {
             <div className="flex items-center gap-2 ml-6 pl-6 border-l border-gray-200">
               {user ? (
                 <>
-                  {userName && (
-                    <span className="text-sm font-medium text-gray-700 px-2">
-                      {userName}님
-                    </span>
-                  )}
+                  <span className="text-sm font-medium text-gray-700 px-2">
+                    {userName || '로딩중'}님
+                  </span>
                   <Link
                     href="/admin"
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-green-50 rounded-lg transition-colors"
@@ -290,11 +288,9 @@ export default function Header() {
             <div className="border-t border-gray-200 pt-3 mt-3 space-y-2">
               {user ? (
                 <>
-                  {userName && (
-                    <div className="px-3 py-2 text-sm font-medium text-gray-700 bg-green-50 rounded-md">
-                      {userName}님 환영합니다
-                    </div>
-                  )}
+                  <div className="px-3 py-2 text-sm font-medium text-gray-700 bg-green-50 rounded-md">
+                    {userName || '로딩중'}님 환영합니다
+                  </div>
                   <Link
                     href="/admin"
                     className="flex items-center gap-2 px-3 py-2 text-base font-medium text-gray-900 hover:bg-green-50 hover:text-primary rounded-md"
