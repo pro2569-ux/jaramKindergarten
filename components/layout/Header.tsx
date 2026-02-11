@@ -85,22 +85,9 @@ export default function Header() {
           console.error('프로필 조회 오류:', error)
         }
 
-        console.log('=== 프로필 조회 결과 ===')
-        console.log('profile:', profile)
-        console.log('user.user_metadata:', user.user_metadata)
-
-        // user_metadata에서 이름 가져오기 (우선순위)
-        const metadataName = user.user_metadata?.name
-        const profileName = profile?.name
-        const emailName = user.email?.split('@')[0]
-
-        console.log('metadataName:', metadataName)
-        console.log('profileName:', profileName)
-        console.log('emailName:', emailName)
-
-        // 우선순위: user_metadata > profile.name > email
-        const name = metadataName || profileName || emailName || '사용자'
-        console.log('최종 userName:', name)
+        // profiles 테이블의 name을 최우선으로 사용
+        const name = profile?.name || user.email?.split('@')[0] || '사용자'
+        console.log('헤더 userName 설정:', name, 'from profile.name:', profile?.name)
 
         setUserName(name)
       } else {
@@ -121,9 +108,8 @@ export default function Header() {
           .eq('id', session.user.id)
           .single()
 
-        // user_metadata 우선
-        const metadataName = session.user.user_metadata?.name
-        const name = metadataName || profile?.name || session.user.email?.split('@')[0] || '사용자'
+        // profiles 테이블의 name을 최우선으로 사용
+        const name = profile?.name || session.user.email?.split('@')[0] || '사용자'
         setUserName(name)
       } else {
         setUserName('')
