@@ -95,6 +95,9 @@ function LoginForm() {
         throw new Error(result.error)
       }
 
+      // 디버깅: API 응답 확인
+      alert(`디버깅 정보:\n\nprofile.name: ${result.profile?.name}\nprofile.role: ${result.profile?.role}\nuser.email: ${result.user?.email}\n\n확인 버튼을 누르면 페이지 이동합니다.`)
+
       // 로그인 성공 메시지
       const userName = result.profile?.name || formData.username
       console.log('userName:', userName, 'profile:', result.profile)
@@ -104,10 +107,10 @@ function LoginForm() {
       const isAdmin = result.profile?.role === 'admin' || result.profile?.role === 'teacher'
       const destination = isAdmin ? (redirectTo !== '/' ? redirectTo : '/admin') : '/'
 
-      // 1초 후 강제 새로고침하며 이동
+      // alert 확인 후 이동
       setTimeout(() => {
         window.location.href = destination
-      }, 1000)
+      }, 500)
     } catch (error: any) {
       setErrorMessage(error.message || '로그인에 실패했습니다.')
     } finally {

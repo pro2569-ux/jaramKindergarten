@@ -88,6 +88,14 @@ export default function Header() {
         console.log('프로필 데이터:', profile, 'user.email:', user.email)
         const name = profile?.name || user.email?.split('@')[0] || '사용자'
         console.log('설정할 userName:', name)
+
+        // 디버깅: 헤더에 userName 설정
+        if (name && name !== '사용자') {
+          console.log('✅ userName 설정 성공:', name)
+        } else {
+          console.warn('⚠️ userName이 기본값입니다:', name, 'profile:', profile)
+        }
+
         setUserName(name)
       } else {
         setUserName('')
