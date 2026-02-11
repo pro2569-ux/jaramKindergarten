@@ -67,56 +67,33 @@ export default function Header() {
   const router = useRouter()
   const supabase = createClient()
 
-  // 인증 상태 확인
+  // 인증 상태 확인 - onAuthStateChange만 사용
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
+    // 인증 상태 변경 감지 (초기 로드 시에도 실행됨)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔐 Auth 상태 변경:', event, 'user:', session?.user?.email)
 
-      if (user) {
-        // 사용자 프로필 정보 가져오기
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('name')
-          .eq('id', user.id)
-          .single()
-
-        if (error) {
-          console.error('프로필 조회 오류:', error)
-        }
-
-        // profiles 테이블의 name을 최우선으로 사용
-        const name = profile?.name || user.email?.split('@')[0] || '사용자'
-        console.log('헤더 userName 설정:', name, 'from profile.name:', profile?.name)
-
-        // 디버깅: alert로 확인
-        if (profile?.name) {
-          alert(`헤더에서 userName 설정: ${name}`)
-        }
-
-        setUserName(name)
-      } else {
-        setUserName('')
-      }
-    }
-
-    getUser()
-
-    // 인증 상태 변경 감지
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null)
 
       if (session?.user) {
-        const { data: profile } = await supabase
+        // 사용자 프로필 정보 가져오기
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('name')
           .eq('id', session.user.id)
           .single()
 
-        // profiles 테이블의 name을 최우선으로 사용
+        if (error) {
+          console.error('❌ 프로필 조회 오류:', error)
+        }
+
+        // profiles 테이블의 name 사용
         const name = profile?.name || session.user.email?.split('@')[0] || '사용자'
+        console.log('✅ 헤더 userName 설정:', name, 'profile.name:', profile?.name)
+
         setUserName(name)
       } else {
+        console.log('❌ 로그아웃 상태')
         setUserName('')
       }
     })
