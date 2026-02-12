@@ -17,14 +17,26 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 
-const navigation = [
-  { name: '대시보드', href: '/admin', icon: LayoutDashboard },
-  { name: '페이지 관리', href: '/admin/pages', icon: FileText },
-  { name: '게시글 관리', href: '/admin/posts', icon: FileText },
-  { name: '앨범 관리', href: '/admin/albums', icon: ImageIcon },
-  { name: '교직원 관리', href: '/admin/teachers', icon: Users },
-  { name: '문의 관리', href: '/admin/inquiries', icon: MessageSquare },
-  { name: '사이트 설정', href: '/admin/settings', icon: Settings },
+type NavItem =
+  | { type: 'link'; name: string; href: string; icon: typeof LayoutDashboard }
+  | { type: 'group'; name: string }
+
+const navigation: NavItem[] = [
+  { type: 'link', name: '대시보드', href: '/admin', icon: LayoutDashboard },
+
+  { type: 'group', name: '콘텐츠 관리' },
+  { type: 'link', name: '페이지 관리', href: '/admin/pages', icon: FileText },
+  { type: 'link', name: '게시글 관리', href: '/admin/posts', icon: FileText },
+  { type: 'link', name: '앨범 관리', href: '/admin/albums', icon: ImageIcon },
+  { type: 'link', name: '식단표 관리', href: '/admin/meal-plans', icon: UtensilsCrossed },
+
+  { type: 'group', name: '운영 관리' },
+  { type: 'link', name: '교직원 관리', href: '/admin/teachers', icon: Users },
+  { type: 'link', name: '문의 관리', href: '/admin/inquiries', icon: MessageSquare },
+
+  { type: 'group', name: '사이트 관리' },
+  { type: 'link', name: '배너 관리', href: '/admin/banners', icon: ImageIcon },
+  { type: 'link', name: '사이트 설정', href: '/admin/settings', icon: Settings },
 ]
 
 export default function Sidebar() {
@@ -74,8 +86,25 @@ export default function Sidebar() {
 
           {/* 네비게이션 */}
           <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+            {navigation.map((item, index) => {
+              if (item.type === 'group') {
+                return (
+                  <div
+                    key={`group-${index}`}
+                    className={cn(
+                      'px-4 pt-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider',
+                      index === 1 ? 'pt-2' : ''
+                    )}
+                  >
+                    {item.name}
+                  </div>
+                )
+              }
+
+              const isActive =
+                item.href === '/admin'
+                  ? pathname === '/admin'
+                  : pathname === item.href || pathname.startsWith(item.href + '/')
               const Icon = item.icon
 
               return (
