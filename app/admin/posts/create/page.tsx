@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
-import Textarea from '@/components/ui/Textarea'
 import Button from '@/components/ui/Button'
+import RichTextEditor from '@/components/editor/RichTextEditor'
 import { ArrowLeft, Save } from 'lucide-react'
 import Link from 'next/link'
 
@@ -41,18 +42,30 @@ function CreatePostForm() {
     setIsSubmitting(true)
 
     try {
-      // TODO: Supabase에 저장
-      // const supabase = createClient()
-      // const { error } = await supabase.from('posts').insert([formData])
-      // if (error) throw error
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
 
-      // 임시 성공 처리
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (!user) {
+        alert('로그인이 필요합니다.')
+        router.push('/login')
+        return
+      }
+
+      const { error } = await supabase.from('posts').insert([{
+        board_type: formData.board_type,
+        title: formData.title,
+        content: formData.content,
+        is_published: formData.is_published,
+        is_pinned: formData.is_pinned,
+        author_id: user.id,
+      }])
+
+      if (error) throw error
 
       alert('게시글이 등록되었습니다.')
       router.push(`/admin/posts?type=${boardType}`)
     } catch (error: any) {
-      alert('게시글 등록 중 오류가 발생했습니다.')
+      alert('게시글 등록 중 오류가 발생했습니다: ' + (error.message || ''))
       console.error(error)
     } finally {
       setIsSubmitting(false)
@@ -94,16 +107,19 @@ function CreatePostForm() {
               required
             />
 
-            {/* 내용 */}
-            <Textarea
-              label="내용"
-              name="content"
-              value={formData.content}
-              onChange={handleChange}
-              placeholder="게시글 내용을 입력하세요"
-              rows={15}
-              required
-            />
+            {/* 내용 (리치 텍스트 에디터) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                내용
+              </label>
+              <RichTextEditor
+                value={formData.content}
+                onChange={(value) =>
+                  setFormData((prev) => ({ ...prev, content: value }))
+                }
+                placeholder="게시글 내용을 입력하세요"
+              />
+            </div>
 
             {/* 옵션 */}
             <div className="space-y-3">

@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
-import Textarea from '@/components/ui/Textarea'
 import Button from '@/components/ui/Button'
+import RichTextEditor from '@/components/editor/RichTextEditor'
 import { ArrowLeft, Save, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -37,27 +38,28 @@ export default function EditPostPage({ params }: PageProps) {
 
   const loadPost = async (id: string) => {
     try {
-      // TODO: Supabase에서 게시글 불러오기
-      // const supabase = createClient()
-      // const { data, error } = await supabase
-      //   .from('posts')
-      //   .select('*')
-      //   .eq('id', id)
-      //   .single()
-      // if (error) throw error
-      // setFormData(data)
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('id', id)
+        .single()
 
-      // 임시 데이터
-      setFormData({
-        board_type: 'notice',
-        title: '샘플 게시글',
-        content: '샘플 내용입니다.',
-        is_published: true,
-        is_pinned: false,
-      })
+      if (error) throw error
+
+      if (data) {
+        setFormData({
+          board_type: data.board_type,
+          title: data.title,
+          content: data.content || '',
+          is_published: data.is_published,
+          is_pinned: data.is_pinned,
+        })
+      }
     } catch (error) {
       alert('게시글을 불러오는데 실패했습니다.')
       console.error(error)
+      router.push('/admin/posts')
     } finally {
       setLoading(false)
     }
@@ -80,20 +82,24 @@ export default function EditPostPage({ params }: PageProps) {
     setIsSubmitting(true)
 
     try {
-      // TODO: Supabase에 업데이트
-      // const supabase = createClient()
-      // const { error } = await supabase
-      //   .from('posts')
-      //   .update(formData)
-      //   .eq('id', postId)
-      // if (error) throw error
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('posts')
+        .update({
+          title: formData.title,
+          content: formData.content,
+          is_published: formData.is_published,
+          is_pinned: formData.is_pinned,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', postId)
 
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (error) throw error
 
       alert('게시글이 수정되었습니다.')
       router.push(`/admin/posts?type=${formData.board_type}`)
     } catch (error: any) {
-      alert('게시글 수정 중 오류가 발생했습니다.')
+      alert('게시글 수정 중 오류가 발생했습니다: ' + (error.message || ''))
       console.error(error)
     } finally {
       setIsSubmitting(false)
@@ -101,21 +107,21 @@ export default function EditPostPage({ params }: PageProps) {
   }
 
   const handleDelete = async () => {
-    if (!confirm('정말 삭제하시겠습니까?')) return
+    if (!confirm('정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return
 
     try {
-      // TODO: Supabase에서 삭제
-      // const supabase = createClient()
-      // const { error } = await supabase
-      //   .from('posts')
-      //   .delete()
-      //   .eq('id', postId)
-      // if (error) throw error
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', postId)
+
+      if (error) throw error
 
       alert('게시글이 삭제되었습니다.')
       router.push(`/admin/posts?type=${formData.board_type}`)
-    } catch (error) {
-      alert('게시글 삭제 중 오류가 발생했습니다.')
+    } catch (error: any) {
+      alert('게시글 삭제 중 오류가 발생했습니다: ' + (error.message || ''))
       console.error(error)
     }
   }
@@ -161,16 +167,19 @@ export default function EditPostPage({ params }: PageProps) {
               required
             />
 
-            {/* 내용 */}
-            <Textarea
-              label="내용"
-              name="content"
-              value={formData.content}
-              onChange={handleChange}
-              placeholder="게시글 내용을 입력하세요"
-              rows={15}
-              required
-            />
+            {/* 내용 (리치 텍스트 에디터) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                내용
+              </label>
+              <RichTextEditor
+                value={formData.content}
+                onChange={(value) =>
+                  setFormData((prev) => ({ ...prev, content: value }))
+                }
+                placeholder="게시글 내용을 입력하세요"
+              />
+            </div>
 
             {/* 옵션 */}
             <div className="space-y-3">
