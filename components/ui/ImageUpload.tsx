@@ -1,20 +1,22 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
-import { Upload, X, Image as ImageIcon } from 'lucide-react'
-import Button from './Button'
+import { X, Image as ImageIcon } from 'lucide-react'
 
 interface ImageUploadProps {
   value?: string
   onChange: (url: string) => void
   onRemove?: () => void
+  folder?: string
 }
 
 export default function ImageUpload({
   value,
   onChange,
   onRemove,
+  folder = 'uploads',
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -38,33 +40,25 @@ export default function ImageUpload({
     setUploading(true)
 
     try {
-      // TODO: Supabase Storage에 업로드
-      // const supabase = createClient()
-      // const fileExt = file.name.split('.').pop()
-      // const fileName = `${Math.random()}.${fileExt}`
-      // const filePath = `images/${fileName}`
-      //
-      // const { error: uploadError } = await supabase.storage
-      //   .from('public')
-      //   .upload(filePath, file)
-      //
-      // if (uploadError) throw uploadError
-      //
-      // const { data: { publicUrl } } = supabase.storage
-      //   .from('public')
-      //   .getPublicUrl(filePath)
-      //
-      // onChange(publicUrl)
+      const supabase = createClient()
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`
+      const filePath = `${folder}/${fileName}`
 
-      // 임시로 로컬 미리보기 URL 생성
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        onChange(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    } catch (error) {
+      const { error: uploadError } = await supabase.storage
+        .from('images')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('images')
+        .getPublicUrl(filePath)
+
+      onChange(publicUrl)
+    } catch (error: any) {
       console.error('Upload error:', error)
-      alert('이미지 업로드에 실패했습니다.')
+      alert('이미지 업로드에 실패했습니다: ' + (error.message || ''))
     } finally {
       setUploading(false)
     }

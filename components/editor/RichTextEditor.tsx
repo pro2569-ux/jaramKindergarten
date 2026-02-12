@@ -4,6 +4,7 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
+import { createClient } from '@/lib/supabase/client'
 import {
   Bold,
   Italic,
@@ -81,10 +82,46 @@ export default function RichTextEditor({
   }
 
   const addImage = () => {
-    const url = window.prompt('이미지 URL을 입력하세요:')
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run()
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (!file) return
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert('파일 크기는 5MB 이하여야 합니다.')
+        return
+      }
+
+      if (!file.type.startsWith('image/')) {
+        alert('이미지 파일만 업로드 가능합니다.')
+        return
+      }
+
+      try {
+        const supabase = createClient()
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`
+        const filePath = `editor/${fileName}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('images')
+          .upload(filePath, file)
+
+        if (uploadError) throw uploadError
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('images')
+          .getPublicUrl(filePath)
+
+        editor.chain().focus().setImage({ src: publicUrl }).run()
+      } catch (error: any) {
+        alert('이미지 업로드에 실패했습니다: ' + (error.message || ''))
+        console.error(error)
+      }
     }
+    input.click()
   }
 
   return (

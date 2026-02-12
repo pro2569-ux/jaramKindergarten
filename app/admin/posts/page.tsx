@@ -3,7 +3,8 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { formatDate } from '@/lib/utils'
-import { Plus, Edit, Trash2, Eye } from 'lucide-react'
+import { Plus, Edit, Eye } from 'lucide-react'
+import DeletePostButton from './delete-button'
 
 export const metadata = {
   title: '게시글 관리',
@@ -137,14 +138,7 @@ export default async function AdminPostsPage({
                               수정
                             </Button>
                           </Link>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="gap-1 text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            삭제
-                          </Button>
+                          <DeletePostButton postId={post.id} boardType={boardType} />
                         </div>
                       </td>
                     </tr>
