@@ -89,32 +89,23 @@ function LoginForm() {
 
       const result = await response.json()
 
-      console.log('로그인 API 응답:', result)
-
       if (result.error) {
         throw new Error(result.error)
       }
 
-      // 디버깅: API 응답 확인
-      alert(`디버깅 정보:\n\nprofile.name: ${result.profile?.name}\nprofile.role: ${result.profile?.role}\nuser.email: ${result.user?.email}\n\n확인 버튼을 누르면 페이지 이동합니다.`)
-
-      // 로그인 성공 메시지
-      const userName = result.profile?.name || formData.username
-      console.log('userName:', userName, 'profile:', result.profile)
-
       // 로컬스토리지에 userName 저장
+      const userName = result.profile?.name || formData.username
       localStorage.setItem('userName', userName)
 
       setSuccessMessage(`${userName}님, 환영합니다!`)
 
       // 역할에 따라 다른 페이지로 이동
       const isAdmin = result.profile?.role === 'admin' || result.profile?.role === 'teacher'
-      const destination = isAdmin ? (redirectTo !== '/' ? redirectTo : '/admin') : '/'
+      const destination = isAdmin ? '/admin' : '/'
 
-      // alert 확인 후 이동
       setTimeout(() => {
         window.location.href = destination
-      }, 500)
+      }, 1000)
     } catch (error: any) {
       setErrorMessage(error.message || '로그인에 실패했습니다.')
     } finally {
