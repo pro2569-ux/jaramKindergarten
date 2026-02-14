@@ -19,7 +19,9 @@
       "Bash(if not exist \"public\\\\images\\\\about\" mkdir \"public\\\\images\\\\about\")",
       "Bash(if not exist \"public\\\\images\\\\curriculum\" mkdir \"public\\\\images\\\\curriculum\")",
       "Bash(ls:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)"
     ]
   }
 }

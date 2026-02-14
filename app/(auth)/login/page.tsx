@@ -76,31 +76,33 @@ function LoginForm() {
       // ID를 이메일 형식으로 변환 (admin -> admin@jaramk.com)
       const email = `${formData.username}@jaramk.com`
 
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password: formData.password,
-        }),
+      // 클라이언트 사이드 Supabase로 로그인 (브라우저 쿠키 자동 저장)
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: formData.password,
       })
 
-      const result = await response.json()
-
-      if (result.error) {
-        throw new Error(result.error)
+      if (error) {
+        throw new Error(error.message)
       }
 
-      // 로컬스토리지에 userName 저장
-      const userName = result.profile?.name || formData.username
+      // profiles 테이블에서 name, role 조회
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('name, role')
+        .eq('id', data.user.id)
+        .single()
+
+      const userName = profile?.name || formData.username
       localStorage.setItem('userName', userName)
 
       setSuccessMessage(`${userName}님, 환영합니다!`)
 
       // 역할에 따라 다른 페이지로 이동
-      const isAdmin = result.profile?.role === 'admin' || result.profile?.role === 'teacher'
+      const isAdmin = profile?.role === 'admin' || profile?.role === 'teacher'
       const destination = isAdmin ? '/admin' : '/'
 
       setTimeout(() => {

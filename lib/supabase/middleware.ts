@@ -47,27 +47,12 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // 관리자 페이지 보호
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    if (!user) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/login'
-      url.searchParams.set('redirectTo', request.nextUrl.pathname)
-      return NextResponse.redirect(url)
-    }
-
-    // role 체크: admin 또는 teacher만 /admin 접근 허용
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || !['admin', 'teacher'].includes(profile.role)) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/'
-      return NextResponse.redirect(url)
-    }
+  // 관리자 페이지 보호: 로그인만 되어 있으면 접근 허용
+  if (request.nextUrl.pathname.startsWith('/admin') && !user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    url.searchParams.set('redirectTo', request.nextUrl.pathname)
+    return NextResponse.redirect(url)
   }
 
   return supabaseResponse
