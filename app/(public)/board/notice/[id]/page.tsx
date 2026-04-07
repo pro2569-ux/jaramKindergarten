@@ -41,8 +41,11 @@ export default async function NoticeDetailPage({ params }: PageProps) {
     notFound()
   }
 
-  // 조회수 증가 (실제로는 클라이언트에서 처리하는 것이 좋지만 여기서는 간단히)
-  // await supabase.rpc('increment_view_count', { post_id: id })
+  // 조회수 증가
+  await supabase
+    .from('posts')
+    .update({ view_count: (post.view_count || 0) + 1 })
+    .eq('id', id)
 
   return (
     <div className="py-16 bg-gray-50">

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { formatDate } from '@/lib/utils'
 import { Calendar, ArrowLeft, Image as ImageIcon } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import PhotoGrid from '@/components/album/PhotoGrid'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -80,30 +81,9 @@ export default async function AlbumDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* 사진 그리드 */}
+        {/* 사진 그리드 + 라이트박스 */}
         {photos && photos.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {photos.map((photo) => (
-              <div
-                key={photo.id}
-                className="aspect-square bg-gray-200 rounded-lg overflow-hidden relative group cursor-pointer hover:shadow-lg transition-shadow"
-              >
-                <Image
-                  src={photo.image_url}
-                  alt={photo.caption || album.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                {photo.caption && (
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <p className="text-white text-sm line-clamp-2">
-                      {photo.caption}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          <PhotoGrid photos={photos} albumTitle={album.title} />
         ) : (
           <div className="bg-white rounded-xl shadow-sm p-16 text-center">
             <ImageIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />

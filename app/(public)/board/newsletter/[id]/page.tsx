@@ -41,6 +41,12 @@ export default async function NewsletterDetailPage({ params }: PageProps) {
     notFound()
   }
 
+  // 조회수 증가
+  await supabase
+    .from('posts')
+    .update({ view_count: (post.view_count || 0) + 1 })
+    .eq('id', id)
+
   return (
     <div className="py-16 bg-gray-50">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">

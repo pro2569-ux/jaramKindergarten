@@ -1,23 +1,53 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Download, UtensilsCrossed } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import Image from 'next/image'
+import { ChevronLeft, ChevronRight, UtensilsCrossed } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 
+interface MealPlan {
+  id: string
+  year: number
+  month: number
+  week: number | null
+  title: string | null
+  file_url: string | null
+  created_at: string
+}
+
 export default function MealPlanPage() {
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [mealPlans, setMealPlans] = useState<any[]>([])
+  const [mealPlans, setMealPlans] = useState<MealPlan[]>([])
   const [loading, setLoading] = useState(true)
 
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth() + 1
 
   useEffect(() => {
-    // TODO: Supabase에서 식단표 데이터 가져오기
-    // 현재는 더미 데이터 사용
-    setMealPlans([])
-    setLoading(false)
+    const fetchMealPlans = async () => {
+      setLoading(true)
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('meal_plans')
+          .select('*')
+          .eq('year', year)
+          .eq('month', month)
+          .order('week', { ascending: true, nullsFirst: true })
+
+        if (error) throw error
+        setMealPlans(data || [])
+      } catch (error) {
+        console.error('식단표 로드 오류:', error)
+        setMealPlans([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchMealPlans()
   }, [year, month])
 
   const handlePrevMonth = () => {
@@ -35,31 +65,6 @@ export default function MealPlanPage() {
   const handleToday = () => {
     setCurrentDate(new Date())
   }
-
-  // 달력 생성
-  const getDaysInMonth = () => {
-    const firstDay = new Date(year, month - 1, 1)
-    const lastDay = new Date(year, month, 0)
-    const daysInMonth = lastDay.getDate()
-    const startingDayOfWeek = firstDay.getDay()
-
-    const days = []
-
-    // 이전 달의 빈 칸
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push(null)
-    }
-
-    // 현재 달의 날짜
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(i)
-    }
-
-    return days
-  }
-
-  const days = getDaysInMonth()
-  const weekDays = ['일', '월', '화', '수', '목', '금', '토']
 
   return (
     <div className="py-16 bg-gray-50">
@@ -105,98 +110,45 @@ export default function MealPlanPage() {
               </Button>
             </div>
           </CardHeader>
-
-          <CardContent>
-            {/* 캘린더 헤더 */}
-            <div className="grid grid-cols-7 gap-2 mb-2">
-              {weekDays.map((day, index) => (
-                <div
-                  key={day}
-                  className={`text-center font-semibold py-2 ${
-                    index === 0
-                      ? 'text-red-500'
-                      : index === 6
-                      ? 'text-blue-500'
-                      : 'text-gray-700'
-                  }`}
-                >
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* 캘린더 날짜 */}
-            <div className="grid grid-cols-7 gap-2">
-              {days.map((day, index) => {
-                if (day === null) {
-                  return <div key={`empty-${index}`} className="aspect-square" />
-                }
-
-                const isToday =
-                  day === new Date().getDate() &&
-                  month === new Date().getMonth() + 1 &&
-                  year === new Date().getFullYear()
-
-                const dayOfWeek = index % 7
-
-                return (
-                  <div
-                    key={day}
-                    className={`aspect-square border rounded-lg p-2 ${
-                      isToday ? 'bg-primary/10 border-primary' : 'bg-white'
-                    }`}
-                  >
-                    <div
-                      className={`text-sm font-semibold mb-1 ${
-                        dayOfWeek === 0
-                          ? 'text-red-500'
-                          : dayOfWeek === 6
-                          ? 'text-blue-500'
-                          : 'text-gray-700'
-                      }`}
-                    >
-                      {day}
-                    </div>
-                    {/* TODO: 식단 정보 표시 */}
-                    <div className="text-xs text-gray-500 line-clamp-3">
-                      {/* 식단 내용이 여기 표시됩니다 */}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
         </Card>
 
-        {/* 주간 식단표 목록 (선택사항) */}
-        <div className="space-y-4">
-          {mealPlans.length > 0 ? (
-            mealPlans.map((plan) => (
-              <Card key={plan.id}>
+        {/* 식단표 목록 */}
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <p className="text-gray-500">로딩 중...</p>
+          </div>
+        ) : mealPlans.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {mealPlans.map((plan) => (
+              <Card key={plan.id} className="overflow-hidden">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>{plan.title}</CardTitle>
-                    {plan.file_url && (
-                      <Button variant="outline" size="sm" className="gap-2">
-                        <Download className="w-4 h-4" />
-                        다운로드
-                      </Button>
-                    )}
-                  </div>
+                  <CardTitle className="text-lg">
+                    {plan.title || `${plan.year}년 ${plan.month}월${plan.week ? ` ${plan.week}주차` : ''} 식단표`}
+                  </CardTitle>
                 </CardHeader>
+                {plan.file_url && (
+                  <div className="relative aspect-[4/3] bg-gray-100">
+                    <Image
+                      src={plan.file_url}
+                      alt={plan.title || '식단표'}
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                )}
               </Card>
-            ))
-          ) : (
-            <Card>
-              <CardContent className="py-16 text-center">
-                <UtensilsCrossed className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">
-                  {year}년 {month}월 식단표가 아직 등록되지 않았습니다.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="py-16 text-center">
+              <UtensilsCrossed className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">
+                {year}년 {month}월 식단표가 아직 등록되지 않았습니다.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )

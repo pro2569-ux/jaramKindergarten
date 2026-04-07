@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Textarea from '@/components/ui/Textarea'
@@ -85,12 +86,17 @@ export default function InquiryPage() {
     setIsSubmitting(true)
 
     try {
-      // TODO: Supabase에 문의 저장
-      // const supabase = createClient()
-      // await supabase.from('inquiries').insert([formData])
+      const supabase = createClient()
+      const { error } = await supabase.from('inquiries').insert([{
+        author_name: formData.author_name,
+        author_email: formData.author_email,
+        author_phone: formData.author_phone,
+        title: formData.title,
+        content: formData.content,
+        is_private: formData.is_private,
+      }])
 
-      // 임시로 성공 처리
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (error) throw error
 
       setIsSubmitted(true)
       setFormData({
