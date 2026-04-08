@@ -62,7 +62,12 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null)
   const [user, setUser] = useState<User | null>(null)
-  const [userName, setUserName] = useState<string>('')
+  const [userName, setUserName] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('userName') || ''
+    }
+    return ''
+  })
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const router = useRouter()
   const supabase = createClient()
