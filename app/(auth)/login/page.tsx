@@ -96,10 +96,12 @@ function LoginForm() {
         .eq('id', data.user.id)
         .single()
 
-      const userName = profile?.name || formData.username
-      localStorage.setItem('userName', userName)
+      const userName = profile?.name || ''
+      if (userName) {
+        localStorage.setItem('userName', userName)
+      }
 
-      setSuccessMessage(`${userName}님, 환영합니다!`)
+      setSuccessMessage(`${userName || formData.username}님, 환영합니다!`)
 
       // 역할에 따라 다른 페이지로 이동
       const isAdmin = profile?.role === 'admin' || profile?.role === 'teacher'

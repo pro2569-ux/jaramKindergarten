@@ -72,31 +72,12 @@ export default function Header() {
   const router = useRouter()
   const supabase = createClient()
 
-  // 인증 상태 확인 및 프로필 이름 조회
+  // 인증 상태 확인
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
 
-      if (session?.user) {
-        // profiles 테이블에서 name 조회
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('name')
-          .eq('id', session.user.id)
-          .single()
-
-        if (profile?.name) {
-          setUserName(profile.name)
-          localStorage.setItem('userName', profile.name)
-        } else {
-          // 프로필이 없는 경우 localStorage fallback
-          const storedName = localStorage.getItem('userName')
-          if (storedName) {
-            setUserName(storedName)
-          }
-        }
-      } else {
-        // 로그아웃 시 로컬스토리지도 클리어
+      if (!session?.user) {
         localStorage.removeItem('userName')
         setUserName('')
       }
@@ -104,6 +85,26 @@ export default function Header() {
 
     return () => subscription.unsubscribe()
   }, [])
+
+  // user가 설정되면 profiles 테이블에서 이름 조회
+  useEffect(() => {
+    if (!user) return
+
+    const fetchProfileName = async () => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.name) {
+        setUserName(profile.name)
+        localStorage.setItem('userName', profile.name)
+      }
+    }
+
+    fetchProfileName()
+  }, [user])
 
   // 로그아웃 핸들러
   const handleLogout = async () => {
