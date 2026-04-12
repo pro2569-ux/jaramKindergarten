@@ -8,57 +8,23 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 
-const navigation = [
-  {
-    name: '어린이집소개',
-    href: '/about',
-    children: [
-      { name: '원장 인사말', href: '/about/greeting' },
-      { name: '교육이념 및 원훈', href: '/about/philosophy' },
-      { name: '교원 및 반편성', href: '/about/teachers' },
-      { name: '교육환경', href: '/about/environment' },
-      { name: '시설현황', href: '/about/facilities' },
-      { name: '오시는길', href: '/about/location' },
-    ],
-  },
-  {
-    name: '교육프로그램',
-    href: '/curriculum',
-    children: [
-      { name: '표준보육과정', href: '/curriculum/standard' },
-      { name: '누리과정', href: '/curriculum/nuri' },
-      { name: '자연주의 유아교육', href: '/curriculum/nature' },
-      { name: '숲유치원 프로그램', href: '/curriculum/forest' },
-    ],
-  },
-  {
-    name: '입학안내',
-    href: '/admission',
-    children: [
-      { name: '입학안내', href: '/admission/guide' },
-      { name: '모집요강', href: '/admission/recruitment' },
-    ],
-  },
-  {
-    name: '교육활동이야기',
-    href: '/board',
-    children: [
-      { name: '공지사항', href: '/board/notice' },
-      { name: '가정통신문', href: '/board/newsletter' },
-      { name: '식단표', href: '/board/meal-plan' },
-      { name: '앨범', href: '/board/album' },
-    ],
-  },
-  {
-    name: '커뮤니티',
-    href: '/community',
-    children: [
-      { name: '문의하기', href: '/community/inquiry' },
-    ],
-  },
+interface NavItem {
+  name: string
+  href: string
+  children?: { name: string; href: string }[]
+}
+
+// DB 로드 전 초기 표시용 (깜빡임 방지)
+const fallbackNavigation: NavItem[] = [
+  { name: '어린이집소개', href: '/about', children: [] },
+  { name: '교육프로그램', href: '/curriculum', children: [] },
+  { name: '입학안내', href: '/admission', children: [] },
+  { name: '교육활동이야기', href: '/board', children: [] },
+  { name: '커뮤니티', href: '/community', children: [] },
 ]
 
 export default function Header() {
+  const [navigation, setNavigation] = useState<NavItem[]>(fallbackNavigation)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null)
   const [user, setUser] = useState<User | null>(null)
@@ -71,6 +37,25 @@ export default function Header() {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  // menus 테이블에서 네비게이션 조회
+  useEffect(() => {
+    const fetchMenus = async () => {
+      try {
+        const response = await fetch('/api/menus')
+        if (response.ok) {
+          const data = await response.json()
+          if (Array.isArray(data) && data.length > 0) {
+            setNavigation(data)
+          }
+        }
+      } catch (error) {
+        console.error('메뉴 조회 실패:', error)
+      }
+    }
+
+    fetchMenus()
+  }, [])
 
   // 인증 상태 확인
   useEffect(() => {
