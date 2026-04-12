@@ -14,6 +14,7 @@ import {
   LogOut,
   Menu,
   X,
+  Palette,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -36,6 +37,7 @@ const navigation: NavItem[] = [
 
   { type: 'group', name: '사이트 관리' },
   { type: 'link', name: '메뉴 관리', href: '/admin/menus', icon: Menu },
+  { type: 'link', name: '테마 설정', href: '/admin/theme', icon: Palette },
   { type: 'link', name: '배너 관리', href: '/admin/banners', icon: ImageIcon },
   { type: 'link', name: '사이트 설정', href: '/admin/settings', icon: Settings },
 ]
