@@ -86,20 +86,32 @@ export default function Header() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // user가 설정되면 profiles 테이블에서 이름 조회
+  // user가 설정되면 API를 통해 프로필 이름 조회
   useEffect(() => {
     if (!user) return
 
     const fetchProfileName = async () => {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('name')
-        .eq('id', user.id)
-        .single()
+      try {
+        const response = await fetch('/api/auth/me')
+        const data = await response.json()
 
-      if (profile?.name) {
-        setUserName(profile.name)
-        localStorage.setItem('userName', profile.name)
+        if (!response.ok) {
+          alert(`프로필 조회 실패 (${response.status}): ${data.error || '알 수 없는 오류'}`)
+          console.error('프로필 조회 실패:', data)
+          return
+        }
+
+        if (!data.name) {
+          alert(`프로필 name 컬럼 값이 없습니다. 응답: ${JSON.stringify(data)}`)
+          console.error('프로필 name 누락:', data)
+          return
+        }
+
+        setUserName(data.name)
+        localStorage.setItem('userName', data.name)
+      } catch (error: any) {
+        alert(`프로필 조회 중 예외 발생: ${error.message}`)
+        console.error('프로필 조회 예외:', error)
       }
     }
 
@@ -187,9 +199,11 @@ export default function Header() {
             <div className="flex items-center gap-2 ml-6 pl-6 border-l border-gray-200">
               {user ? (
                 <>
-                  <span className="text-sm font-medium text-gray-700 px-2">
-                    {userName || '로딩중'}님
-                  </span>
+                  {userName && (
+                    <span className="text-sm font-medium text-gray-700 px-2">
+                      {userName}님
+                    </span>
+                  )}
                   <Link
                     href="/admin"
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-green-50 rounded-lg transition-colors"
@@ -279,7 +293,7 @@ export default function Header() {
               {user ? (
                 <>
                   <div className="px-3 py-2 text-sm font-medium text-gray-700 bg-green-50 rounded-md">
-                    {userName || '로딩중'}님 환영합니다
+                    {userName ? `${userName}님 환영합니다` : ''}
                   </div>
                   <Link
                     href="/admin"
