@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { Save, Palette } from 'lucide-react'
+import { revalidateTheme } from './actions'
 
 // ── 상수 ──────────────────────────────────────────────────────
 const HEX_RE = /^#[0-9a-fA-F]{6}$/
@@ -271,6 +272,8 @@ export default function AdminThemePage() {
         .eq('id', themeId)   // ID로 직접 타게팅 — is_active 변경 없음
 
       if (error) throw error
+      // 전역 테마 캐시 무효화 → 변경한 색이 사이트에 즉시 반영
+      await revalidateTheme()
       alert('테마가 저장되었습니다.')
     } catch (err: any) {
       alert('저장 중 오류가 발생했습니다: ' + (err.message || ''))
