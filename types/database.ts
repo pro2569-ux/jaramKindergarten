@@ -1,6 +1,4 @@
-/**
- * 데이터베이스 타입 정의
- */
+import type { PageType, StyleConfig } from '@/lib/page-types'
 
 export interface Profile {
   id: string
@@ -18,11 +16,18 @@ export interface Page {
   slug: string
   title: string
   content: string | null
-  category: 'about' | 'curriculum'
+  category: 'about' | 'curriculum' | 'admission' | 'board' | 'community'
   sort_order: number
   is_published: boolean
   created_at: string
   updated_at: string
+  // layout_system 마이그레이션에서 추가된 컬럼 (옵셔널: 구버전 쿼리 호환)
+  page_type?: PageType | null
+  layout_config?: Record<string, unknown> | null
+  style_config?: StyleConfig | null
+  hero_image_url?: string | null
+  hero_title?: string | null
+  hero_subtitle?: string | null
 }
 
 export interface Post {
@@ -114,5 +119,33 @@ export interface Banner {
   link_url: string | null
   sort_order: number
   is_active: boolean
+  created_at: string
+}
+
+export interface Menu {
+  id: string
+  parent_id: string | null
+  label: string
+  slug: string
+  page_id: string | null
+  sort_order: number
+  is_visible: boolean
+  depth: 0 | 1
+  created_at: string
+  updated_at: string
+  children?: Menu[]
+}
+
+export interface SiteTheme {
+  id: string
+  name: string
+  is_active: boolean
+  primary_color: string
+  secondary_color: string
+  background_color: string
+  text_color: string
+  heading_font: string
+  body_font: string
+  header_style: 'default' | 'centered' | 'minimal'
   created_at: string
 }

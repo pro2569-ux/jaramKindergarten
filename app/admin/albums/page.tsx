@@ -1,4 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -6,18 +9,65 @@ import Button from '@/components/ui/Button'
 import { Plus, Edit, Trash2, Image as ImageIcon } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
-export const metadata = {
-  title: '앨범 관리',
+interface Album {
+  id: string
+  title: string
+  description: string | null
+  cover_image_url: string | null
+  is_published: boolean
+  event_date: string | null
+  created_at: string
 }
 
-export default async function AdminAlbumsPage() {
-  const supabase = await createClient()
+export default function AdminAlbumsPage() {
+  const [albums, setAlbums] = useState<Album[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // 앨범 목록 가져오기
-  const { data: albums } = await supabase
-    .from('albums')
-    .select('*')
-    .order('created_at', { ascending: false })
+  useEffect(() => {
+    loadAlbums()
+  }, [])
+
+  const loadAlbums = async () => {
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('albums')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setAlbums(data || [])
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`"${title}" 앨범을 삭제하시겠습니까?\n앨범 내 사진도 함께 삭제됩니다.`)) return
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.from('albums').delete().eq('id', id)
+
+      if (error) throw error
+
+      alert('앨범이 삭제되었습니다.')
+      loadAlbums()
+    } catch (error: any) {
+      alert('앨범 삭제 중 오류가 발생했습니다: ' + (error.message || ''))
+      console.error(error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-500">로딩 중...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -37,7 +87,7 @@ export default async function AdminAlbumsPage() {
 
       {/* 앨범 목록 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {albums && albums.length > 0 ? (
+        {albums.length > 0 ? (
           albums.map((album) => (
             <Card key={album.id} className="overflow-hidden">
               {/* 커버 이미지 */}
@@ -96,6 +146,7 @@ export default async function AdminAlbumsPage() {
                     variant="outline"
                     size="sm"
                     className="gap-1 text-red-600 hover:text-red-700"
+                    onClick={() => handleDelete(album.id, album.title)}
                   >
                     <Trash2 className="w-4 h-4" />
                     삭제

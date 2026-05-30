@@ -1,22 +1,72 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { Plus, Edit, Trash2, User } from 'lucide-react'
 
-export const metadata = {
-  title: '교직원 관리',
+interface Teacher {
+  id: string
+  name: string
+  position: string
+  class_name: string | null
+  photo_url: string | null
+  is_active: boolean
+  sort_order: number
 }
 
-export default async function AdminTeachersPage() {
-  const supabase = await createClient()
+export default function AdminTeachersPage() {
+  const [teachers, setTeachers] = useState<Teacher[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // 교직원 목록 가져오기
-  const { data: teachers } = await supabase
-    .from('teachers')
-    .select('*')
-    .order('sort_order')
+  useEffect(() => {
+    loadTeachers()
+  }, [])
+
+  const loadTeachers = async () => {
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('teachers')
+        .select('*')
+        .order('sort_order')
+
+      if (error) throw error
+      setTeachers(data || [])
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`"${name}" 교직원을 삭제하시겠습니까?`)) return
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.from('teachers').delete().eq('id', id)
+
+      if (error) throw error
+
+      alert('교직원이 삭제되었습니다.')
+      loadTeachers()
+    } catch (error: any) {
+      alert('교직원 삭제 중 오류가 발생했습니다: ' + (error.message || ''))
+      console.error(error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-500">로딩 중...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -36,7 +86,7 @@ export default async function AdminTeachersPage() {
 
       {/* 교직원 목록 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {teachers && teachers.length > 0 ? (
+        {teachers.length > 0 ? (
           teachers.map((teacher) => (
             <Card key={teacher.id}>
               <CardContent className="p-6">
@@ -96,6 +146,7 @@ export default async function AdminTeachersPage() {
                     variant="outline"
                     size="sm"
                     className="gap-1 text-red-600 hover:text-red-700"
+                    onClick={() => handleDelete(teacher.id, teacher.name)}
                   >
                     <Trash2 className="w-4 h-4" />
                     삭제

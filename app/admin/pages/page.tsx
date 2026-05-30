@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { Edit, Eye } from 'lucide-react'
+import { PAGE_TYPE_LABELS, type PageType } from '@/lib/page-types'
 
 export const metadata = {
   title: '페이지 관리',
@@ -39,6 +40,9 @@ export default async function AdminPagesPage() {
                     <div className="flex items-center gap-2 mb-2">
                       <span className="px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-700 rounded">
                         {page.category === 'about' ? '소개' : '보육과정'}
+                      </span>
+                      <span className="px-2 py-1 text-xs font-semibold bg-indigo-100 text-indigo-700 rounded">
+                        {PAGE_TYPE_LABELS[(page.page_type as PageType) ?? 'single'] ?? '단일 페이지'}
                       </span>
                       {page.is_published && (
                         <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded">

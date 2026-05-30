@@ -21,7 +21,23 @@
       "Bash(ls:*)",
       "Bash(dir:*)",
       "Bash(git pull:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "WebFetch(domain:jaramk.com)",
+      "Bash(Get-ChildItem -Force)",
+      "Bash(Select-Object Name)",
+      "Bash(Get-Content *)",
+      "Bash(git checkout *)",
+      "Bash(pnpm build *)",
+      "Bash(npm run *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Project\\\\jaram\" -Directory)",
+      "Bash(Select-Object -ExpandProperty Name)",
+      "Bash(npx tsc *)",
+      "Bash(npx next *)",
+      "Bash(awk '{print $1}')",
+      "Bash(echo \"===EXIT CODE: $?===\")",
+      "Bash(grep -iE '\\\\.env|secret|\\\\.pem$|\\\\.key$|credential|\\\\.p12$|\\\\.pfx$|id_rsa|service[_-]?account')",
+      "Bash(git check-ignore *)",
+      "Bash(git ls-files *)"
     ]
   }
 }
