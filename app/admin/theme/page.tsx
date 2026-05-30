@@ -8,6 +8,7 @@ import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { Save, Palette } from 'lucide-react'
 import { revalidateTheme } from './actions'
+import { THEME_PRESETS, type ThemePreset } from '@/lib/theme-presets'
 
 // ── 상수 ──────────────────────────────────────────────────────
 const HEX_RE = /^#[0-9a-fA-F]{6}$/
@@ -234,6 +235,27 @@ export default function AdminThemePage() {
     }
   }
 
+  // 프리셋: 4개 색만 폼에 채운다(이름·폰트·헤더는 유지). DB 저장 X — 사용자가 "테마 저장"을 눌러야 반영.
+  const applyPreset = (preset: ThemePreset) => {
+    setForm((prev) => ({
+      ...prev,
+      primary_color:    preset.primary,
+      secondary_color:  preset.secondary,
+      background_color: preset.background,
+      text_color:       preset.text,
+    }))
+    setHexErrors({ primary_color: false, secondary_color: false, background_color: false, text_color: false })
+  }
+
+  // 현재 폼 색이 어떤 프리셋과 정확히 일치하는지 (적용됨 표시용)
+  const isPresetActive = (p: ThemePreset) => {
+    const eq = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
+    return eq(form.primary_color, p.primary)
+      && eq(form.secondary_color, p.secondary)
+      && eq(form.background_color, p.background)
+      && eq(form.text_color, p.text)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -303,6 +325,48 @@ export default function AdminThemePage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+
+        {/* 카드 0: 프리셋 팔레트 (원클릭으로 폼 채우기 — 저장은 별도) */}
+        <Card>
+          <CardHeader><CardTitle>프리셋 팔레트</CardTitle></CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-500 mb-4">
+              원클릭으로 색 조합을 폼에 채웁니다. 실제 사이트 반영은 아래{' '}
+              <span className="font-medium text-gray-700">테마 저장</span>을 눌러야 합니다.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {THEME_PRESETS.map((p) => {
+                const active = isPresetActive(p)
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => applyPreset(p)}
+                    aria-pressed={active}
+                    title={`${p.name} 적용`}
+                    className={`text-left rounded-xl border p-3 transition hover:shadow-md hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary ${
+                      active ? 'border-primary ring-2 ring-primary/40' : 'border-gray-200'
+                    }`}
+                  >
+                    {/* 색 미리보기 스와치: background 위에 primary·secondary 점 + text 색 글자 */}
+                    <div
+                      className="rounded-lg border border-gray-100 mb-2 h-12 flex items-center gap-1.5 px-2"
+                      style={{ backgroundColor: p.background }}
+                    >
+                      <span className="w-5 h-5 rounded-full border border-black/5" style={{ backgroundColor: p.primary }} />
+                      <span className="w-5 h-5 rounded-full border border-black/5" style={{ backgroundColor: p.secondary }} />
+                      <span className="ml-auto text-xs font-bold" style={{ color: p.text }}>가나다</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-sm font-medium text-gray-800 truncate">{p.name}</span>
+                      {active && <span className="text-[10px] text-primary font-semibold flex-shrink-0">● 적용됨</span>}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* 카드 1: 테마 이름 */}
         <Card>
