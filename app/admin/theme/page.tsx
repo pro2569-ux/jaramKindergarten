@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Save, Palette, Type, Layout, RotateCcw } from 'lucide-react'
+import { THEME_PRESETS, type ThemePreset } from '@/lib/theme-presets'
+import { revalidateTheme } from './actions'
 
 interface ThemeData {
   id: string
@@ -98,6 +100,8 @@ export default function ThemeSettingsPage() {
     if (error) {
       alert(`저장 실패: ${error.message}`)
     } else {
+      // 전역 테마 캐시(unstable_cache tags:['site-theme']) 무효화 → 저장한 색 즉시 사이트 반영
+      await revalidateTheme()
       alert('테마 설정이 저장되었습니다.')
     }
     setSaving(false)
@@ -116,6 +120,29 @@ export default function ThemeSettingsPage() {
   const updateField = (field: keyof ThemeData, value: string) => {
     if (!theme) return
     setTheme({ ...theme, [field]: value })
+  }
+
+  // 프리셋: 4색(primary/secondary/background/text)만 폼에 채움 (이름·폰트·헤더 유지).
+  // DB 저장 X — 사용자가 "저장"을 눌러야 반영.
+  const applyPreset = (preset: ThemePreset) => {
+    if (!theme) return
+    setTheme({
+      ...theme,
+      primary_color: preset.primary,
+      secondary_color: preset.secondary,
+      background_color: preset.background,
+      text_color: preset.text,
+    })
+  }
+
+  // 현재 폼 색이 어떤 프리셋과 정확히 일치하는지 (적용됨 표시용)
+  const isPresetActive = (p: ThemePreset) => {
+    if (!theme) return false
+    const eq = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
+    return eq(theme.primary_color, p.primary)
+      && eq(theme.secondary_color, p.secondary)
+      && eq(theme.background_color, p.background)
+      && eq(theme.text_color, p.text)
   }
 
   if (loading) {
@@ -149,6 +176,48 @@ export default function ThemeSettingsPage() {
             <Save className="w-4 h-4" />
             {saving ? '저장 중...' : '저장'}
           </button>
+        </div>
+      </div>
+
+      {/* 프리셋 팔레트 (원클릭으로 폼 채우기 — 실제 반영은 저장 버튼) */}
+      <div className="bg-white border rounded-lg p-5 mb-6">
+        <h2 className="flex items-center gap-2 text-lg font-bold text-gray-800 mb-1">
+          <Palette className="w-5 h-5" />
+          프리셋 팔레트
+        </h2>
+        <p className="text-sm text-gray-500 mb-4">
+          원클릭으로 색 조합을 폼에 채웁니다. 실제 사이트 반영은{' '}
+          <span className="font-medium text-gray-700">저장</span>을 눌러야 합니다.
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {THEME_PRESETS.map((p) => {
+            const active = isPresetActive(p)
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => applyPreset(p)}
+                aria-pressed={active}
+                title={`${p.name} 적용`}
+                className={`text-left rounded-xl border p-3 transition hover:shadow-md hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary ${
+                  active ? 'border-primary ring-2 ring-primary/40' : 'border-gray-200'
+                }`}
+              >
+                <div
+                  className="rounded-lg border border-gray-100 mb-2 h-12 flex items-center gap-1.5 px-2"
+                  style={{ backgroundColor: p.background }}
+                >
+                  <span className="w-5 h-5 rounded-full border border-black/5" style={{ backgroundColor: p.primary }} />
+                  <span className="w-5 h-5 rounded-full border border-black/5" style={{ backgroundColor: p.secondary }} />
+                  <span className="ml-auto text-xs font-bold" style={{ color: p.text }}>가나다</span>
+                </div>
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-sm font-medium text-gray-800 truncate">{p.name}</span>
+                  {active && <span className="text-[10px] text-primary font-semibold flex-shrink-0">● 적용됨</span>}
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
 

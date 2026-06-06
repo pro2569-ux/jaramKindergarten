@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { getActiveTheme, themeToCssVars } from "@/lib/theme";
 
 export const metadata: Metadata = {
   title: {
@@ -19,11 +20,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // 활성 site_theme 색을 CSS 변수로 전역 주입 → 모든 공개 페이지·Header·Footer가 상속.
+  // (테마 미설정/조회 실패 시 themeStyle=undefined → globals.css :root 폴백 사용)
+  const theme = await getActiveTheme();
+  const themeStyle = themeToCssVars(theme);
+
   return (
     <html lang="ko">
       <head>
@@ -34,7 +40,7 @@ export default function RootLayout({
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
         />
       </head>
-      <body className="antialiased">
+      <body className="antialiased" style={themeStyle}>
         <div className="flex min-h-screen flex-col">
           <Header />
           <main className="flex-1">{children}</main>
