@@ -15,6 +15,10 @@ function getSupabaseHostname(): string | null {
 const supabaseHostname = getSupabaseHostname();
 
 const nextConfig: NextConfig = {
+  // jsdom(isomorphic-dompurify 내부)은 동적 require가 많아 서버 번들 트레이싱에서 누락되어
+  // Vercel 서버리스 런타임에서 모듈을 못 찾아 SSR 중 500이 난다.
+  // 번들에서 제외하고 런타임에 node_modules에서 직접 로드하도록 외부 패키지로 지정.
+  serverExternalPackages: ["isomorphic-dompurify", "jsdom"],
   images: {
     remotePatterns: supabaseHostname
       ? [
