@@ -157,7 +157,7 @@ export default async function DynamicPage({ params }: PageProps) {
             <DynamicPageSidebar
               parentLabel={parentMenu.label}
               parentSlug={parentSlug}
-              siblings={siblings}
+              siblings={siblings ?? []}
               currentSlug={slug}
             />
           </aside>

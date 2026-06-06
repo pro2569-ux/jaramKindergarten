@@ -12,7 +12,7 @@ export default function LayoutOptionsEditor({ pageType, layoutConfig, onChange }
   const typeInfo = PAGE_TYPES[pageType]
   if (!typeInfo) return null
 
-  const options = typeInfo.layoutOptions as Record<string, any[]>
+  const options = typeInfo.layoutOptions as Record<string, readonly any[]>
 
   const handleChange = (key: string, value: any) => {
     onChange({ ...layoutConfig, [key]: value })
