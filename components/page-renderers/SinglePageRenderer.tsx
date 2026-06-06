@@ -1,6 +1,7 @@
 'use client'
 
 import { RendererProps } from './types'
+import { sanitizeHtml } from '@/lib/sanitize'
 
 const widthMap = {
   narrow: 'max-w-2xl',
@@ -17,7 +18,7 @@ export default function SinglePageRenderer({ page, layoutConfig }: RendererProps
       {page.content && (
         <div
           className="prose prose-lg max-w-none"
-          dangerouslySetInnerHTML={{ __html: page.content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.content) }}
         />
       )}
     </div>
