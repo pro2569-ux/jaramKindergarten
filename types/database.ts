@@ -116,3 +116,17 @@ export interface Banner {
   is_active: boolean
   created_at: string
 }
+
+export interface SiteTheme {
+  id: string
+  name: string
+  is_active: boolean
+  primary_color: string
+  secondary_color: string
+  background_color: string
+  text_color: string
+  heading_font: string
+  body_font: string
+  header_style: 'default' | 'centered' | 'minimal'
+  created_at: string
+}

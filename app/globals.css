@@ -4,13 +4,16 @@
   --background: #fafafa;
   --foreground: #333333;
 
-  /* 어린이집 테마 컬러 */
+  /* 어린이집 테마 컬러
+     --primary / --secondary 는 site_theme(활성 행)이 <body> 인라인 스타일로 런타임 주입.
+     아래 값은 주입 실패/미설정 시의 폴백(= 현재 브랜드 초록·주황)이며 활성 테마와 정합.
+     -dark / -light 는 --primary/--secondary 에서 color-mix 로 파생 → 테마 변경 시 자동 추종(T2). */
   --primary: #4CAF50;
-  --primary-dark: #388E3C;
-  --primary-light: #81C784;
+  --primary-dark: color-mix(in srgb, var(--primary) 80%, black);
+  --primary-light: color-mix(in srgb, var(--primary) 70%, white);
   --secondary: #FF9800;
-  --secondary-dark: #F57C00;
-  --secondary-light: #FFB74D;
+  --secondary-dark: color-mix(in srgb, var(--secondary) 85%, black);
+  --secondary-light: color-mix(in srgb, var(--secondary) 70%, white);
   --accent: #03A9F4;
   --accent-dark: #0288D1;
   --accent-light: #4FC3F7;
