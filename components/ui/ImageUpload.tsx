@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { STORAGE_BUCKET } from '@/lib/constants'
 import Image from 'next/image'
 import { X, Image as ImageIcon } from 'lucide-react'
 
@@ -46,13 +47,13 @@ export default function ImageUpload({
       const filePath = `${folder}/${fileName}`
 
       const { error: uploadError } = await supabase.storage
-        .from('images')
+        .from(STORAGE_BUCKET)
         .upload(filePath, file)
 
       if (uploadError) throw uploadError
 
       const { data: { publicUrl } } = supabase.storage
-        .from('images')
+        .from(STORAGE_BUCKET)
         .getPublicUrl(filePath)
 
       onChange(publicUrl)

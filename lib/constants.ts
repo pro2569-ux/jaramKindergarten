@@ -84,3 +84,9 @@ export const PAGINATION = {
   ALBUM_PAGE_SIZE: 12,
   ADMIN_PAGE_SIZE: 20,
 } as const
+
+/**
+ * Supabase Storage 버킷 이름
+ * Supabase 대시보드에 실제 존재하는 버킷명과 반드시 일치해야 함
+ */
+export const STORAGE_BUCKET = 'publicImage' as const

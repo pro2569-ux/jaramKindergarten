@@ -5,6 +5,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import { createClient } from '@/lib/supabase/client'
+import { STORAGE_BUCKET } from '@/lib/constants'
 import {
   Bold,
   Italic,
@@ -106,13 +107,13 @@ export default function RichTextEditor({
         const filePath = `editor/${fileName}`
 
         const { error: uploadError } = await supabase.storage
-          .from('images')
+          .from(STORAGE_BUCKET)
           .upload(filePath, file)
 
         if (uploadError) throw uploadError
 
         const { data: { publicUrl } } = supabase.storage
-          .from('images')
+          .from(STORAGE_BUCKET)
           .getPublicUrl(filePath)
 
         editor.chain().focus().setImage({ src: publicUrl }).run()
