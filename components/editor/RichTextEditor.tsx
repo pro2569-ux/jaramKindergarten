@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
@@ -31,6 +32,8 @@ export default function RichTextEditor({
   placeholder = '내용을 입력하세요...',
 }: RichTextEditorProps) {
   const editor = useEditor({
+    // SSR 시 즉시 렌더하면 hydration 불일치가 발생하므로 클라이언트 마운트 후 렌더
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       Link.configure({
@@ -49,6 +52,67 @@ export default function RichTextEditor({
       },
     },
   })
+
+  // 표 등 TipTap이 모르는 HTML이 들어있으면 손실 방지를 위해 HTML 소스 모드로 시작
+  const [mode, setMode] = useState<'wysiwyg' | 'html'>(() =>
+    /<table/i.test(value || '') ? 'html' : 'wysiwyg'
+  )
+
+  const switchToWysiwyg = () => {
+    if (
+      !confirm(
+        'WYSIWYG(편집기) 모드로 전환하면 표 등 편집기가 지원하지 않는 HTML이 제거될 수 있습니다.\n표 HTML은 "HTML 소스" 모드에서 편집하세요.\n계속하시겠습니까?'
+      )
+    ) {
+      return
+    }
+    editor?.commands.setContent(value || '')
+    setMode('wysiwyg')
+  }
+
+  const modeBar = (
+    <div className="flex items-center gap-1 p-2 border-b bg-gray-100">
+      <button
+        type="button"
+        onClick={switchToWysiwyg}
+        className={cn(
+          'px-3 py-1 text-sm rounded transition-colors',
+          mode === 'wysiwyg' ? 'bg-white shadow font-medium' : 'text-gray-500 hover:bg-gray-200'
+        )}
+      >
+        편집기
+      </button>
+      <button
+        type="button"
+        onClick={() => setMode('html')}
+        className={cn(
+          'px-3 py-1 text-sm rounded transition-colors',
+          mode === 'html' ? 'bg-white shadow font-medium' : 'text-gray-500 hover:bg-gray-200'
+        )}
+      >
+        HTML 소스
+      </button>
+    </div>
+  )
+
+  // HTML 소스 모드: raw HTML을 이스케이프 없이 그대로 content에 저장
+  if (mode === 'html') {
+    return (
+      <div className="border border-gray-300 rounded-lg overflow-hidden">
+        {modeBar}
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          spellCheck={false}
+          className="w-full min-h-[300px] p-4 font-mono text-sm focus:outline-none resize-y"
+        />
+        <p className="px-4 py-2 text-xs text-gray-500 border-t bg-gray-50">
+          HTML을 직접 입력합니다. 표 등 디자인된 HTML을 붙여넣을 수 있습니다. (저장 시 보안 처리되어 안전하게 표시됩니다)
+        </p>
+      </div>
+    )
+  }
 
   if (!editor) {
     return null
@@ -127,6 +191,7 @@ export default function RichTextEditor({
 
   return (
     <div className="border border-gray-300 rounded-lg overflow-hidden">
+      {modeBar}
       {/* 툴바 */}
       <div className="flex items-center gap-1 p-2 border-b bg-gray-50">
         <MenuButton

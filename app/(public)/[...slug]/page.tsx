@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getRendererByType } from '@/components/page-renderers'
+import GreetingRenderer from '@/components/page-renderers/GreetingRenderer'
 import DynamicPageSidebar from './DynamicPageSidebar'
 import type { Metadata } from 'next'
 
@@ -113,18 +114,53 @@ export default async function DynamicPage({ params }: PageProps) {
     notFound()
   }
 
-  const { parentMenu, page, siblings } = result
+  const { parentMenu, page, siblings, childMenu } = result
   const parentSlug = parentMenu.slug
+  // greeting(원장 인사말)만 전용 렌더러로 분기. 그 외는 기존 경로 그대로.
+  const isGreeting = childMenu?.slug === 'greeting'
   const Renderer = getRendererByType(page.page_type || 'single')
+
+  const sc = (page.style_config || {}) as Record<string, any>
 
   // style_config를 CSS 변수로 변환
   const styleVars: Record<string, string> = {}
-  if (page.style_config) {
-    const sc = page.style_config
-    if (sc.primaryColor) styleVars['--page-primary'] = sc.primaryColor
-    if (sc.accentColor) styleVars['--page-accent'] = sc.accentColor
-    if (sc.fontFamily) styleVars['--page-font'] = sc.fontFamily
+  if (sc.primaryColor) styleVars['--page-primary'] = sc.primaryColor
+  if (sc.accentColor) styleVars['--page-accent'] = sc.accentColor
+  if (sc.fontFamily) styleVars['--page-font'] = sc.fontFamily
+
+  // 페이지 배경: backgroundImage가 있고 모드가 full/subtle일 때만 활성화.
+  // 그 외(미설정/none/이미지 없음)는 기존 화면 경로를 그대로 탄다 → 회귀 없음.
+  const bgImage: string = sc.backgroundImage || ''
+  const bgMode: 'none' | 'full' | 'subtle' =
+    bgImage && (sc.backgroundMode === 'full' || sc.backgroundMode === 'subtle')
+      ? sc.backgroundMode
+      : 'none'
+
+  // 배경은 "콘텐츠 컬럼(우측 영역)"에만 적용한다.
+  // 최외곽 래퍼 / 좌측 사이드바 / 바깥 여백은 배경 미설정 때와 동일하게 유지.
+  const contentBgStyle: React.CSSProperties = {}
+  if (bgMode === 'full') {
+    // 가독성용 어두운 스크림 + 이미지 (cover/center).
+    // 모바일 호환을 위해 background-attachment: fixed는 쓰지 않음(iOS 깨짐 방지).
+    contentBgStyle.backgroundImage = `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url(${bgImage})`
+    contentBgStyle.backgroundSize = 'cover'
+    contentBgStyle.backgroundPosition = 'center'
+  } else if (bgMode === 'subtle') {
+    // 같은 이미지를 밝은 오버레이로 옅게 깔기 (콘텐츠는 평소대로).
+    contentBgStyle.backgroundImage = `linear-gradient(rgba(255,255,255,0.88), rgba(255,255,255,0.92)), url(${bgImage})`
+    contentBgStyle.backgroundSize = 'cover'
+    contentBgStyle.backgroundPosition = 'center'
   }
+
+  const rendered = isGreeting ? (
+    <GreetingRenderer page={page} />
+  ) : (
+    <Renderer
+      page={page}
+      layoutConfig={page.layout_config || {}}
+      styleConfig={page.style_config || {}}
+    />
+  )
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white" style={styleVars as React.CSSProperties}>
@@ -162,13 +198,23 @@ export default async function DynamicPage({ params }: PageProps) {
             />
           </aside>
 
-          {/* 콘텐츠 */}
+          {/* 콘텐츠 (배경은 이 컬럼에만 적용됨) */}
           <div className="lg:col-span-3">
-            <Renderer
-              page={page}
-              layoutConfig={page.layout_config || {}}
-              styleConfig={page.style_config || {}}
-            />
+            {bgMode === 'full' ? (
+              // 꽉찬 배경: 콘텐츠 컬럼에만 이미지+스크림, 실제 콘텐츠는 반투명 카드로 가독성 확보
+              <div className="rounded-2xl p-4 sm:p-6 shadow-lg" style={contentBgStyle}>
+                <div className="bg-white/85 backdrop-blur rounded-xl p-6 sm:p-8">
+                  {rendered}
+                </div>
+              </div>
+            ) : bgMode === 'subtle' ? (
+              // 은은한 배경: 콘텐츠 컬럼에만 옅은 이미지, 콘텐츠는 평소대로
+              <div className="rounded-2xl p-6 sm:p-8 shadow-sm" style={contentBgStyle}>
+                {rendered}
+              </div>
+            ) : (
+              rendered
+            )}
           </div>
         </div>
       </div>
