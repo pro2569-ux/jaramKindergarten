@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 import { Eye, Calendar, ArrowLeft, Download } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import { sanitizeHtml } from '@/lib/sanitize'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -77,7 +78,7 @@ export default async function NewsletterDetailPage({ params }: PageProps) {
           <div className="px-8 py-8">
             <div
               className="prose prose-lg max-w-none"
-              dangerouslySetInnerHTML={{ __html: post.content || '' }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content || '') }}
             />
           </div>
 
