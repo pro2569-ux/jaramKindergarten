@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getRendererByType } from '@/components/page-renderers'
 import GreetingRenderer from '@/components/page-renderers/GreetingRenderer'
@@ -110,8 +111,28 @@ export default async function DynamicPage({ params }: PageProps) {
     redirect(result.redirect)
   }
 
+  // 자식(소분류)이 없는 빈 대분류 접근 → 404 대신 "준비 중" 안내 (예: 입학안내)
   if (!('page' in result)) {
-    notFound()
+    const label = ('parentMenu' in result && result.parentMenu?.label) || '페이지'
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
+        <div className="relative bg-gradient-to-r from-primary/10 to-primary/5 border-b border-green-100">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">{label}</h1>
+          </div>
+        </div>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 text-center">
+          <p className="text-2xl font-semibold text-gray-700">준비 중입니다</p>
+          <p className="mt-3 text-gray-500">콘텐츠를 준비하고 있어요. 곧 찾아뵙겠습니다.</p>
+          <Link
+            href="/"
+            className="mt-8 inline-block rounded-lg bg-primary px-5 py-2.5 text-white transition-colors hover:opacity-90"
+          >
+            홈으로
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   const { parentMenu, page, siblings, childMenu } = result
