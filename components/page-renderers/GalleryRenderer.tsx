@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { RendererProps } from './types'
 
 interface Album {
@@ -25,23 +24,25 @@ const aspectMap = {
 export default function GalleryRenderer({ page, layoutConfig }: RendererProps) {
   const [albums, setAlbums] = useState<Album[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
 
   const cols = colsMap[layoutConfig.columns as keyof typeof colsMap] || 'grid-cols-3'
   const gap = gapMap[layoutConfig.gap as keyof typeof gapMap] || 'gap-4'
   const aspect = aspectMap[layoutConfig.aspectRatio as keyof typeof aspectMap] || 'aspect-[4/3]'
 
   useEffect(() => {
+    // 이관 앨범의 커버는 private 버킷이라 브라우저에서 직접 조회할 수 없다.
+    // 서버 라우트가 공개 앨범만 골라 서명 URL 로 바꿔 내려준다.
     const fetchAlbums = async () => {
       setLoading(true)
-      const { data } = await supabase
-        .from('albums')
-        .select('id, title, cover_image_url, event_date, created_at')
-        .eq('is_published', true)
-        .order('event_date', { ascending: false })
-
-      setAlbums(data || [])
-      setLoading(false)
+      try {
+        const res = await fetch('/api/albums')
+        const json = (await res.json()) as { albums?: Album[] }
+        setAlbums(res.ok && json.albums ? json.albums : [])
+      } catch {
+        setAlbums([])
+      } finally {
+        setLoading(false)
+      }
     }
 
     fetchAlbums()

@@ -23,6 +23,12 @@ const nextConfig: NextConfig = {
             hostname: supabaseHostname,
             pathname: "/storage/v1/object/public/**",
           },
+          // private 버킷(legacy-media)의 서명 URL
+          {
+            protocol: "https",
+            hostname: supabaseHostname,
+            pathname: "/storage/v1/object/sign/**",
+          },
         ]
       : [],
   },
