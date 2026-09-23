@@ -3,23 +3,27 @@
  *
  * 원칙 (모든 Phase 공통):
  * - GET 만 보낸다. 다른 메서드는 아예 구현하지 않는다.
- * - 요청 간격 최소 1.5초, 동시 요청 1개 (모듈 전역 throttle).
+ * - 동시 요청 1개 (모듈 전역 throttle). 간격: 페이지 1.5초, 파일 다운로드 0.5초.
  * - 실패 시 최대 3회 재시도, 간격 3s → 6s → 12s.
  * - 성공 응답은 data/raw 에 캐시하고, 다음 실행부터는 네트워크 없이 캐시를 쓴다 (이어받기).
- * - JARAMK_COOKIE(.env.local) 가 있으면 Cookie 헤더로 보내되 값은 절대 로그에 남기지 않는다.
- * - 로그인 페이지로 튕기는 등 세션 만료 징후가 보이면 SessionExpiredError 로 즉시 중단.
+ *   파일 다운로드(downloadTo)는 raw 캐시 대신 목적지 파일 존재 여부로 이어받기.
+ * - 로그인 쿠키(.env.local)는 Cookie 헤더로 보내되 값은 절대 로그에 남기지 않는다.
+ * - 로그인 벽(권한 없음 경고/로그인 iframe)은 loginWall 로 표시하고 캐시하지 않는다.
  */
 import { createHash } from 'node:crypto'
-import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { appendFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import { DATA_DIR, RAW_DIR, ensureDirs } from './paths.ts'
 
 export const BASE_URL = 'http://jaramk.com'
-const MIN_INTERVAL_MS = 1500
+const PAGE_INTERVAL_MS = 1500
+const FILE_INTERVAL_MS = 500
 const MAX_RETRIES = 3
 const RETRY_BASE_MS = 3000
-const TIMEOUT_MS = 30000
+const TIMEOUT_MS = 60000
 const USER_AGENT = 'Mozilla/5.0 (compatible; jaram-migration/0.1; site-owner content migration)'
+
+export type RequestKind = 'page' | 'file'
 
 export class SessionExpiredError extends Error {
   constructor(url: string, reason: string) {
@@ -33,6 +37,7 @@ export interface RawResponse {
   finalUrl: string
   status: number
   contentType: string | null
+  lastModified: string | null
   bytes: number
   fetchedAt: string
   /** HTML 응답이 로그인 벽(권한 없음 경고/로그인 iframe)이면 그 사유. 쿠키 사용 중이면 세션 만료 의심 */
@@ -48,12 +53,19 @@ export interface HtmlResponse extends RawResponse {
   charset: string
 }
 
-export const stats = { network: 0, cached: 0, failed: 0, loginWalls: 0 }
-
-/** Phase 1 수집용: 쿠키를 쓰는 중에 로그인 벽을 만나면 즉시 중단 */
-export function assertSession(res: RawResponse): void {
-  if (res.loginWall && hasSessionCookie()) throw new SessionExpiredError(res.url, res.loginWall)
+export interface DownloadResult {
+  url: string
+  dest: string
+  status: number
+  bytes: number
+  contentType: string | null
+  lastModified: string | null
+  fromCache: boolean
+  ok: boolean
+  reason: string | null
 }
+
+export const stats = { network: 0, cached: 0, failed: 0, loginWalls: 0, bytes: 0 }
 
 let lastRequestAt = 0
 
@@ -61,8 +73,9 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-async function throttle(): Promise<void> {
-  const wait = lastRequestAt + MIN_INTERVAL_MS - Date.now()
+async function throttle(kind: RequestKind): Promise<void> {
+  const interval = kind === 'file' ? FILE_INTERVAL_MS : PAGE_INTERVAL_MS
+  const wait = lastRequestAt + interval - Date.now()
   if (wait > 0) await sleep(wait)
   lastRequestAt = Date.now()
 }
@@ -113,7 +126,7 @@ function requestHeaders(): Record<string, string> {
 }
 
 /**
- * 로그인 필요/세션 만료 페이지로 보이는지 (쿠키를 쓰는 상황에서만 호출됨).
+ * 로그인 필요/세션 만료 페이지로 보이는지.
  * 실제 사이트 마크업 기준:
  *  - window.alert("리스트보기 권한이 없습니다.") / ("글보기 권한이 없습니다.") + onload 로그인 팝업
  *  - <iframe src="/core/module/membership/default/loginPage.html">
@@ -130,16 +143,69 @@ export function looksLikeLoginWall(finalUrl: string, html: string): string | nul
   return null
 }
 
+/** Phase 1 수집용: 쿠키를 쓰는 중에 로그인 벽을 만나면 즉시 중단 */
+export function assertSession(res: { url: string; loginWall: string | null }): void {
+  if (res.loginWall && hasSessionCookie()) throw new SessionExpiredError(res.url, res.loginWall)
+}
+
+interface FetchAttempt {
+  status: number
+  finalUrl: string
+  contentType: string | null
+  lastModified: string | null
+  body: Buffer
+}
+
+/** 재시도 포함 GET. 5xx/429/네트워크 오류만 재시도, 4xx 는 그대로 반환. */
+async function getWithRetry(abs: string, kind: RequestKind): Promise<FetchAttempt> {
+  let lastError: unknown = null
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+    if (attempt > 0) {
+      const backoff = RETRY_BASE_MS * 2 ** (attempt - 1)
+      log(`재시도 ${attempt}/${MAX_RETRIES} (${backoff / 1000}s 후): ${abs}`)
+      await sleep(backoff)
+    }
+    await throttle(kind)
+    try {
+      const res = await fetch(abs, {
+        method: 'GET',
+        headers: requestHeaders(),
+        redirect: 'follow',
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      })
+      const body = Buffer.from(await res.arrayBuffer())
+      stats.network += 1
+      stats.bytes += body.byteLength
+      if (res.status >= 500 || res.status === 429) {
+        lastError = new Error(`HTTP ${res.status}`)
+        continue
+      }
+      return {
+        status: res.status,
+        finalUrl: res.url || abs,
+        contentType: res.headers.get('content-type'),
+        lastModified: res.headers.get('last-modified'),
+        body,
+      }
+    } catch (err) {
+      lastError = err
+    }
+  }
+  const reason = lastError instanceof Error ? lastError.message : String(lastError)
+  throw new Error(`요청 실패 (재시도 ${MAX_RETRIES}회 소진): ${abs} — ${reason}`)
+}
+
 /**
- * GET + 캐시 + 재시도. 2xx 만 캐시하고, 그 외는 failures.jsonl 에 기록한다.
+ * GET + raw 캐시. 2xx 만 캐시하고, 그 외는 failures.jsonl 에 기록한다.
  * 상대 URL 은 BASE_URL 기준으로 절대화한다.
  */
-export async function fetchRaw(url: string, opts: { force?: boolean } = {}): Promise<RawResponse> {
+export async function fetchRaw(url: string, opts: { force?: boolean; kind?: RequestKind } = {}): Promise<RawResponse> {
   ensureDirs()
   const abs = absoluteUrl(url)
   const key = cacheKey(abs)
   const metaPath = join(RAW_DIR, `${key}.json`)
   const bodyPath = join(RAW_DIR, `${key}.bin`)
+  const kind = opts.kind ?? 'page'
 
   if (!opts.force && existsSync(metaPath) && existsSync(bodyPath)) {
     const meta = JSON.parse(readFileSync(metaPath, 'utf8')) as Partial<Meta> & Meta
@@ -152,92 +218,113 @@ export async function fetchRaw(url: string, opts: { force?: boolean } = {}): Pro
     // 쿠키 없이 받아 둔 로그인 벽 페이지는, 쿠키가 생겼으면 다시 받는다
     if (!(cachedWall && hasSessionCookie())) {
       stats.cached += 1
-      return { ...meta, loginWall: cachedWall, body: cachedBody, fromCache: true }
+      return { ...meta, lastModified: meta.lastModified ?? null, loginWall: cachedWall, body: cachedBody, fromCache: true }
     }
     log(`캐시 무효화(로그인 벽 → 쿠키로 재요청): ${abs}`)
   }
 
-  let lastError: unknown = null
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
-    if (attempt > 0) {
-      const backoff = RETRY_BASE_MS * 2 ** (attempt - 1)
-      log(`재시도 ${attempt}/${MAX_RETRIES} (${backoff / 1000}s 후): ${abs}`)
-      await sleep(backoff)
+  let attempt: FetchAttempt
+  try {
+    attempt = await getWithRetry(abs, kind)
+  } catch (err) {
+    recordFailure(abs, err instanceof Error ? err.message : String(err))
+    throw err
+  }
+
+  const { status, finalUrl, contentType, lastModified, body } = attempt
+  const loginWall = contentType?.includes('text/html') ? looksLikeLoginWall(finalUrl, decodeHtml(body, contentType).text) : null
+  const result: RawResponse = {
+    url: abs,
+    finalUrl,
+    status,
+    contentType,
+    lastModified,
+    bytes: body.byteLength,
+    fetchedAt: new Date().toISOString(),
+    loginWall,
+    body,
+    fromCache: false,
+  }
+
+  if (loginWall && hasSessionCookie()) {
+    // 쿠키를 보냈는데도 로그인 벽 → 세션 만료 또는 권한 부족. 캐시하지 않고 호출자가 판단하게 한다.
+    stats.loginWalls += 1
+    log(`⚠ 로그인 벽 (${loginWall}): ${abs}`)
+    return result
+  }
+
+  if (status >= 200 && status < 300) {
+    const meta: Meta = {
+      url: result.url,
+      finalUrl: result.finalUrl,
+      status: result.status,
+      contentType: result.contentType,
+      lastModified: result.lastModified,
+      bytes: result.bytes,
+      fetchedAt: result.fetchedAt,
+      loginWall,
     }
-    await throttle()
-    try {
-      const res = await fetch(abs, {
-        method: 'GET',
-        headers: requestHeaders(),
-        redirect: 'follow',
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      })
-      const body = Buffer.from(await res.arrayBuffer())
-      stats.network += 1
+    writeFileSync(bodyPath, body)
+    writeFileSync(metaPath, JSON.stringify(meta, null, 2))
+    appendFileSync(join(RAW_DIR, 'index.jsonl'), JSON.stringify({ key, ...meta }) + '\n')
+  } else {
+    recordFailure(abs, `HTTP ${status}`)
+  }
+  return result
+}
 
-      if (res.status >= 500 || res.status === 429) {
-        lastError = new Error(`HTTP ${res.status}`)
-        continue
-      }
-
-      const contentType = res.headers.get('content-type')
-      const finalUrl = res.url || abs
-      const loginWall = contentType?.includes('text/html')
-        ? looksLikeLoginWall(finalUrl, decodeHtml(body, contentType).text)
-        : null
-      const result: RawResponse = {
-        url: abs,
-        finalUrl,
-        status: res.status,
-        contentType,
-        bytes: body.byteLength,
-        fetchedAt: new Date().toISOString(),
-        loginWall,
-        body,
-        fromCache: false,
-      }
-
-      if (loginWall && hasSessionCookie()) {
-        // 쿠키를 보냈는데도 로그인 벽 → 세션 만료 또는 권한 부족. 캐시하지 않고 호출자가 판단하게 한다.
-        stats.loginWalls += 1
-        log(`⚠ 로그인 벽 (${loginWall}): ${abs}`)
-        return result
-      }
-
-      if (res.ok) {
-        const meta: Meta = {
-          url: result.url,
-          finalUrl: result.finalUrl,
-          status: result.status,
-          contentType: result.contentType,
-          bytes: result.bytes,
-          fetchedAt: result.fetchedAt,
-          loginWall,
-        }
-        writeFileSync(bodyPath, body)
-        writeFileSync(metaPath, JSON.stringify(meta, null, 2))
-        appendFileSync(join(RAW_DIR, 'index.jsonl'), JSON.stringify({ key, ...meta }) + '\n')
-      } else {
-        recordFailure(abs, `HTTP ${res.status}`)
-      }
-      return result
-    } catch (err) {
-      if (err instanceof SessionExpiredError) throw err
-      lastError = err
+/**
+ * 파일 다운로드 (이미지/첨부). 목적지 파일이 이미 있으면(0바이트 초과) 네트워크 없이 그대로 사용.
+ * HTML 이 돌아오면(권한 없음/오류 페이지) 실패로 기록하고, 쿠키 사용 중 로그인 벽이면 SessionExpiredError.
+ */
+export async function downloadTo(url: string, dest: string): Promise<DownloadResult> {
+  ensureDirs()
+  const abs = absoluteUrl(url)
+  if (existsSync(dest)) {
+    const size = statSync(dest).size
+    if (size > 0) {
+      stats.cached += 1
+      return { url: abs, dest, status: 200, bytes: size, contentType: null, lastModified: null, fromCache: true, ok: true, reason: null }
     }
   }
 
-  const reason = lastError instanceof Error ? lastError.message : String(lastError)
-  recordFailure(abs, reason)
-  throw new Error(`요청 실패 (재시도 ${MAX_RETRIES}회 소진): ${abs} — ${reason}`)
+  let attempt: FetchAttempt
+  try {
+    attempt = await getWithRetry(abs, 'file')
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err)
+    recordFailure(abs, reason)
+    return { url: abs, dest, status: 0, bytes: 0, contentType: null, lastModified: null, fromCache: false, ok: false, reason }
+  }
+
+  const { status, finalUrl, contentType, lastModified, body } = attempt
+  const base = { url: abs, dest, status, contentType, lastModified, fromCache: false }
+
+  if (contentType?.includes('text/html')) {
+    const html = decodeHtml(body, contentType).text
+    const wall = looksLikeLoginWall(finalUrl, html)
+    if (wall && hasSessionCookie()) {
+      stats.loginWalls += 1
+      throw new SessionExpiredError(abs, wall)
+    }
+    const reason = `파일 대신 HTML 응답 (HTTP ${status})`
+    recordFailure(abs, reason)
+    return { ...base, bytes: 0, ok: false, reason }
+  }
+  if (status < 200 || status >= 300 || body.byteLength === 0) {
+    const reason = body.byteLength === 0 ? `빈 응답 (HTTP ${status})` : `HTTP ${status}`
+    recordFailure(abs, reason)
+    return { ...base, bytes: 0, ok: false, reason }
+  }
+
+  mkdirSync(dirname(dest), { recursive: true })
+  writeFileSync(dest, body)
+  return { ...base, bytes: body.byteLength, ok: true, reason: null }
 }
 
 function recordFailure(url: string, reason: string): void {
   stats.failed += 1
-  appendFileSync(
-    join(DATA_DIR, 'failures.jsonl'),
-    JSON.stringify({ url, reason, at: new Date().toISOString() }) + '\n'
-  )
+  appendFileSync(join(DATA_DIR, 'failures.jsonl'), JSON.stringify({ url, reason, at: new Date().toISOString() }) + '\n')
 }
 
 /**

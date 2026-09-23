@@ -274,6 +274,78 @@ export function analyzeStaticContent(html: string): NonNullable<PageInfo['static
   }
 }
 
+export interface PageMakerItem {
+  index: number
+  left: number | null
+  top: number | null
+  width: number | null
+  height: number | null
+  zIndex: number | null
+  imageSrc: string | null
+  text: string | null
+  html: string
+}
+
+export interface StaticExtract {
+  kind: StaticKind
+  /** 본문 컨테이너 innerHTML (richtext: #ContentBase, pagemaker: #pageMakerBaseLayer, image-only: .contents) */
+  contentHtml: string
+  text: string
+  imageSrcs: string[] // 본문 안 이미지 (사이트 크롬 제외), 문서 순서, 중복 제거
+  attachmentHrefs: string[]
+  pageMaker: { width: number | null; height: number | null; items: PageMakerItem[] } | null
+}
+
+/** 정적 페이지 본문과 이미지 목록 추출 (Phase 1 수집용) */
+export function extractStaticPage(html: string): StaticExtract {
+  const $ = cheerio.load(html)
+  const analysis = analyzeStaticContent(html)
+  const richtext = $('#ContentBase')
+  const pm = $('#pageMakerBaseLayer')
+  const container = richtext.length ? richtext : pm.length ? pm : $('.contents')
+
+  const seen = new Set<string>()
+  const imageSrcs: string[] = []
+  container.find('img[src]').each((_, el) => {
+    const src = $(el).attr('src') ?? ''
+    if (!src || isSiteChromeAsset(src) || seen.has(src)) return
+    seen.add(src)
+    imageSrcs.push(src)
+  })
+
+  let pageMaker: StaticExtract['pageMaker'] = null
+  if (pm.length) {
+    const style = pm.attr('style') ?? ''
+    const items: PageMakerItem[] = []
+    pm.children().each((i, el) => {
+      const c = $(el)
+      const st = c.attr('style') ?? ''
+      const text = c.text().replace(/\s+/g, ' ').trim()
+      items.push({
+        index: i,
+        left: cssPx(st, 'left'),
+        top: cssPx(st, 'top'),
+        width: cssPx(st, 'width'),
+        height: cssPx(st, 'height'),
+        zIndex: /z-index\s*:\s*(-?\d+)/.exec(st)?.[1] ? Number(/z-index\s*:\s*(-?\d+)/.exec(st)![1]) : null,
+        imageSrc: c.find('img[src]').first().attr('src') ?? null,
+        text: text || null,
+        html: $.html(c),
+      })
+    })
+    pageMaker = { width: cssPx(style, 'width'), height: cssPx(style, 'height'), items }
+  }
+
+  return {
+    kind: analysis.kind,
+    contentHtml: (container.html() ?? '').trim(),
+    text: container.text().replace(/\s+/g, ' ').trim(),
+    imageSrcs,
+    attachmentHrefs: analysis.attachmentUrls,
+    pageMaker,
+  }
+}
+
 export function classifyPage(
   html: string
 ): Pick<PageInfo, 'type' | 'boardID' | 'boardMode' | 'loginRequired' | 'loginMessage' | 'redirectTo'> {
