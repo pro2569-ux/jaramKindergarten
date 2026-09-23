@@ -41,6 +41,8 @@ export interface UploadItem {
   bytes: number
   contentType: string
   kind: 'album-photo' | 'static-image' | 'post-image' | 'attachment'
+  /** 첨부: 다운로드 시 쓸 원래 파일명 (객체 키에는 한글이 허용되지 않아 ?download= 로 전달) */
+  downloadName?: string
 }
 export interface UploadMapEntry {
   bucket: string
@@ -63,13 +65,24 @@ function contentTypeOf(path: string): string {
   )
 }
 
-function refFor(bucket: string, objectPath: string): string {
-  return bucket === PRIVATE_BUCKET ? `${PRIVATE_BUCKET}:${objectPath}` : `${supabaseUrl()}/storage/v1/object/public/${bucket}/${objectPath}`
+function refFor(bucket: string, objectPath: string, downloadName?: string): string {
+  if (bucket === PRIVATE_BUCKET) return `${PRIVATE_BUCKET}:${objectPath}`
+  const url = `${supabaseUrl()}/storage/v1/object/public/${bucket}/${objectPath}`
+  return downloadName ? `${url}?download=${encodeURIComponent(downloadName)}` : url
+}
+
+/** 첨부 객체 키: Storage 키는 ASCII 만 안전하므로 <fileNum>.<ext> 로 두고 원래 이름은 downloadName 으로 보존 */
+function attachmentObjectName(local: string): { objectName: string; downloadName: string } {
+  const base = basename(local)
+  const m = /^(\d+)_(.+)$/.exec(base)
+  const ext = (base.split('.').pop() ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
+  if (m?.[1]) return { objectName: `${m[1]}.${ext || 'bin'}`, downloadName: m[2] ?? base }
+  return { objectName: base.replace(/[^A-Za-z0-9._-]/g, '_'), downloadName: base }
 }
 
 // ---------- 계획 수립 ----------
 const items = new Map<string, UploadItem>() // key: bucket/objectPath
-function add(kind: UploadItem['kind'], bucket: string, objectPath: string, localPath: string) {
+function add(kind: UploadItem['kind'], bucket: string, objectPath: string, localPath: string, downloadName?: string) {
   const abs = join(DATA_DIR, localPath)
   if (!existsSync(abs)) {
     missingLocal.push(localPath)
@@ -77,7 +90,7 @@ function add(kind: UploadItem['kind'], bucket: string, objectPath: string, local
   }
   const key = `${bucket}/${objectPath}`
   if (items.has(key)) return
-  items.set(key, { bucket, objectPath, localPath, bytes: statSync(abs).size, contentType: contentTypeOf(localPath), kind })
+  items.set(key, { bucket, objectPath, localPath, bytes: statSync(abs).size, contentType: contentTypeOf(localPath), kind, downloadName })
 }
 const missingLocal: string[] = []
 
@@ -85,7 +98,10 @@ const missingLocal: string[] = []
 for (const f of listJson(join(TRANSFORMED_DIR, 'pages'))) {
   const p = readJson<{ pageCode: number; mediaTokens: string[]; attachments: string[] }>(f)
   for (const local of p.mediaTokens) add('static-image', PUBLIC_BUCKET, `legacy/static/${p.pageCode}/${safeSegment(basename(local))}`, local)
-  for (const local of p.attachments) add('attachment', PUBLIC_BUCKET, `legacy/static/${p.pageCode}/attach/${safeSegment(basename(local))}`, local)
+  for (const local of p.attachments) {
+    const { objectName, downloadName } = attachmentObjectName(local)
+    add('attachment', PUBLIC_BUCKET, `legacy/static/${p.pageCode}/attach/${objectName}`, local, downloadName)
+  }
 }
 
 // 게시글(posts): 본문 인라인 이미지(변환본이 있으면 변환본) + 첨부(hwp)
@@ -96,7 +112,10 @@ for (const f of listJsonTree(join(TRANSFORMED_DIR, 'posts'))) {
     const use = existsSync(join(DATA_DIR, derived)) ? derived : local
     add('post-image', PUBLIC_BUCKET, `legacy/board/${p.boardID}/${p.num}/${safeSegment(basename(use))}`, use)
   }
-  for (const a of p.attachments) add('attachment', PUBLIC_BUCKET, `legacy/attach/${p.boardID}/${p.num}/${safeSegment(basename(a.local))}`, a.local)
+  for (const a of p.attachments) {
+    const { objectName } = attachmentObjectName(a.local)
+    add('attachment', PUBLIC_BUCKET, `legacy/attach/${p.boardID}/${p.num}/${objectName}`, a.local, a.name || basename(a.local))
+  }
 }
 
 // 앨범: 사진 수집 완료된 것만, 변환본 경로
@@ -110,7 +129,10 @@ for (const f of listJsonTree(join(TRANSFORMED_DIR, 'albums'))) {
   }
   albumsIncluded += 1
   for (const ph of a.photos) add('album-photo', PRIVATE_BUCKET, `board/${a.boardID}/${a.num}/${safeSegment(basename(ph.local))}`, ph.local)
-  for (const d of a.documents) add('attachment', PUBLIC_BUCKET, `legacy/attach/${a.boardID}/${a.num}/${safeSegment(basename(d.local))}`, d.local)
+  for (const d of a.documents) {
+    const { objectName } = attachmentObjectName(d.local)
+    add('attachment', PUBLIC_BUCKET, `legacy/attach/${a.boardID}/${a.num}/${objectName}`, d.local, d.name || basename(d.local))
+  }
 }
 
 const plan = [...items.values()]
@@ -193,8 +215,9 @@ async function worker() {
   for (;;) {
     const it = queue.shift()
     if (!it) return
+    const ref = refFor(it.bucket, it.objectPath, it.downloadName)
     if (uploadMap[it.localPath] || existing.get(it.bucket)?.has(it.objectPath)) {
-      if (!uploadMap[it.localPath]) uploadMap[it.localPath] = { bucket: it.bucket, objectPath: it.objectPath, ref: refFor(it.bucket, it.objectPath), bytes: it.bytes, uploadedAt: 'pre-existing' }
+      if (!uploadMap[it.localPath]) uploadMap[it.localPath] = { bucket: it.bucket, objectPath: it.objectPath, ref, bytes: it.bytes, uploadedAt: 'pre-existing' }
       skipped += 1
       continue
     }
@@ -202,14 +225,14 @@ async function worker() {
     const { error } = await client.storage.from(it.bucket).upload(it.objectPath, body, { contentType: it.contentType, upsert: false })
     if (error) {
       if (/already exists|Duplicate/i.test(error.message)) {
-        uploadMap[it.localPath] = { bucket: it.bucket, objectPath: it.objectPath, ref: refFor(it.bucket, it.objectPath), bytes: it.bytes, uploadedAt: 'pre-existing' }
+        uploadMap[it.localPath] = { bucket: it.bucket, objectPath: it.objectPath, ref, bytes: it.bytes, uploadedAt: 'pre-existing' }
         skipped += 1
       } else {
         failed += 1
         failures.push({ localPath: it.localPath, reason: error.message })
       }
     } else {
-      uploadMap[it.localPath] = { bucket: it.bucket, objectPath: it.objectPath, ref: refFor(it.bucket, it.objectPath), bytes: it.bytes, uploadedAt: new Date().toISOString() }
+      uploadMap[it.localPath] = { bucket: it.bucket, objectPath: it.objectPath, ref, bytes: it.bytes, uploadedAt: new Date().toISOString() }
       done += 1
     }
     if ((done + skipped + failed) % 50 === 0) {
