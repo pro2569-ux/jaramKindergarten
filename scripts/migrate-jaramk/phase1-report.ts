@@ -6,6 +6,7 @@
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { DATA_DIR, OUT_DIR, PARSED_DIR } from './lib/paths.ts'
+import { fetchHtml } from './lib/http.ts'
 import type { ParsedPage, ParsedPost, FileRecord } from './phase1-collect.ts'
 
 const readJson = <T>(p: string): T => JSON.parse(readFileSync(p, 'utf8')) as T
@@ -20,6 +21,27 @@ if (existsSync(postsDir)) {
   for (const board of readdirSync(postsDir)) for (const f of listJson(join(postsDir, board))) posts.push(readJson<ParsedPost>(f))
 }
 posts.sort((a, b) => b.num - a.num)
+
+// ---------- 메인 페이지 미리보기의 실제 날짜 ([2026.02.19] + 링크 num) 반영 ----------
+// 목록/상세에 날짜가 없는 목록형 게시판(교육자료실)의 최신 글 몇 건은 메인 페이지에 날짜가 노출된다.
+const mainPreviewDates = new Map<number, string>()
+try {
+  const main = await fetchHtml('/main/main.html') // Phase 0 캐시 (네트워크 없음)
+  const re = /class="date">\[(\d{4}\.\d{2}\.\d{2})\][\s\S]{0,400}?boardID=(www\d+)&num=(\d+)&Mode=view/g
+  for (const m of main.html.matchAll(re)) mainPreviewDates.set(Number(m[3]), m[1]!)
+} catch {
+  // 캐시가 없으면 건너뜀
+}
+let fromMainPreview = 0
+for (const p of posts) {
+  const d = mainPreviewDates.get(p.num)
+  if (d && (!p.date || p.dateSource === 'interpolated')) {
+    p.date = d
+    p.dateSource = 'view' // 사이트가 표시한 실제 등록일
+    fromMainPreview += 1
+    writeFileSync(join(postsDir, p.boardID, `${p.num}.json`), JSON.stringify(p, null, 2))
+  }
+}
 
 // ---------- 날짜 근사 (전 게시판 공통 일련번호 num 기준 선형 보간) ----------
 const toDays = (d: string) => Date.parse(d.replace(/\./g, '-')) / 86400000
@@ -55,7 +77,9 @@ const albumPhotos = posts.flatMap((p) => p.photos)
 const nonImageAttach = posts.flatMap((p) => p.attachments.filter((a) => !a.isImage).map((a) => a.file).filter((f): f is FileRecord => !!f))
 
 const collected = posts.filter((p) => p.photosCollected && p.photos.length > 0)
-const pending = posts.filter((p) => !p.photosCollected)
+// 미수집 = 예산 컷오프(사진 0장), 부분 수집 = 원본 서버 404 등으로 일부만 받힌 글
+const partialOrigin = posts.filter((p) => !p.photosCollected && p.photos.some((f) => f.ok))
+const pending = posts.filter((p) => !p.photosCollected && !p.photos.some((f) => f.ok))
 const noPhoto = posts.filter((p) => p.photos.length === 0)
 const state = existsSync(join(OUT_DIR, 'phase1-state.json')) ? readJson<{ cutoff: unknown; budgetBytes: number; finished: boolean }>(join(OUT_DIR, 'phase1-state.json')) : null
 
@@ -113,7 +137,16 @@ const cutoffPost = state?.cutoff as { num: number; boardID: string; title: strin
 const report = {
   generatedAt: new Date().toISOString(),
   finished: state?.finished ?? false,
-  posts: { total: posts.length, photosCollected: collected.length, photosPending: pending.length, noPhoto: noPhoto.length, interpolatedDates: interpolated, withComments: posts.filter((p) => p.comments.length > 0).length },
+  posts: {
+    total: posts.length,
+    photosCollected: collected.length,
+    photosPending: pending.length,
+    partialOrigin: partialOrigin.map((p) => ({ boardID: p.boardID, num: p.num, title: p.title, date: p.date, ok: p.photos.filter((f) => f.ok).length, total: p.photos.length })),
+    noPhoto: noPhoto.length,
+    interpolatedDates: interpolated,
+    datesFromMainPreview: fromMainPreview,
+    withComments: posts.filter((p) => p.comments.length > 0).length,
+  },
   cutoff: cutoffPost
     ? { ...cutoffPost, oldestCollectedNum: collected.length ? Math.min(...collected.map((p) => p.num)) : null, oldestCollectedDate: collected.length ? collected.map((p) => p.date).filter(Boolean).sort()[0] : null }
     : null,
@@ -131,7 +164,14 @@ writeFileSync(join(OUT_DIR, 'url-map.json'), JSON.stringify(urlMap, null, 2))
 writeFileSync(
   join(OUT_DIR, 'photo-pending.json'),
   JSON.stringify(
-    pending.map((p) => ({ boardID: p.boardID, num: p.num, title: p.title, date: p.date, photoUrls: p.photos.map((f) => f.url) })),
+    [...pending, ...partialOrigin].map((p) => ({
+      boardID: p.boardID,
+      num: p.num,
+      title: p.title,
+      date: p.date,
+      reason: p.photos.some((f) => f.ok) ? 'partial-origin-404' : 'budget-cutoff',
+      photoUrls: p.photos.filter((f) => !f.ok).map((f) => f.url),
+    })),
     null,
     2
   )
@@ -139,7 +179,9 @@ writeFileSync(
 
 // ---------- 콘솔 ----------
 console.log(`=== Phase 1 리포트 (${report.finished ? '완료' : '진행 중/중단'}) ===`)
-console.log(`글 ${posts.length}건: 사진 수집 ${collected.length} / 미수집 ${pending.length} / 사진 없는 글 ${noPhoto.length}, 날짜 근사 ${interpolated}건, 댓글 있는 글 ${report.posts.withComments}건`)
+console.log(`글 ${posts.length}건: 사진 수집 ${collected.length} / 미수집(예산) ${pending.length} / 부분 수집(원본 404) ${partialOrigin.length} / 사진 없는 글 ${noPhoto.length}`)
+console.log(`날짜: 메인 미리보기 반영 ${fromMainPreview}건, 근사(interpolated) ${interpolated}건 / 댓글 있는 글 ${report.posts.withComments}건`)
+for (const p of partialOrigin) console.log(`  부분 수집: ${p.boardID} #${p.num} «${p.title}» ${p.date} ${p.photos.filter((f) => f.ok).length}/${p.photos.length}`)
 if (report.cutoff) console.log(`컷오프: ${report.cutoff.boardID} #${report.cutoff.num} «${report.cutoff.title}» ${report.cutoff.date} (이 글 ${mb(report.cutoff.postBytes)}MB) — 수집된 가장 오래된 글 #${report.cutoff.oldestCollectedNum} ${report.cutoff.oldestCollectedDate}`)
 console.log('\nboardID  라벨        글수  수집  미수집  무사진  사진파일   사진MB  미수집URL  첨부  첨부MB  댓글  기간')
 for (const b of report.byBoard) {
