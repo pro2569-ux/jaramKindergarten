@@ -19,6 +19,7 @@ import { SessionExpiredError, absoluteUrl, downloadTo, fetchHtml, hasSessionCook
 import { DATA_DIR, FILES_DIR, OUT_DIR, PARSED_DIR, ensureDirs } from './lib/paths.ts'
 import { contentUrl, dateFromStoredName, listUrl, parseContentPage, parseListPage, parseViewPage, viewUrl, type Attachment, type BoardSkin, type Comment, type ListItem } from './lib/board.ts'
 import { extractStaticPage, pageUrl, type StaticKind } from './lib/site.ts'
+import { deriveJpeg, derivedPathFor } from './lib/derive.ts'
 
 // ---------- 옵션 ----------
 const argv = process.argv.slice(2)
@@ -27,6 +28,7 @@ const opt = (name: string) => argv.find((a) => a.startsWith(`--${name}=`))?.spli
 const DO_STATIC = flag('static') || (!flag('static') && !flag('boards'))
 const DO_BOARDS = flag('boards') || (!flag('static') && !flag('boards'))
 const BUDGET_BYTES = Number(opt('budget-mb') ?? '800') * 1024 * 1024
+const BUDGET_BASIS: 'original' | 'derived' = opt('budget-basis') === 'original' ? 'original' : 'derived' // 승인: 변환본 크기 기준
 const LIMIT_POSTS = Number(opt('limit-posts') ?? '0')
 const ONLY_BOARD = opt('board') ?? null
 
@@ -54,6 +56,8 @@ export interface FileRecord {
   ok: boolean
   reason: string | null
   lastModified?: string | null
+  /** 업로드용 변환본 (JPEG, 긴 변 1920px). 사진에만 있음 */
+  derived?: { local: string; bytes: number; converted: boolean } | null
 }
 
 export interface ParsedPage {
@@ -98,7 +102,9 @@ export interface ParsedPost {
 
 interface State {
   budgetBytes: number
-  photoBytes: number
+  budgetBasis: 'original' | 'derived' // 예산을 원본 크기로 셀지 변환본 크기로 셀지
+  photoBytes: number // 원본 누적
+  derivedBytes: number // 변환본 누적 (basis=derived 일 때 예산 비교 대상)
   photoFiles: number
   postsProcessed: number
   postsTotal: number
@@ -227,7 +233,9 @@ if (DO_BOARDS) {
   // ---------- 3) 게시글 (num 내림차순) ----------
   const state: State = {
     budgetBytes: BUDGET_BYTES,
+    budgetBasis: BUDGET_BASIS,
     photoBytes: 0,
+    derivedBytes: 0,
     photoFiles: 0,
     postsProcessed: 0,
     postsTotal: targets.length,
@@ -240,14 +248,15 @@ if (DO_BOARDS) {
     updatedAt: new Date().toISOString(),
     finished: false,
   }
-  // 같은 예산으로 재실행이면 이전 컷오프를 존중 (컷오프 글의 사진을 또 받았다 지우는 낭비 방지)
-  const priorCutoffNum = prevState && prevState.budgetBytes === BUDGET_BYTES && prevState.cutoff ? prevState.cutoff.num : null
+  // 같은 예산·같은 기준으로 재실행이면 이전 컷오프를 존중 (컷오프 글의 사진을 또 받았다 지우는 낭비 방지)
+  const priorCutoffNum =
+    prevState && prevState.budgetBytes === BUDGET_BYTES && (prevState.budgetBasis ?? 'original') === BUDGET_BASIS && prevState.cutoff ? prevState.cutoff.num : null
   const saveState = () => {
     state.updatedAt = new Date().toISOString()
     writeJson(statePath, state)
   }
 
-  log(`게시글 ${targets.length}건 수집 시작 (사진 예산 ${mb(BUDGET_BYTES)}MB${priorCutoffNum ? `, 이전 컷오프 num=${priorCutoffNum}` : ''})`)
+  log(`게시글 ${targets.length}건 수집 시작 (사진 예산 ${mb(BUDGET_BYTES)}MB, 기준=${BUDGET_BASIS === 'derived' ? '변환본(JPEG 1920px)' : '원본'}${priorCutoffNum ? `, 이전 컷오프 num=${priorCutoffNum}` : ''})`)
   let idx = 0
   try {
     for (const it of targets) {
@@ -281,28 +290,40 @@ if (DO_BOARDS) {
         attachments.push({ ...a, file })
       }
 
-      // 사진 다운로드 (예산)
+      // 사진 다운로드 (예산) + 변환본 생성
       let photos: FileRecord[] = []
       let photoBytes = 0
+      let derivedBytes = 0
       let photosCollected = false
       const skipByPriorCutoff = priorCutoffNum !== null && it.num <= priorCutoffNum
+      const derivedDir = derivedPathFor(photoDir, FILES_DIR)
       if (!state.budgetExhausted && !skipByPriorCutoff && photoPlan.length > 0) {
         for (const p of photoPlan) {
           const rec = await grabFile(p.url, p.dest)
-          photos.push({ ...rec, src: p.src })
-          if (rec.ok) photoBytes += rec.bytes ?? 0
+          let derived: FileRecord['derived'] = null
+          if (rec.ok) {
+            photoBytes += rec.bytes ?? 0
+            const d = await deriveJpeg(p.dest, derivedPathFor(p.dest, FILES_DIR))
+            derived = { local: rel(d.dest), bytes: d.bytes, converted: d.converted }
+            derivedBytes += d.bytes
+          }
+          photos.push({ ...rec, src: p.src, derived })
         }
-        if (state.photoBytes + photoBytes > BUDGET_BYTES) {
-          // 글 단위 컷: 이 글의 사진을 전부 지우고 여기서부터 미수집
+        const budgetUse = BUDGET_BASIS === 'derived' ? state.derivedBytes + derivedBytes : state.photoBytes + photoBytes
+        if (budgetUse > BUDGET_BYTES) {
+          // 글 단위 컷: 이 글의 사진(원본·변환본)을 전부 지우고 여기서부터 미수집
           rmSync(photoDir, { recursive: true, force: true })
-          photos = photoPlan.map((p) => ({ src: p.src, url: p.url, local: null, bytes: null, ok: false, reason: 'budget-cutoff' }))
+          rmSync(derivedDir, { recursive: true, force: true })
+          photos = photoPlan.map((p) => ({ src: p.src, url: p.url, local: null, bytes: null, ok: false, reason: 'budget-cutoff', derived: null }))
           state.budgetExhausted = true
-          state.cutoff = { num: it.num, boardID: it.boardID, title: vp.title ?? it.title, date: vp.date ?? it.date, postBytes: photoBytes }
+          state.cutoff = { num: it.num, boardID: it.boardID, title: vp.title ?? it.title, date: vp.date ?? it.date, postBytes: BUDGET_BASIS === 'derived' ? derivedBytes : photoBytes }
           photoBytes = 0
-          log(`■ 사진 예산 도달: ${it.boardID} #${it.num} «${vp.title ?? it.title}» 이 글(${mb(state.cutoff.postBytes)}MB)부터 미수집. 누적 ${mb(state.photoBytes)}MB`)
+          derivedBytes = 0
+          log(`■ 사진 예산 도달: ${it.boardID} #${it.num} «${vp.title ?? it.title}» 이 글(${mb(state.cutoff.postBytes)}MB)부터 미수집. 누적 원본 ${mb(state.photoBytes)}MB / 변환본 ${mb(state.derivedBytes)}MB`)
         } else {
           photosCollected = photos.length > 0 && photos.every((p) => p.ok)
           state.photoBytes += photoBytes
+          state.derivedBytes += derivedBytes
           state.photoFiles += photos.filter((p) => p.ok).length
         }
       } else {
@@ -310,7 +331,7 @@ if (DO_BOARDS) {
           state.budgetExhausted = true
           state.cutoff = prevState?.cutoff ?? null
         }
-        photos = photoPlan.map((p) => ({ src: p.src, url: p.url, local: null, bytes: null, ok: false, reason: photoPlan.length ? 'budget-cutoff' : null }))
+        photos = photoPlan.map((p) => ({ src: p.src, url: p.url, local: null, bytes: null, ok: false, reason: photoPlan.length ? 'budget-cutoff' : null, derived: null }))
       }
       if (photoPlan.length === 0) photosCollected = true // 사진이 없는 글은 "수집 완료"로 본다
 
@@ -368,7 +389,7 @@ if (DO_BOARDS) {
       if (!photosCollected) state.photosPendingPosts += 1
       saveState()
       log(
-        `[${String(idx).padStart(4)}/${targets.length}] ${it.boardID.padEnd(6)} #${it.num} ${date ?? '----.--.--'} ${photosCollected ? '📷' : (photoPlan.length ? '⏸' : '  ')} ${String(photos.filter((p) => p.ok).length).padStart(2)}/${String(photoPlan.length).padEnd(2)} 첨부${nonImageAttachments.length} 누적 ${mb(state.photoBytes)}MB «${(vp.title ?? it.title).slice(0, 30)}»`
+        `[${String(idx).padStart(4)}/${targets.length}] ${it.boardID.padEnd(6)} #${it.num} ${date ?? '----.--.--'} ${photosCollected ? '📷' : (photoPlan.length ? '⏸' : '  ')} ${String(photos.filter((p) => p.ok).length).padStart(2)}/${String(photoPlan.length).padEnd(2)} 첨부${nonImageAttachments.length} 누적 원본 ${mb(state.photoBytes)}MB 변환본 ${mb(state.derivedBytes)}MB «${(vp.title ?? it.title).slice(0, 30)}»`
       )
     }
     state.finished = true

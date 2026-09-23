@@ -213,6 +213,8 @@ for (const p of posts) {
   const map = BOARD_MAP[p.boardID]
   if (!map) throw new Error(`BOARD_MAP 에 ${p.boardID} 가 없습니다`)
   const photoLocals = p.photos.map(okLocal).filter((x): x is string => !!x)
+  // 업로드는 변환본(JPEG 1920px) 을 쓴다. 변환본이 없으면(구 실행분) 원본 경로.
+  const uploadLocals = p.photos.filter((f) => okLocal(f)).map((f) => f.derived?.local ?? f.local!)
   const videos = p.attachments.filter((a) => !a.isImage && VIDEO_EXT.test(a.name))
   for (const v of videos) excludedVideos.push({ boardID: p.boardID, num: p.num, name: v.name, local: v.file?.local ?? null })
   const docs = p.attachments.filter((a) => !a.isImage && !VIDEO_EXT.test(a.name) && a.file?.ok && a.file.local).map((a) => ({ name: a.name, local: a.file!.local! }))
@@ -243,8 +245,8 @@ for (const p of posts) {
       description: description || null,
       event_date: toIsoDate(p.date),
       created_at: toIsoDate(p.date),
-      cover: photoLocals[0] ?? null,
-      photos: photoLocals.map((local, i) => ({ sort_order: i, local, legacy_source_url: p.photos[i]?.url ?? null })),
+      cover: uploadLocals[0] ?? null,
+      photos: uploadLocals.map((local, i) => ({ sort_order: i, local, original: photoLocals[i] ?? null, legacy_source_url: p.photos.filter((f) => okLocal(f))[i]?.url ?? null })),
       documents: docs, // hwp 등 — albums 에는 첨부 컬럼이 없어 Phase 3 에서 처리 방법 결정 필요
       photosCollected: p.photosCollected,
       residue: body.residue,
