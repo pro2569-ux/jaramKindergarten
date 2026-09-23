@@ -218,6 +218,9 @@ for (const p of posts) {
   const videos = p.attachments.filter((a) => !a.isImage && VIDEO_EXT.test(a.name))
   for (const v of videos) excludedVideos.push({ boardID: p.boardID, num: p.num, name: v.name, local: v.file?.local ?? null })
   const docs = p.attachments.filter((a) => !a.isImage && !VIDEO_EXT.test(a.name) && a.file?.ok && a.file.local).map((a) => ({ name: a.name, local: a.file!.local! }))
+  // 부분 수집(원본 서버 404 등으로 일부만 받힌 글)은 승인에 따라 받은 사진만으로 넣고 결손을 메타에 기록한다.
+  const partialOrigin = !p.photosCollected && p.photos.some((f) => f.ok) && !p.photos.some((f) => f.reason === 'budget-cutoff')
+  const includePhotos = p.photosCollected || partialOrigin
   const legacy_meta = {
     boardID: p.boardID,
     boardLabel: p.boardLabel,
@@ -225,10 +228,12 @@ for (const p of posts) {
     date: p.date,
     dateSource: p.dateSource,
     views: p.views,
-    photosCollected: p.photosCollected,
+    photosCollected: includePhotos,
+    partialOrigin,
+    missingPhotoUrls: partialOrigin ? p.photos.filter((f) => !f.ok).map((f) => ({ url: f.url, reason: f.reason })) : [],
     photoSource: p.photoSource,
     photoCount: p.photos.length,
-    pendingPhotoUrls: p.photosCollected ? [] : p.photos.filter((f) => !f.ok).map((f) => f.url),
+    pendingPhotoUrls: includePhotos ? [] : p.photos.filter((f) => !f.ok).map((f) => f.url),
     excludedVideos: videos.map((v) => v.name),
     commentCount: p.comments.length,
   }
@@ -248,7 +253,8 @@ for (const p of posts) {
       cover: uploadLocals[0] ?? null,
       photos: uploadLocals.map((local, i) => ({ sort_order: i, local, original: photoLocals[i] ?? null, legacy_source_url: p.photos.filter((f) => okLocal(f))[i]?.url ?? null })),
       documents: docs, // hwp 등 — albums 에는 첨부 컬럼이 없어 Phase 3 에서 처리 방법 결정 필요
-      photosCollected: p.photosCollected,
+      photosCollected: includePhotos,
+      partialOrigin,
       residue: body.residue,
       legacy_source_url: p.sourceUrls.view,
       // 원본은 사진 사이에 교사 서술이 끼어 있는 "포토 에세이" 형태. albums.description 은 텍스트만 담으므로
