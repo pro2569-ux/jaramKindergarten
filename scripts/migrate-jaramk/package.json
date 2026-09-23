@@ -1,0 +1,6 @@
+{
+  "name": "migrate-jaramk-scripts",
+  "private": true,
+  "type": "module",
+  "description": "jaramk.com → Supabase 콘텐츠 이관 스크립트 (Node 24 로 직접 실행, 별도 빌드 없음). 의존성은 루트 package.json 을 사용."
+}
