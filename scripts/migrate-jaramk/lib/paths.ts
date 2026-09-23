@@ -1,13 +1,24 @@
 import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
-import { mkdirSync } from 'node:fs'
+import { existsSync, mkdirSync } from 'node:fs'
 
 /** 리포지토리 루트 (scripts/migrate-jaramk/lib 의 세 단계 위) */
 export const REPO_ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 
+// .env.local 로드 (JARAMK_COOKIE, JARAMK_DATA_DIR, SUPABASE_* 등). 이미 설정된 환경변수가 우선.
+// 값은 어디에도 출력하지 않는다.
+const ENV_PATH = join(REPO_ROOT, '.env.local')
+if (existsSync(ENV_PATH)) {
+  try {
+    process.loadEnvFile(ENV_PATH)
+  } catch {
+    // 파싱 실패 시 무시 — 필요한 값이 없으면 각 스크립트가 명확히 실패한다
+  }
+}
+
 /**
- * 수집 데이터 폴더. 기본은 scripts/migrate-jaramk/data (gitignore 대상).
- * 워크트리 밖에 두고 싶으면 JARAMK_DATA_DIR 로 지정.
+ * 수집 데이터 폴더. JARAMK_DATA_DIR(.env.local) 로 지정 — 리포/워크트리 밖 경로 권장.
+ * 미지정 시 scripts/migrate-jaramk/data (gitignore 대상, 워크트리 삭제 시 함께 사라짐).
  */
 export const DATA_DIR = process.env.JARAMK_DATA_DIR ?? join(REPO_ROOT, 'scripts', 'migrate-jaramk', 'data')
 

@@ -281,7 +281,7 @@ export function classifyPage(
 
   const refresh = /<meta[^>]+http-equiv=["']Refresh["'][^>]+URL=([^'">]+)/i.exec(html)
   if (refresh?.[1]) return { ...none, type: 'redirect', redirectTo: pageCodeOf(refresh[1]) }
-  if (/페이지 정보가 없습니다/.test(html) && html.length < 500) return { ...none, type: 'missing' }
+  if (/페이지 정보가 없습니다|DB질의에 실패하였습니다/.test(html) && html.length < 500) return { ...none, type: 'missing' }
 
   const board = detectBoard(html)
   const wall = detectLoginWall(html)

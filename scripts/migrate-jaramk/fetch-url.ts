@@ -10,7 +10,10 @@ const showLinks = args.includes('--links')
 const showHtml = args.includes('--html')
 const grepIdx = args.indexOf('--grep')
 const grep = grepIdx >= 0 ? new RegExp(args[grepIdx + 1] ?? '', 'i') : null
-const urls = args.filter((a, i) => !a.startsWith('--') && (grepIdx < 0 || i !== grepIdx + 1))
+const selectIdx = args.indexOf('--select')
+const select = selectIdx >= 0 ? (args[selectIdx + 1] ?? '') : null
+const optionValueIdx = new Set([grepIdx + 1, selectIdx + 1].filter((i) => i > 0))
+const urls = args.filter((a, i) => !a.startsWith('--') && !optionValueIdx.has(i))
 
 function classify(href: string): string {
   if (/boardID=.*Mode=view/i.test(href)) return 'post-view'
@@ -62,6 +65,12 @@ for (const url of urls) {
     res.html.split(/\r?\n/).forEach((line, i) => {
       if (grep.test(line)) console.log(`   ${i + 1}: ${line.trim().slice(0, 300)}`)
     })
+  }
+  if (select) {
+    const node = $(select)
+    console.log(`-- select ${select} (matches=${node.length}, imgs=${node.find('img').length}, textLength=${node.text().replace(/\s+/g, ' ').trim().length})`)
+    node.find('img').each((_, img) => console.log(`   img: ${$(img).attr('src')}`))
+    console.log((node.html() ?? '').replace(/\r?\n\s*/g, '\n').trim())
   }
   if (showHtml) {
     console.log('-- html')

@@ -25,6 +25,10 @@ const MAIN_URL = '/main/main.html'
 const EXTRA_CATEGORY_PROBES = [4] // 상단 메뉴에 없는 mstrCode (숨은 대분류) 확인용
 const REQUEST_INTERVAL_SEC = 1.5
 
+// --sweep=1-70 : 메뉴에 링크되지 않은 pageCode 까지 훑는다 (pageCode 당 1 요청)
+const sweepArg = process.argv.find((a) => a.startsWith('--sweep='))
+const sweepRange = sweepArg ? sweepArg.slice('--sweep='.length).split('-').map(Number) : null
+
 ensureDirs()
 
 // 1) 메인 페이지 → 상단 메뉴 트리 + 퀵링크
@@ -42,6 +46,19 @@ for (const mstrCode of EXTRA_CATEGORY_PROBES) {
   log(`mstrCode=${mstrCode}: final=${res.finalUrl} → 누적 pageCode ${discovered.size}개`)
 }
 
+// 2-1) 스윕 범위의 pageCode 를 큐에 추가 (라벨은 페이지 제목에서 채움)
+const swept = new Set<number>()
+if (sweepRange && sweepRange.length === 2 && sweepRange.every((n) => Number.isFinite(n))) {
+  const [from, to] = sweepRange as [number, number]
+  for (let c = from; c <= to; c += 1) {
+    if (!discovered.has(c)) {
+      discovered.set(c, '')
+      swept.add(c)
+    }
+  }
+  log(`스윕: pageCode ${from}~${to} 중 미발견 ${swept.size}개 추가`)
+}
+
 // 3) 발견된 모든 pageCode 를 1회씩 방문해 분류 (방문 중 새로 발견된 pageCode 도 큐에 추가)
 const pages = new Map<number, PageInfo>()
 const queue = [...discovered.keys()].sort((a, b) => a - b)
@@ -54,13 +71,14 @@ while (queue.length > 0) {
   const info: PageInfo = {
     pageCode: code,
     url: res.url,
-    label: discovered.get(code) ?? null,
+    label: discovered.get(code) || titleLabel || breadcrumb[breadcrumb.length - 1] || null,
     titleLabel,
     breadcrumb,
     ...cls,
     charset: res.charset,
     bytes: res.bytes,
   }
+  if (swept.has(code) && cls.type !== 'missing') log(`  스윕 발견: pageCode=${code} ${cls.type} «${info.label ?? ''}» breadcrumb=${breadcrumb.join(' > ')}`)
   if (cls.type === 'static') info.static = analyzeStaticContent(res.html)
   pages.set(code, info)
 

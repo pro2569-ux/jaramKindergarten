@@ -35,6 +35,8 @@ export interface RawResponse {
   contentType: string | null
   bytes: number
   fetchedAt: string
+  /** HTML 응답이 로그인 벽(권한 없음 경고/로그인 iframe)이면 그 사유. 쿠키 사용 중이면 세션 만료 의심 */
+  loginWall: string | null
   body: Buffer
   fromCache: boolean
 }
@@ -46,7 +48,12 @@ export interface HtmlResponse extends RawResponse {
   charset: string
 }
 
-export const stats = { network: 0, cached: 0, failed: 0 }
+export const stats = { network: 0, cached: 0, failed: 0, loginWalls: 0 }
+
+/** Phase 1 수집용: 쿠키를 쓰는 중에 로그인 벽을 만나면 즉시 중단 */
+export function assertSession(res: RawResponse): void {
+  if (res.loginWall && hasSessionCookie()) throw new SessionExpiredError(res.url, res.loginWall)
+}
 
 let lastRequestAt = 0
 
@@ -77,13 +84,30 @@ export function isCached(url: string): boolean {
   return existsSync(join(RAW_DIR, `${key}.json`)) && existsSync(join(RAW_DIR, `${key}.bin`))
 }
 
+/**
+ * 로그인 세션 쿠키 헤더. .env.local 의 JARAMK_COOKIE("PHPSESSID=..; ANYSELITEDEL=Y") 를 우선 쓰고,
+ * 없으면 개별 변수 PHPSESSID / ANYSELITEDEL 로 조립한다. 값은 절대 로그에 남기지 않는다.
+ */
+export function cookieHeader(): string | null {
+  const direct = process.env.JARAMK_COOKIE?.trim()
+  if (direct) return direct
+  const parts: string[] = []
+  if (process.env.PHPSESSID) parts.push(`PHPSESSID=${process.env.PHPSESSID.trim()}`)
+  if (process.env.ANYSELITEDEL) parts.push(`ANYSELITEDEL=${process.env.ANYSELITEDEL.trim()}`)
+  return parts.length ? parts.join('; ') : null
+}
+
+export function hasSessionCookie(): boolean {
+  return cookieHeader() !== null
+}
+
 function requestHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     'User-Agent': USER_AGENT,
     Accept: '*/*',
     'Accept-Language': 'ko-KR,ko;q=0.9',
   }
-  const cookie = process.env.JARAMK_COOKIE
+  const cookie = cookieHeader()
   if (cookie) headers.Cookie = cookie
   return headers
 }
@@ -118,9 +142,19 @@ export async function fetchRaw(url: string, opts: { force?: boolean } = {}): Pro
   const bodyPath = join(RAW_DIR, `${key}.bin`)
 
   if (!opts.force && existsSync(metaPath) && existsSync(bodyPath)) {
-    const meta = JSON.parse(readFileSync(metaPath, 'utf8')) as Meta
-    stats.cached += 1
-    return { ...meta, body: readFileSync(bodyPath), fromCache: true }
+    const meta = JSON.parse(readFileSync(metaPath, 'utf8')) as Partial<Meta> & Meta
+    const cachedBody = readFileSync(bodyPath)
+    const cachedWall =
+      meta.loginWall ??
+      (meta.contentType?.includes('text/html')
+        ? looksLikeLoginWall(meta.finalUrl, decodeHtml(cachedBody, meta.contentType).text)
+        : null)
+    // 쿠키 없이 받아 둔 로그인 벽 페이지는, 쿠키가 생겼으면 다시 받는다
+    if (!(cachedWall && hasSessionCookie())) {
+      stats.cached += 1
+      return { ...meta, loginWall: cachedWall, body: cachedBody, fromCache: true }
+    }
+    log(`캐시 무효화(로그인 벽 → 쿠키로 재요청): ${abs}`)
   }
 
   let lastError: unknown = null
@@ -146,20 +180,28 @@ export async function fetchRaw(url: string, opts: { force?: boolean } = {}): Pro
         continue
       }
 
+      const contentType = res.headers.get('content-type')
+      const finalUrl = res.url || abs
+      const loginWall = contentType?.includes('text/html')
+        ? looksLikeLoginWall(finalUrl, decodeHtml(body, contentType).text)
+        : null
       const result: RawResponse = {
         url: abs,
-        finalUrl: res.url || abs,
+        finalUrl,
         status: res.status,
-        contentType: res.headers.get('content-type'),
+        contentType,
         bytes: body.byteLength,
         fetchedAt: new Date().toISOString(),
+        loginWall,
         body,
         fromCache: false,
       }
 
-      if (process.env.JARAMK_COOKIE && result.contentType?.includes('text/html')) {
-        const reason = looksLikeLoginWall(result.finalUrl, decodeHtml(body, result.contentType).text)
-        if (reason) throw new SessionExpiredError(abs, reason)
+      if (loginWall && hasSessionCookie()) {
+        // 쿠키를 보냈는데도 로그인 벽 → 세션 만료 또는 권한 부족. 캐시하지 않고 호출자가 판단하게 한다.
+        stats.loginWalls += 1
+        log(`⚠ 로그인 벽 (${loginWall}): ${abs}`)
+        return result
       }
 
       if (res.ok) {
@@ -170,6 +212,7 @@ export async function fetchRaw(url: string, opts: { force?: boolean } = {}): Pro
           contentType: result.contentType,
           bytes: result.bytes,
           fetchedAt: result.fetchedAt,
+          loginWall,
         }
         writeFileSync(bodyPath, body)
         writeFileSync(metaPath, JSON.stringify(meta, null, 2))
