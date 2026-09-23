@@ -90,3 +90,10 @@ export const PAGINATION = {
  * Supabase 대시보드에 실제 존재하는 버킷명과 반드시 일치해야 함
  */
 export const STORAGE_BUCKET = 'publicImage' as const
+
+/**
+ * 이관(jaramk.com) 앨범 사진용 private 버킷. 공개 URL 이 없고 서버에서 서명 URL 로만 열람한다.
+ * DB 에는 'legacy-media:<객체 경로>' 형태로 저장하고 lib/storage/media.ts 가 렌더 시 해석한다.
+ */
+export const LEGACY_MEDIA_BUCKET = 'legacy-media' as const
+export const LEGACY_MEDIA_PREFIX = 'legacy-media:' as const

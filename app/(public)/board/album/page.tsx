@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { withResolvedMedia } from '@/lib/storage/media'
 import Link from 'next/link'
 import Image from 'next/image'
 import { PAGINATION } from '@/lib/constants'
@@ -35,12 +36,15 @@ export default async function AlbumPage({
   const totalPages = Math.ceil((count || 0) / pageSize)
 
   // 앨범 목록 가져오기
-  const { data: albums } = await supabase
+  const { data: albumRows } = await supabase
     .from('albums')
     .select('*')
     .eq('is_published', true)
     .order('created_at', { ascending: false })
     .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
+
+  // 이관 앨범(legacy-media 버킷)의 커버는 서명 URL 로 해석
+  const albums = await withResolvedMedia(albumRows ?? [], 'cover_image_url')
 
   return (
     <div className="py-16 bg-gray-50">

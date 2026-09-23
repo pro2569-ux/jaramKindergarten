@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { withResolvedMedia } from '@/lib/storage/media'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -42,12 +43,15 @@ export default async function AlbumDetailPage({ params }: PageProps) {
   }
 
   // 앨범 사진들 가져오기
-  const { data: photos } = await supabase
+  const { data: photoRows } = await supabase
     .from('album_photos')
     .select('*')
     .eq('album_id', id)
     .order('sort_order')
     .order('created_at')
+
+  // 이관 사진(legacy-media 버킷)은 서명 URL 로 해석 (공개 앨범만 여기까지 옴)
+  const photos = await withResolvedMedia(photoRows ?? [], 'image_url')
 
   return (
     <div className="py-16 bg-gray-50">
@@ -88,12 +92,18 @@ export default async function AlbumDetailPage({ params }: PageProps) {
                 key={photo.id}
                 className="aspect-square bg-gray-200 rounded-lg overflow-hidden relative group cursor-pointer hover:shadow-lg transition-shadow"
               >
-                <Image
-                  src={photo.image_url}
-                  alt={photo.caption || album.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+                {photo.image_url ? (
+                  <Image
+                    src={photo.image_url}
+                    alt={photo.caption || album.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <ImageIcon className="w-10 h-10 text-gray-400" />
+                  </div>
+                )}
                 {photo.caption && (
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
                     <p className="text-white text-sm line-clamp-2">
