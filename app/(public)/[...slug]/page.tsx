@@ -109,6 +109,10 @@ export default async function DynamicPage({ params }: Props) {
 
   const { parentMenu, menuItems, page } = data
 
+  // greeting은 전용 렌더러(GreetingRenderer)가 배지·제목을 자체적으로 그리므로
+  // 기본 헤더(h2 + hero_subtitle)를 숨겨 제목 중복을 방지. 다른 페이지는 영향 없음.
+  const isGreeting = page?.slug === 'greeting'
+
   // ── 결정 B: 대분류만 hit → 소분류 인덱스 표시 ──────────────
   if (!page) {
     return (
@@ -156,14 +160,18 @@ export default async function DynamicPage({ params }: Props) {
         </div>
       )}
 
-      {/* 페이지 제목 (hero_title 있으면 그걸 사용) */}
-      <h2 className="text-3xl font-bold text-gray-900 mb-2">
-        {page.hero_title ?? page.title}
-      </h2>
+      {/* 페이지 제목 (hero_title 있으면 그걸 사용) — greeting은 전용 렌더러가 직접 그림 */}
+      {!isGreeting && (
+        <>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            {page.hero_title ?? page.title}
+          </h2>
 
-      {/* Hero 부제목 */}
-      {page.hero_subtitle && (
-        <p className="text-gray-600 text-lg mb-6">{page.hero_subtitle}</p>
+          {/* Hero 부제목 */}
+          {page.hero_subtitle && (
+            <p className="text-gray-600 text-lg mb-6">{page.hero_subtitle}</p>
+          )}
+        </>
       )}
 
       {/* 본문 렌더 (page_type에 따라 PageRenderer가 분기) */}
