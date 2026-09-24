@@ -59,8 +59,8 @@ export default async function Home() {
     // 패턴 배경은 메인 전체를 감싸는 이 한 곳에만 깐다(PageShell 과 같은 방식). 각 섹션은 배경 투명 →
     // 무늬가 섹션 경계에서 잘리지 않고 위아래로 이어진다. background-attachment: fixed 는 iOS 문제로 쓰지 않음.
     <div className="bg-pattern flex flex-col">
-      {/* 히어로 배너 섹션 — 위쪽은 단색(tint), 아래로 갈수록 투명해져 패턴이 서서히 드러난다 */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-tint from-35% to-transparent py-12 md:py-20">
+      {/* 히어로 배너 섹션 — 배경 투명: 감싸는 패턴이 다른 영역과 같은 투명도로 그대로 비친다 */}
+      <section className="relative overflow-hidden py-12 md:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
             {/* 왼쪽: 텍스트 콘텐츠 */}
