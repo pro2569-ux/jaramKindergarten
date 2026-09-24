@@ -109,22 +109,15 @@ export default function Header() {
         const response = await fetch('/api/auth/me')
         const data = await response.json()
 
-        if (!response.ok) {
-          alert(`프로필 조회 실패 (${response.status}): ${data.error || '알 수 없는 오류'}`)
-          console.error('프로필 조회 실패:', data)
-          return
-        }
-
-        if (!data.name) {
-          alert(`프로필 name 컬럼 값이 없습니다. 응답: ${JSON.stringify(data)}`)
-          console.error('프로필 name 누락:', data)
+        // 실패해도 방문자에게 alert 로 내부 정보를 보여 주지 않는다 — 콘솔에만 남긴다
+        if (!response.ok || !data.name) {
+          console.error('프로필 조회 실패:', response.status)
           return
         }
 
         setUserName(data.name)
         localStorage.setItem('userName', data.name)
       } catch (error) {
-        alert(`프로필 조회 중 예외 발생: ${error instanceof Error ? error.message : String(error)}`)
         console.error('프로필 조회 예외:', error)
       }
     }
