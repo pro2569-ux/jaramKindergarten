@@ -133,3 +133,20 @@ npm run dev
 - [ ] 실제 Supabase Auth 로그인 연동
 - [ ] 파일 첨부 기능
 - [ ] 검색 기능
+
+## 이관 스크립트 — Phase 6: pageMaker 페이지 통짜 이미지 교체
+
+원본(jaramk.com)에서 "pageMaker"(절대좌표 이미지 조각) 방식으로 만든 16개 페이지는 이관 뒤 조각 이미지 54~89장이 세로로 쌓여 깨져 보인다.
+원본 페이지의 본문 컨테이너(`#pageMakerBaseLayer`)만 헤드리스 크롬으로 2배율 캡처해 이미지 1장으로 바꾼다. (`scripts/migrate-jaramk/`, Node 24 직접 실행, `JARAMK_DATA_DIR` 필요)
+
+```bash
+node scripts/migrate-jaramk/phase6-capture.ts                     # 원본 캡처 → <data>/files/pagemaker-full/<code>.png, @1x/@2x.webp, manifest.json (66 제외, 페이지당 1회, 2초 간격)
+node scripts/migrate-jaramk/phase6-pagemaker-full.ts --upload     # webp 를 publicImage/legacy/pagemaker-full/<code>.webp 에 업로드(upsert), 공개 URL 을 manifest 에 기록
+node scripts/migrate-jaramk/phase6-pagemaker-full.ts              # dry-run: 바뀔 행·새 본문 출력, out/pagemaker-full/plan-<ts>.json 저장 (DB 변경 없음)
+node scripts/migrate-jaramk/phase6-pagemaker-full.ts --apply      # 반영: 대상 행 content 전체를 out/pagemaker-full/backup-<ts>.json 에 백업한 뒤 교체
+node scripts/migrate-jaramk/phase6-pagemaker-full.ts --rollback <backup.json>   # 백업 시점 content 로 복원
+```
+
+- 새 본문: `<figure class="legacy-full"><img src=… width height loading="lazy" style="max-width:100%;height:auto;display:block;margin:0 auto" /><figcaption>이미지 크게 보기</figcaption></figure>` — `lib/sanitize.ts` 허용 목록을 그대로 통과하는 형태(`decoding` 속성은 허용 목록에 없어 넣지 않음)
+- 66(교원/반편성)은 캡처하지 않고 사이트의 `/images/teacher.png` 를 쓴다. 67(오시는길)은 비공개 + 정적 라우트라 캡처만 하고 기본 계획에서 제외 (`--include-excluded`)
+- 이미지 변형: `@2x.webp`(q80) 가 700KB 이하이면 그것을, 아니면 `@1x.webp`(q85) 를 올린다
