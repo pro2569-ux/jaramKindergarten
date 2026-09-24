@@ -1,17 +1,17 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect, permanentRedirect } from 'next/navigation'
 import type { Metadata } from 'next'
-import type { CSSProperties, ReactNode } from 'react'
+import { createElement, type CSSProperties, type ReactNode } from 'react'
 import { Construction } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getRendererByType } from '@/components/page-renderers'
+import type { PageData } from '@/components/page-renderers/types'
 import GreetingRenderer from '@/components/page-renderers/GreetingRenderer'
 import PageShell from '@/components/layout/PageShell'
 import SideNav from '@/components/layout/SideNav'
 import ContentCard from '@/components/ui/ContentCard'
 import EmptyState from '@/components/ui/EmptyState'
 import ButtonLink from '@/components/ui/ButtonLink'
-import { getSectionNav } from '@/lib/site-nav'
-import { menuHref, redirectTargetOf, type MenuLinkPage } from '@/lib/menu-links'
+import { getMenuTree, hrefOf, sectionNavOf, type MenuNode, type NavItem } from '@/lib/site-nav'
 
 export const revalidate = 60
 
@@ -19,81 +19,71 @@ interface PageProps {
   params: Promise<{ slug: string[] }>
 }
 
-async function fetchMenuAndPage(slugArray: string[]) {
-  const supabase = await createClient()
-  const [parentSlug, childSlug] = slugArray
+type Resolved =
+  | { kind: 'redirect'; to: string; permanent: boolean }
+  | { kind: 'empty'; parentMenu: MenuNode }
+  | { kind: 'page'; parentMenu: MenuNode; childMenu: MenuNode; page: PageData; siblings: NavItem[] }
 
-  if (!parentSlug) return null
+/**
+ * 경로 → 메뉴 트리 해석. 원본(jaramk.com)과 같은 3단: /대분류/소분류 또는 /대분류/그룹/항목
+ * - /대분류          → 첫 소분류로 (링크 페이지면 그 목적지로)
+ * - /대분류/그룹     → 그룹의 첫 항목으로 (원본 동작)
+ * - /대분류/항목     → 그룹 아래로 옮겨진 항목이면 새 3단 경로로 영구 이동 (옛 2단 평탄화 URL)
+ * - 링크 페이지      → pages.layout_config.redirectTo 로
+ */
+async function resolve(slugArray: string[]): Promise<Resolved | null> {
+  const [parentSlug, childSlug, leafSlug, ...rest] = slugArray
+  if (!parentSlug || rest.length > 0) return null
 
-  // 대분류 메뉴 찾기
-  const { data: parentMenu } = await supabase
-    .from('menus')
-    .select('id, label, slug')
-    .eq('slug', parentSlug)
-    .eq('depth', 0)
-    .eq('is_visible', true)
-    .single()
+  const tree = await getMenuTree()
+  const root = tree.find((r) => r.slug === parentSlug)
+  if (!root) return null
 
-  if (!parentMenu) return null
-
-  // 소분류가 없으면 대분류 아래 첫 번째 소분류로 이동할 정보 반환 (링크 페이지면 그 목적지로)
   if (!childSlug) {
-    const { data: firstChild } = await supabase
-      .from('menus')
-      .select('slug, pages(layout_config)')
-      .eq('parent_id', parentMenu.id)
-      .eq('is_visible', true)
-      .order('sort_order', { ascending: true })
-      .limit(1)
-      .single()
-
-    return {
-      redirect: firstChild ? menuHref(parentSlug, firstChild.slug, firstChild.pages as unknown as MenuLinkPage | MenuLinkPage[] | null) : null,
-      parentMenu,
-    }
+    return root.children.length > 0
+      ? { kind: 'redirect', to: hrefOf(root), permanent: false }
+      : { kind: 'empty', parentMenu: root }
   }
 
-  // 소분류 메뉴 찾기 (page 데이터 조인)
-  const { data: childMenu } = await supabase
-    .from('menus')
-    .select('id, label, slug, page_id')
-    .eq('parent_id', parentMenu.id)
-    .eq('slug', childSlug)
-    .eq('is_visible', true)
-    .single()
+  let node = root.children.find((c) => c.slug === childSlug)
+  if (!node) {
+    if (!leafSlug) {
+      for (const group of root.children) {
+        const leaf = group.children.find((l) => l.slug === childSlug)
+        if (leaf) return { kind: 'redirect', to: hrefOf(leaf), permanent: true }
+      }
+    }
+    return null
+  }
+  if (node.children.length > 0) {
+    if (!leafSlug) return { kind: 'redirect', to: hrefOf(node), permanent: false }
+    const leaf = node.children.find((l) => l.slug === leafSlug)
+    if (!leaf) return null
+    node = leaf
+  } else if (leafSlug) {
+    return null
+  }
 
-  if (!childMenu?.page_id) return null
+  if (node.redirectTo) return { kind: 'redirect', to: node.redirectTo, permanent: false }
+  if (!node.pageId) return null
 
-  // 페이지 데이터 조회
+  const supabase = await createClient()
   const { data: page } = await supabase
     .from('pages')
     .select('*')
-    .eq('id', childMenu.page_id)
+    .eq('id', node.pageId)
     .eq('is_published', true)
     .single()
-
   if (!page) return null
 
-  // 링크 페이지(게시판 등 다른 라우트로 보내는 메뉴)면 목적지로 리디렉트
-  const linkTarget = redirectTargetOf(page as MenuLinkPage)
-  if (linkTarget) return { redirect: linkTarget, parentMenu }
-
-  // 같은 대분류 아래 소분류 목록 (사이드바용, 링크 페이지는 목적지로)
-  const nav = await getSectionNav(parentSlug)
-
-  return {
-    parentMenu,
-    childMenu,
-    page,
-    siblings: nav.items,
-  }
+  return { kind: 'page', parentMenu: root, childMenu: node, page: page as unknown as PageData, siblings: sectionNavOf(root).items }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
-  const result = await fetchMenuAndPage(slug)
+  const result = await resolve(slug)
 
-  if (!result || !('page' in result)) {
+  if (!result || result.kind !== 'page') {
     return { title: '페이지를 찾을 수 없습니다' }
   }
 
@@ -106,23 +96,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function DynamicPage({ params }: PageProps) {
   const { slug } = await params
-  const result = await fetchMenuAndPage(slug)
+  const result = await resolve(slug)
 
   if (!result) {
     notFound()
   }
 
-  // 대분류만 접근한 경우 첫 번째 소분류로 리디렉트
-  if ('redirect' in result && result.redirect) {
-    const { redirect } = await import('next/navigation')
-    redirect(result.redirect)
+  // 대분류·그룹만 접근 → 첫 하위 항목으로. 옛 2단 경로 → 새 3단 경로로 영구 이동
+  if (result.kind === 'redirect') {
+    if (result.permanent) permanentRedirect(result.to)
+    redirect(result.to)
   }
 
-  // 자식(소분류)이 없는 빈 대분류 접근 → 404 대신 "준비 중" 안내 (예: 입학안내)
-  if (!('page' in result)) {
-    const label = ('parentMenu' in result && result.parentMenu?.label) || '페이지'
+  // 자식(소분류)이 없는 빈 대분류 접근 → 404 대신 "준비 중" 안내
+  if (result.kind === 'empty') {
     return (
-      <PageShell title={label} width="reading">
+      <PageShell title={result.parentMenu.label} width="reading">
         <EmptyState
           icon={Construction}
           title="준비 중입니다"
@@ -135,7 +124,7 @@ export default async function DynamicPage({ params }: PageProps) {
 
   const { parentMenu, page, siblings, childMenu } = result
   // greeting(원장 인사말)만 전용 렌더러로 분기. 그 외는 기존 경로 그대로.
-  const isGreeting = childMenu?.slug === 'greeting'
+  const isGreeting = childMenu.slug === 'greeting'
   const Renderer = getRendererByType(page.page_type || 'single')
 
   const sc = (page.style_config || {}) as Record<string, string | undefined>
@@ -169,14 +158,11 @@ export default async function DynamicPage({ params }: PageProps) {
     contentBgStyle.backgroundPosition = 'center'
   }
 
+  // 서버 컴포넌트라 상태가 없으므로 page_type 에 따라 고른 렌더러를 바로 그린다
   const rendered = isGreeting ? (
     <GreetingRenderer page={page} />
   ) : (
-    <Renderer
-      page={page}
-      layoutConfig={page.layout_config || {}}
-      styleConfig={page.style_config || {}}
-    />
+    createElement(Renderer, { page, layoutConfig: page.layout_config || {}, styleConfig: page.style_config || {} })
   )
 
   // 콘텐츠 컬럼 래핑: 배경 모드별 / 인사말(자체 카드) / 기본 ContentCard
@@ -203,9 +189,9 @@ export default async function DynamicPage({ params }: PageProps) {
     <PageShell
       eyebrow={parentMenu.label}
       title={page.title}
-      subtitle={page.hero_subtitle}
-      heroImageUrl={page.hero_image_url}
-      sidebar={<SideNav title={parentMenu.label} items={siblings ?? []} />}
+      subtitle={page.hero_subtitle ?? undefined}
+      heroImageUrl={page.hero_image_url ?? undefined}
+      sidebar={<SideNav title={parentMenu.label} items={siblings} />}
       card={false}
       style={styleVars as CSSProperties}
     >

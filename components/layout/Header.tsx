@@ -5,14 +5,15 @@ import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { Menu, X, LogIn, LogOut, Settings, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { cn } from '@/lib/utils'
 
+/** 헤더 메뉴 항목. 대분류 > 소분류(그룹이면 children) > 항목 — 원본(jaramk.com)의 3단 구조 */
 interface NavItem {
   name: string
   href: string
-  children?: { name: string; href: string }[]
+  children?: NavItem[]
 }
 
 // DB 로드 전 초기 표시용 (깜빡임 방지)
@@ -23,6 +24,23 @@ const fallbackNavigation: NavItem[] = [
   { name: '교육활동이야기', href: '/board', children: [] },
   { name: '커뮤니티', href: '/community', children: [] },
 ]
+
+const isUnder = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`)
+/** 항목 자신 또는 하위 항목에 현재 경로가 있는지 */
+const contains = (item: NavItem, pathname: string): boolean =>
+  isUnder(pathname, item.href) || (item.children ?? []).some((c) => contains(c, pathname))
+const isGroup = (item: NavItem) => !!item.children && item.children.length > 0
+
+/** PC 메가메뉴 열: 그룹은 자기 열, 그룹이 아닌 연속 항목은 한 열로 (원본 순서 유지) */
+function columnsOf(children: NavItem[]): NavItem[][] {
+  const cols: NavItem[][] = []
+  for (const c of children) {
+    const last = cols[cols.length - 1]
+    if (isGroup(c) || !last || isGroup(last[0]!)) cols.push([c])
+    else last.push(c)
+  }
+  return cols
+}
 
 export default function Header() {
   const [navigation, setNavigation] = useState<NavItem[]>(fallbackNavigation)
@@ -36,17 +54,18 @@ export default function Header() {
     return ''
   })
   const [isLoggingOut, setIsLoggingOut] = useState(false)
-  // 모바일 아코디언: 기본은 현재 경로가 속한 대분류만 펼침. 사용자가 누르면 그 경로에서의 선택을 기억한다 (effect 없이 파생)
+  // 모바일 아코디언: 기본은 현재 경로가 속한 대분류/그룹만 펼침. 사용자가 누르면 그 경로에서의 선택을 기억한다 (effect 없이 파생)
   const [sectionChoice, setSectionChoice] = useState<{ path: string; name: string | null } | null>(null)
-  const router = useRouter()
+  const [groupChoice, setGroupChoice] = useState<{ path: string; name: string | null } | null>(null)
   const pathname = usePathname()
   const supabase = createClient()
 
-  const sectionContains = (item: NavItem) =>
-    (item.children ?? []).some((c) => pathname === c.href || pathname.startsWith(`${c.href}/`))
-  const currentSection = navigation.find(sectionContains)
+  const currentSection = navigation.find((s) => (s.children ?? []).some((c) => contains(c, pathname)))
   const mobileOpenSection = sectionChoice?.path === pathname ? sectionChoice.name : (currentSection?.name ?? null)
   const setMobileOpenSection = (name: string | null) => setSectionChoice({ path: pathname, name })
+  const currentGroup = currentSection?.children?.find((c) => isGroup(c) && contains(c, pathname))
+  const mobileOpenGroup = groupChoice?.path === pathname ? groupChoice.name : (currentGroup?.name ?? null)
+  const setMobileOpenGroup = (name: string | null) => setGroupChoice({ path: pathname, name })
 
   // menus 테이블에서 네비게이션 조회
   useEffect(() => {
@@ -129,6 +148,8 @@ export default function Header() {
     }
   }
 
+  const dropdownLink = 'block rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-tint hover:text-primary-ink'
+
   return (
     <header className="sticky top-0 z-50 bg-white shadow-md">
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -150,44 +171,76 @@ export default function Header() {
 
           {/* 데스크톱 네비게이션 */}
           <div className="hidden lg:flex lg:items-center lg:space-x-8 lg:flex-1 lg:justify-end">
-            {navigation.map((item, index) => (
-              <div
-                key={item.name}
-                className="relative group"
-                onMouseEnter={() => setActiveDropdown(index)}
-                onMouseLeave={() => setActiveDropdown(null)}
-              >
-                <Link
-                  href={item.href}
-                  className="text-gray-700 hover:text-primary-ink font-semibold transition-all py-2 px-3 block rounded-lg hover:bg-tint"
+            {navigation.map((item, index) => {
+              const children = item.children ?? []
+              const mega = children.some(isGroup)
+              const open = activeDropdown === index
+              return (
+                <div
+                  key={item.name}
+                  className="relative group"
+                  onMouseEnter={() => setActiveDropdown(index)}
+                  onMouseLeave={() => setActiveDropdown(null)}
                 >
-                  {item.name}
-                </Link>
-                {item.children && (
-                  <div
-                    className={`absolute left-0 top-full mt-0 w-56 rounded-card bg-white shadow-lg ring-1 ring-black/5 transition-all duration-200 ${
-                      activeDropdown === index
-                        ? 'opacity-100 visible translate-y-0'
-                        : 'opacity-0 invisible -translate-y-2'
-                    }`}
-                    onMouseEnter={() => setActiveDropdown(index)}
-                    onMouseLeave={() => setActiveDropdown(null)}
+                  <Link
+                    href={item.href}
+                    className="text-gray-700 hover:text-primary-ink font-semibold transition-all py-2 px-3 block rounded-lg hover:bg-tint"
                   >
-                    <div className="py-2">
-                      {item.children.map((child) => (
-                        <Link
-                          key={child.name}
-                          href={child.href}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-tint hover:text-primary-ink transition-colors"
-                        >
-                          {child.name}
-                        </Link>
-                      ))}
+                    {item.name}
+                  </Link>
+                  {children.length > 0 && (
+                    <div
+                      className={cn(
+                        'absolute top-full z-50 rounded-card bg-white shadow-lg ring-1 ring-black/5 transition-all duration-200',
+                        // 그룹이 있는 대분류(교육프로그램)는 메가메뉴: 열마다 그룹 소제목 + 항목. 항목 아래 가운데 정렬
+                        mega ? 'left-1/2 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2' : 'left-0 w-56',
+                        open ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-2 opacity-0'
+                      )}
+                      onMouseEnter={() => setActiveDropdown(index)}
+                      onMouseLeave={() => setActiveDropdown(null)}
+                    >
+                      {mega ? (
+                        <div className="flex divide-x divide-border p-2">
+                          {columnsOf(children).map((col, ci) => (
+                            <div key={ci} className="min-w-[11rem] px-1 py-1">
+                              {isGroup(col[0]!) ? (
+                                <>
+                                  <Link
+                                    href={col[0]!.href}
+                                    className="block rounded-md px-3 py-2 text-sm font-semibold text-heading transition-colors hover:bg-tint hover:text-primary-ink"
+                                  >
+                                    {col[0]!.name}
+                                  </Link>
+                                  {col[0]!.children!.map((leaf) => (
+                                    <Link key={leaf.href} href={leaf.href} className={cn(dropdownLink, 'py-1.5 pl-5')}>
+                                      {leaf.name}
+                                    </Link>
+                                  ))}
+                                </>
+                              ) : (
+                                col.map((child) => (
+                                  <Link key={child.href} href={child.href} className={dropdownLink}>
+                                    {child.name}
+                                  </Link>
+                                ))
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-2">
+                          {children.map((child) => (
+                            <Link key={child.href} href={child.href} className={dropdownLink}>
+                              {child.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              )
+            })}
 
             {/* 로그인/로그아웃 버튼 */}
             <div className="flex items-center gap-2 ml-6 pl-6 border-l border-gray-200">
@@ -248,14 +301,14 @@ export default function Header() {
         </div>
       </nav>
 
-      {/* 모바일 메뉴: 대분류 아코디언(현재 대분류만 펼침), 헤더 아래 화면 높이 안에서 스크롤 */}
+      {/* 모바일 메뉴: 대분류 아코디언(현재 대분류만 펼침) > 그룹 아코디언(2단 펼치면 3단), 헤더 아래 화면 높이 안에서 스크롤 */}
       {mobileMenuOpen && (
         <div id="mobile-menu" className="max-h-[calc(100dvh-7rem)] overflow-y-auto border-t bg-white lg:hidden">
           <div className="space-y-1 px-4 pb-3 pt-2">
             {navigation.map((item) => {
               const hasChildren = !!item.children && item.children.length > 0
               const isOpen = mobileOpenSection === item.name
-              const sectionActive = (item.children ?? []).some((c) => pathname === c.href || pathname.startsWith(`${c.href}/`))
+              const sectionActive = (item.children ?? []).some((c) => contains(c, pathname))
               return (
                 <div key={item.name} className="space-y-1">
                   {hasChildren ? (
@@ -283,10 +336,51 @@ export default function Header() {
                   {hasChildren && isOpen && (
                     <div className="space-y-0.5 pb-1 pl-3">
                       {item.children!.map((child) => {
-                        const active = pathname === child.href || pathname.startsWith(`${child.href}/`)
+                        if (isGroup(child)) {
+                          const groupOpen = mobileOpenGroup === child.name
+                          const groupActive = contains(child, pathname)
+                          return (
+                            <div key={child.href} className="space-y-0.5">
+                              <button
+                                type="button"
+                                aria-expanded={groupOpen}
+                                onClick={() => setMobileOpenGroup(groupOpen ? null : child.name)}
+                                className={cn(
+                                  'flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-semibold hover:bg-tint hover:text-primary-ink',
+                                  groupActive ? 'text-primary-ink' : 'text-gray-800'
+                                )}
+                              >
+                                {child.name}
+                                <ChevronDown className={cn('h-4 w-4 text-muted transition-transform', groupOpen && 'rotate-180')} aria-hidden="true" />
+                              </button>
+                              {groupOpen && (
+                                <div className="space-y-0.5 pb-1 pl-3">
+                                  {child.children!.map((leaf) => {
+                                    const active = isUnder(pathname, leaf.href)
+                                    return (
+                                      <Link
+                                        key={leaf.href}
+                                        href={leaf.href}
+                                        aria-current={active ? 'page' : undefined}
+                                        className={cn(
+                                          'block rounded-md px-3 py-2 text-sm hover:bg-tint hover:text-primary-ink',
+                                          active ? 'bg-primary font-medium text-on-primary' : 'text-gray-700'
+                                        )}
+                                        onClick={() => setMobileMenuOpen(false)}
+                                      >
+                                        {leaf.name}
+                                      </Link>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        }
+                        const active = isUnder(pathname, child.href)
                         return (
                           <Link
-                            key={child.name}
+                            key={child.href}
                             href={child.href}
                             aria-current={active ? 'page' : undefined}
                             className={cn(
