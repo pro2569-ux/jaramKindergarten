@@ -10,6 +10,9 @@ interface PaginationProps {
   baseUrl: string
 }
 
+const cellBase =
+  'flex h-10 min-w-10 items-center justify-center rounded-control border px-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-ink focus-visible:ring-offset-2'
+
 export default function Pagination({
   currentPage,
   totalPages,
@@ -44,22 +47,23 @@ export default function Pagination({
   }
 
   return (
-    <nav className="flex items-center justify-center gap-2">
+    <nav aria-label="페이지" className="flex items-center justify-center gap-2">
       {/* 이전 버튼 */}
       {currentPage > 1 ? (
         <Link
           href={getPageUrl(currentPage - 1)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+          aria-label="이전 페이지"
+          className={cn(cellBase, 'border-border bg-surface text-body hover:bg-gray-50')}
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
         </Link>
       ) : (
-        <button
-          disabled
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-400 cursor-not-allowed"
+        <span
+          aria-disabled="true"
+          className={cn(cellBase, 'cursor-not-allowed border-border text-disabled')}
         >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+        </span>
       )}
 
       {/* 페이지 번호 */}
@@ -68,7 +72,7 @@ export default function Pagination({
           return (
             <span
               key={`ellipsis-${index}`}
-              className="flex h-9 w-9 items-center justify-center text-gray-400"
+              className="flex h-10 w-8 items-center justify-center text-disabled"
             >
               ...
             </span>
@@ -82,11 +86,13 @@ export default function Pagination({
           <Link
             key={pageNumber}
             href={getPageUrl(pageNumber)}
+            aria-current={isActive ? 'page' : undefined}
+            aria-label={`${pageNumber}페이지`}
             className={cn(
-              'flex h-9 w-9 items-center justify-center rounded-lg border transition-colors',
+              cellBase,
               isActive
-                ? 'border-primary bg-primary text-white font-semibold'
-                : 'border-gray-300 hover:bg-gray-50'
+                ? 'border-primary bg-primary font-semibold text-on-primary'
+                : 'border-border bg-surface text-body hover:bg-gray-50'
             )}
           >
             {pageNumber}
@@ -98,17 +104,18 @@ export default function Pagination({
       {currentPage < totalPages ? (
         <Link
           href={getPageUrl(currentPage + 1)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+          aria-label="다음 페이지"
+          className={cn(cellBase, 'border-border bg-surface text-body hover:bg-gray-50')}
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       ) : (
-        <button
-          disabled
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-400 cursor-not-allowed"
+        <span
+          aria-disabled="true"
+          className={cn(cellBase, 'cursor-not-allowed border-border text-disabled')}
         >
-          <ChevronRight className="h-4 w-4" />
-        </button>
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        </span>
       )}
     </nav>
   )

@@ -3,7 +3,12 @@ import Link from 'next/link'
 import { PAGINATION } from '@/lib/constants'
 import Pagination from '@/components/ui/Pagination'
 import { formatDate } from '@/lib/utils'
-import { Eye, Paperclip } from 'lucide-react'
+import { Eye, Paperclip, FileText } from 'lucide-react'
+import PageShell from '@/components/layout/PageShell'
+import SideNav from '@/components/layout/SideNav'
+import ContentCard from '@/components/ui/ContentCard'
+import EmptyState from '@/components/ui/EmptyState'
+import { getSectionNav } from '@/lib/site-nav'
 
 export const metadata = {
   title: '가정통신문',
@@ -23,6 +28,7 @@ export default async function NewsletterPage({
   const pageSize = PAGINATION.DEFAULT_PAGE_SIZE
 
   const supabase = await createClient()
+  const nav = await getSectionNav('board')
 
   // 전체 개수 가져오기
   const { count } = await supabase
@@ -43,92 +49,84 @@ export default async function NewsletterPage({
     .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
 
   return (
-    <div className="py-16 bg-gray-50">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">가정통신문</h1>
-          <p className="text-gray-600">
-            가정과 함께하는 교육 소식을 전해드립니다
-          </p>
+    <PageShell
+      eyebrow={nav.label}
+      title="가정통신문"
+      subtitle="가정과 함께하는 교육 소식을 전해드립니다"
+      sidebar={<SideNav title={nav.label} items={nav.items} />}
+      card={false}
+    >
+      {/* 게시글 목록 */}
+      <ContentCard className="overflow-hidden p-0 md:p-0">
+        {/* 헤더 */}
+        <div className="hidden gap-4 border-b border-border bg-page px-6 py-3 text-sm font-semibold text-body md:grid md:grid-cols-12">
+          <div className="col-span-1 text-center">번호</div>
+          <div className="col-span-7">제목</div>
+          <div className="col-span-2 text-center">작성일</div>
+          <div className="col-span-2 text-center">조회수</div>
         </div>
 
-        {/* 게시글 목록 */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          {/* 헤더 */}
-          <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b text-sm font-semibold text-gray-700">
-            <div className="col-span-1 text-center">번호</div>
-            <div className="col-span-7">제목</div>
-            <div className="col-span-2 text-center">작성일</div>
-            <div className="col-span-2 text-center">조회수</div>
-          </div>
+        <div className="divide-y divide-border">
+          {posts && posts.length > 0 ? (
+            posts.map((post, index) => (
+              <Link
+                key={post.id}
+                href={`/board/newsletter/${post.id}`}
+                className="block px-4 py-4 transition-colors hover:bg-tint md:px-6"
+              >
+                <div className="grid items-center gap-2 md:grid-cols-12 md:gap-4">
+                  {/* 번호 */}
+                  <div className="hidden text-center text-sm text-muted md:col-span-1 md:block">
+                    {count! - (currentPage - 1) * pageSize - index}
+                  </div>
 
-          {/* 게시글 목록 */}
-          <div className="divide-y">
-            {posts && posts.length > 0 ? (
-              posts.map((post, index) => (
-                <Link
-                  key={post.id}
-                  href={`/board/newsletter/${post.id}`}
-                  className="block px-6 py-4 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="grid md:grid-cols-12 gap-4 items-center">
-                    {/* 번호 */}
-                    <div className="hidden md:block col-span-1 text-center text-gray-600">
-                      {count! - (currentPage - 1) * pageSize - index}
-                    </div>
-
-                    {/* 제목 */}
-                    <div className="col-span-12 md:col-span-7">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900 line-clamp-1">
-                          {post.title}
-                        </span>
-                        {post.attachment_urls && post.attachment_urls.length > 0 && (
-                          <Paperclip className="w-4 h-4 text-gray-400" />
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 작성일 (모바일) */}
-                    <div className="flex md:hidden items-center gap-4 text-sm text-gray-500">
-                      <span>{formatDate(post.created_at)}</span>
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-4 h-4" />
-                        {post.view_count}
-                      </span>
-                    </div>
-
-                    {/* 작성일 (데스크톱) */}
-                    <div className="hidden md:block col-span-2 text-center text-gray-600 text-sm">
-                      {formatDate(post.created_at)}
-                    </div>
-
-                    {/* 조회수 (데스크톱) */}
-                    <div className="hidden md:block col-span-2 text-center text-gray-600 text-sm">
-                      {post.view_count}
+                  {/* 제목 */}
+                  <div className="col-span-12 md:col-span-7">
+                    <div className="flex items-center gap-2">
+                      <span className="line-clamp-1 font-medium text-heading">{post.title}</span>
+                      {post.attachment_urls && post.attachment_urls.length > 0 && (
+                        <Paperclip className="h-4 w-4 shrink-0 text-disabled" aria-label="첨부파일 있음" />
+                      )}
                     </div>
                   </div>
-                </Link>
-              ))
-            ) : (
-              <div className="px-6 py-16 text-center text-gray-500">
-                등록된 가정통신문이 없습니다.
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* 페이지네이션 */}
-        {totalPages > 1 && (
-          <div className="mt-8">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              baseUrl="/board/newsletter"
-            />
-          </div>
-        )}
-      </div>
-    </div>
+                  {/* 작성일·조회수 (모바일) */}
+                  <div className="flex items-center gap-4 text-sm text-muted md:hidden">
+                    <span>{formatDate(post.created_at)}</span>
+                    <span className="flex items-center gap-1">
+                      <Eye className="h-4 w-4" aria-hidden="true" />
+                      {post.view_count}
+                    </span>
+                  </div>
+
+                  {/* 작성일 (데스크톱) */}
+                  <div className="hidden text-center text-sm text-muted md:col-span-2 md:block">
+                    {formatDate(post.created_at)}
+                  </div>
+
+                  {/* 조회수 (데스크톱) */}
+                  <div className="hidden text-center text-sm text-muted md:col-span-2 md:block">
+                    {post.view_count}
+                  </div>
+                </div>
+              </Link>
+            ))
+          ) : (
+            <EmptyState icon={FileText} title="등록된 가정통신문이 없습니다." description="새 소식이 올라오면 이곳에 표시됩니다." />
+          )}
+        </div>
+      </ContentCard>
+
+      {/* 페이지네이션 */}
+      {totalPages > 1 && (
+        <div className="mt-8">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            baseUrl="/board/newsletter"
+          />
+        </div>
+      )}
+    </PageShell>
   )
 }

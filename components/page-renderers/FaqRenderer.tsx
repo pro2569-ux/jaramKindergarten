@@ -38,22 +38,21 @@ export default function FaqRenderer({ page, layoutConfig }: RendererProps) {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">{page.title}</h1>
+    <div className="max-w-3xl mx-auto">
       {items.length === 0 ? (
-        <div className="text-center text-gray-400 py-12">등록된 Q&A가 없습니다.</div>
+        <div className="py-12 text-center text-muted">등록된 Q&A가 없습니다.</div>
       ) : (
         <div className="space-y-3">
           {items.map((item, index) => {
             const isOpen = openIndexes.has(index)
             return (
-              <div key={index} className="border rounded-lg overflow-hidden">
+              <div key={index} className="border border-border rounded-control overflow-hidden">
                 <button
                   onClick={() => toggleIndex(index)}
                   className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition-colors"
                 >
                   <span className="font-medium text-gray-800">
-                    <span className="text-primary mr-2">Q.</span>
+                    <span className="text-primary-ink mr-2">Q.</span>
                     {item.question}
                   </span>
                   <ChevronDown
@@ -61,8 +60,8 @@ export default function FaqRenderer({ page, layoutConfig }: RendererProps) {
                   />
                 </button>
                 {isOpen && (
-                  <div className="px-5 py-4 bg-green-50 border-t">
-                    <span className="text-primary font-medium mr-2">A.</span>
+                  <div className="px-5 py-4 bg-tint border-t border-border">
+                    <span className="text-primary-ink font-medium mr-2">A.</span>
                     <span className="text-gray-700">{item.answer}</span>
                   </div>
                 )}

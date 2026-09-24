@@ -1,8 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import Image from 'next/image'
-import { User } from 'lucide-react'
-import SubPageLayout from '@/components/layout/SubPageLayout'
-import { menuData } from '@/lib/menu-items'
+import { User, Users } from 'lucide-react'
+import PageShell from '@/components/layout/PageShell'
+import SideNav from '@/components/layout/SideNav'
+import EmptyState from '@/components/ui/EmptyState'
+import { getSectionNav } from '@/lib/site-nav'
 
 export const metadata = {
   title: '교원 및 반편성',
@@ -10,6 +12,7 @@ export const metadata = {
 
 export default async function TeachersPage() {
   const supabase = await createClient()
+  const nav = await getSectionNav('about')
 
   const { data: teachers } = await supabase
     .from('teachers')
@@ -18,75 +21,67 @@ export default async function TeachersPage() {
     .order('sort_order')
 
   return (
-    <SubPageLayout title={menuData.about.title} menuItems={menuData.about.items}>
-      <div className="mb-12">
-        <h2 className="text-3xl font-bold text-gray-900 mb-6">
-          교원 및 반편성
-        </h2>
-
-        {/* teacher.png 이미지 */}
-        <div className="mb-8 flex justify-center">
-          <img
-            src="/images/teacher.png"
-            alt="교원 및 반편성"
-            className="w-full max-w-4xl rounded-lg shadow-xl"
-          />
-        </div>
-
-        <p className="text-lg text-gray-600 text-center">
-          사랑과 전문성으로 아이들을 가르치는 우리 선생님들을 소개합니다
-        </p>
+    <PageShell
+      eyebrow={nav.label}
+      title="교원 및 반편성"
+      subtitle="사랑과 전문성으로 아이들을 가르치는 우리 선생님들을 소개합니다"
+      sidebar={<SideNav title={nav.label} items={nav.items} />}
+    >
+      {/* 조직도·반편성 이미지 */}
+      <div className="mb-10 flex justify-center">
+        <Image
+          src="/images/teacher.png"
+          alt="교원 및 반편성 조직도"
+          width={1200}
+          height={900}
+          sizes="(min-width: 1024px) 840px, 100vw"
+          className="h-auto w-full max-w-4xl rounded-card border border-border"
+          priority
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {teachers && teachers.length > 0 ? (
-          teachers.map((teacher) => (
+      <h2 className="typo-h2 mb-6 text-heading">교직원 소개</h2>
+
+      {teachers && teachers.length > 0 ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {teachers.map((teacher) => (
             <div
               key={teacher.id}
-              className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow"
+              className="overflow-hidden rounded-card border border-border bg-surface shadow-sm transition-shadow hover:shadow-md"
             >
-              <div className="aspect-square bg-gray-200 relative">
+              <div className="relative aspect-square bg-gray-100">
                 {teacher.photo_url ? (
                   <Image
                     src={teacher.photo_url}
                     alt={teacher.name}
                     fill
+                    sizes="(min-width: 1024px) 260px, (min-width: 768px) 50vw, 100vw"
                     className="object-cover"
                   />
                 ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <User className="w-24 h-24 text-gray-400" />
+                  <div className="flex h-full items-center justify-center">
+                    <User className="h-24 w-24 text-disabled" aria-hidden="true" />
                   </div>
                 )}
               </div>
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xl font-bold text-gray-900">
-                    {teacher.name}
-                  </h3>
-                  <span className="text-sm font-medium text-primary">
-                    {teacher.position}
-                  </span>
+              <div className="p-4 md:p-5">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <h3 className="typo-h3 text-heading">{teacher.name}</h3>
+                  <span className="text-sm font-medium text-primary-ink">{teacher.position}</span>
                 </div>
                 {teacher.class_name && (
-                  <p className="text-sm text-gray-600 mb-3">
-                    {teacher.class_name} 담당
-                  </p>
+                  <p className="mb-3 text-sm text-muted">{teacher.class_name} 담당</p>
                 )}
                 {teacher.introduction && (
-                  <p className="text-sm text-gray-700 line-clamp-3">
-                    {teacher.introduction}
-                  </p>
+                  <p className="line-clamp-3 text-sm text-body">{teacher.introduction}</p>
                 )}
               </div>
             </div>
-          ))
-        ) : (
-          <div className="col-span-3 p-12 text-center text-gray-500">
-            등록된 교직원 정보가 없습니다.
-          </div>
-        )}
-      </div>
-    </SubPageLayout>
+          ))}
+        </div>
+      ) : (
+        <EmptyState icon={Users} title="등록된 교직원 정보가 없습니다." />
+      )}
+    </PageShell>
   )
 }

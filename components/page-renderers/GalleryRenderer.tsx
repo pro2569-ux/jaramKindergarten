@@ -49,14 +49,13 @@ export default function GalleryRenderer({ page, layoutConfig }: RendererProps) {
   }, [])
 
   if (loading) {
-    return <div className="max-w-6xl mx-auto px-4 py-8 text-center text-gray-500">로딩 중...</div>
+    return <div className="py-8 text-center text-muted">로딩 중...</div>
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">{page.title}</h1>
+    <div className="max-w-6xl mx-auto">
       {albums.length === 0 ? (
-        <div className="text-center text-gray-400 py-12">앨범이 없습니다.</div>
+        <div className="py-12 text-center text-muted">앨범이 없습니다.</div>
       ) : (
         <div className={`grid ${cols} ${gap}`}>
           {albums.map((album) => (
@@ -75,7 +74,7 @@ export default function GalleryRenderer({ page, layoutConfig }: RendererProps) {
                   </div>
                 )}
               </div>
-              <h3 className="mt-2 text-sm font-medium text-gray-700 group-hover:text-primary truncate">
+              <h3 className="mt-2 text-sm font-medium text-gray-700 group-hover:text-primary-ink truncate">
                 {album.title}
               </h3>
               {album.event_date && (
