@@ -10,9 +10,10 @@ const TITLE = '[테스트] API 접수 확인'
 const db = adminClient()
 
 async function main(): Promise<void> {
-  const { data, error } = await db.from('inquiries').select('id, title, status, is_private, created_at, consent_at').eq('title', TITLE)
+  // consent_at 컬럼은 보안 SQL 실행 전엔 없을 수 있어 * 로 읽는다
+  const { data, error } = await db.from('inquiries').select('*').eq('title', TITLE)
   if (error) throw new Error(`조회 실패: ${error.message}`)
-  const rows = (data ?? []) as Array<{ id: string; status: string; is_private: boolean; created_at: string; consent_at?: string | null }>
+  const rows = (data ?? []) as unknown as Array<{ id: string; status: string; is_private: boolean; created_at: string; consent_at?: string | null }>
   console.log(`테스트 문의 ${rows.length}건: ${rows.map((r) => `${r.id.slice(0, 8)} status=${r.status} private=${r.is_private} consent_at=${r.consent_at ?? '(컬럼 없음/미기록)'}`).join(' | ')}`)
   if (DELETE && rows.length) {
     const { error: e } = await db.from('inquiries').delete().in('id', rows.map((r) => r.id))
