@@ -16,7 +16,7 @@ export default function SinglePageRenderer({ page, layoutConfig }: RendererProps
     <div className={`${width} mx-auto`}>
       {page.content && (
         <div
-          className="prose prose-lg max-w-none"
+          className="content"
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.content) }}
         />
       )}
