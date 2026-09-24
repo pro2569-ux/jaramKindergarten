@@ -48,6 +48,7 @@ const CHROME_OPT = opt('chrome', null)
 
 const VIEWPORTS = {
   pc: { name: 'pc', width: 1440, height: 900, mobile: false },
+  tablet: { name: 'tablet', width: 768, height: 1024, mobile: false },
   mobile: { name: 'mobile', width: 390, height: 900, mobile: true },
 }
 const MOBILE_UA =
@@ -274,9 +275,38 @@ const METRICS_JS = (deviceWidth) => `(() => {
   const overflowers = [];
   for (const el of mainEls) { const r = el.getBoundingClientRect(); if (r.width > 0 && r.right > DEVICE_WIDTH + 1) { overflowers.push({ tag: el.tagName.toLowerCase(), class: (el.getAttribute('class') || '').slice(0, 80), right: Math.round(r.right), width: Math.round(r.width) }); if (overflowers.length >= 5) break; } }
 
+  // 반응형 검사 (PR G): 작은 글씨 / 본문(.content) 안에서 한쪽으로 치우친 좁은 블록 / 페이지 컨테이너 가운데 정렬
+  const visibleEl = (el) => { const r = el.getBoundingClientRect(); if (r.width === 0 || r.height === 0) return false; const s = cs(el); return s.visibility !== 'hidden' && s.display !== 'none'; };
+  const hasOwnText = (el) => Array.from(el.childNodes).some((n) => n.nodeType === 3 && n.textContent.trim());
+  const smallText = [];
+  for (const el of mainEls) {
+    if (!hasOwnText(el) || !visibleEl(el)) continue;
+    const fs = parseFloat(cs(el).fontSize);
+    if (fs < 12) smallText.push({ tag: el.tagName.toLowerCase(), class: (el.getAttribute('class') || '').slice(0, 60), fontSize: fs, text: (el.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 40) });
+  }
+  const offCenter = [];
+  for (const c of Array.from(document.querySelectorAll('.content'))) {
+    const cr = c.getBoundingClientRect(); if (cr.width === 0) continue;
+    for (const el of Array.from(c.querySelectorAll('table, img, figure, iframe, video, div[style*="width"]'))) {
+      if (el.tagName !== 'TABLE' && el.closest('table')) continue; // 표 안의 요소는 제외
+      if (el.tagName === 'TABLE' && el.parentElement && el.parentElement.closest('table')) continue; // 중첩 표 제외
+      const r = el.getBoundingClientRect(); if (r.width === 0 || !visibleEl(el)) continue;
+      if (r.width >= cr.width * 0.6) continue;
+      const leftGap = r.left - cr.left, rightGap = cr.right - r.right;
+      if (Math.abs(leftGap - rightGap) > 24) offCenter.push({ tag: el.tagName.toLowerCase(), width: Math.round(r.width), container: Math.round(cr.width), leftGap: Math.round(leftGap), rightGap: Math.round(rightGap) });
+      if (offCenter.length >= 10) break;
+    }
+  }
+  const shell = document.querySelector('[class*="max-w-[1200px]"]');
+  const shellRect = shell ? shell.getBoundingClientRect() : null;
+  const containerCenterDiff = shellRect ? Math.round(Math.abs(shellRect.left - (innerWidth - shellRect.right))) : null;
+
   const header = document.querySelector('header');
   const body = document.body;
   return {
+    smallTextCount: smallText.length, smallText: smallText.slice(0, 8),
+    offCenterCount: offCenter.length, offCenter,
+    containerCenterDiff,
     title: document.title,
     scrollWidth: de.scrollWidth, innerWidth, deviceWidth: DEVICE_WIDTH,
     // 모바일 에뮬레이션은 가로로 넘치면 축소(zoom-out)해서 innerWidth 자체가 커진다 → 둘 다 본다
@@ -299,8 +329,10 @@ const METRICS_JS = (deviceWidth) => `(() => {
   };
 })()`
 
-const CLICK_JS = (action) => `(() => {
+// mode: 'click' 은 요소를 클릭, 'hover' 는 요소 중심 좌표만 돌려준다 (마우스 이동은 CDP Input 으로)
+const CLICK_JS = (action, mode = 'click') => `(() => {
   const a = ${JSON.stringify(action)};
+  const MODE = ${JSON.stringify(mode)};
   const root = a.within ? document.querySelector(a.within) : document;
   if (!root) return { ok: false, reason: 'within 없음' };
   const visible = (el) => { if (!el) return false; const r = el.getClientRects(); if (!r.length) return false; const s = getComputedStyle(el); return s.visibility !== 'hidden' && s.display !== 'none'; };
@@ -319,6 +351,10 @@ const CLICK_JS = (action) => `(() => {
     if (!expandable) return { ok: false, reason: '펼침 요소 아님(' + el.tagName.toLowerCase() + ')', skipped: true };
   }
   el.scrollIntoView({ block: 'center' });
+  if (MODE === 'hover') {
+    const r = el.getBoundingClientRect();
+    return { ok: true, x: r.left + r.width / 2, y: r.top + r.height / 2, tag: el.tagName.toLowerCase(), text: norm(el.textContent).slice(0, 40) };
+  }
   el.click();
   return { ok: true, tag: el.tagName.toLowerCase(), text: norm(el.textContent).slice(0, 40) };
 })()`
@@ -423,6 +459,16 @@ async function capturePage(cdp, page, vp) {
         actionResults.push({ type: 'click', ...action, result: r })
         if (!r.ok && !action.optional && !r.skipped) throw new Error(`click 실패 (${action.selector || action.text}): ${r.reason}`)
         log(`action click ${action.selector || action.text}:`, r.ok ? `ok <${r.tag}> ${r.text}` : `skip (${r.reason})`)
+      } else if (action.type === 'hover') {
+        // PC 드롭다운(마우스 올림) 확인용: 요소 중심으로 마우스를 옮긴다
+        const r = await evaluate(cdp, sessionId, CLICK_JS(action, 'hover'))
+        if (r.ok) {
+          await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: r.x, y: r.y }, sessionId)
+          await sleep(action.ms ?? 500)
+        }
+        actionResults.push({ type: 'hover', ...action, result: r })
+        if (!r.ok && !action.optional) throw new Error(`hover 실패 (${action.selector || action.text}): ${r.reason}`)
+        log(`action hover ${action.selector || action.text}:`, r.ok ? `ok <${r.tag}> ${r.text}` : `skip (${r.reason})`)
       }
     }
     if (actionResults.length) await sleep(300)

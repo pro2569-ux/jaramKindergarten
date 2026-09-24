@@ -1,4 +1,12 @@
-export const menuData = {
+export interface StaticMenuItem {
+  name: string
+  href: string
+  /** 원본(jaramk.com)의 3단 메뉴 그룹 — 그룹 href 는 첫 하위 항목 */
+  children?: StaticMenuItem[]
+}
+
+/** DB(menus) 조회 실패 시 폴백. DB 와 같은 순서·이름·경로로 유지한다 */
+export const menuData: Record<string, { title: string; items: StaticMenuItem[] }> = {
   about: {
     title: '어린이집소개',
     items: [
@@ -15,18 +23,37 @@ export const menuData = {
     items: [
       { name: '표준보육과정', href: '/curriculum/standard' },
       { name: '누리과정', href: '/curriculum/nuri' },
-      { name: '자연주의 유아교육', href: '/curriculum/nature' },
-      { name: '숲유치원 프로그램', href: '/curriculum/forest' },
+      {
+        name: '자연주의 유아교육 프로그램',
+        href: '/curriculum/nature/forest',
+        children: [
+          { name: '숲유치원 프로그램', href: '/curriculum/nature/forest' },
+          { name: '꼬마 농부의 텃밭 활동', href: '/curriculum/nature/farm' },
+          { name: '어린이 천조 휘트니스', href: '/curriculum/nature/fitness' },
+          { name: '세시풍속 프로그램', href: '/curriculum/nature/seasonal-customs' },
+          { name: '바깥호흡 산책 프로그램', href: '/curriculum/nature/outdoor-walk' },
+        ],
+      },
+      {
+        name: '특색프로그램',
+        href: '/curriculum/featured/reading-coaching',
+        children: [
+          { name: '독서코칭 프로그램', href: '/curriculum/featured/reading-coaching' },
+          { name: '우리 아이 행복 프로젝트', href: '/curriculum/featured/happy-project' },
+          { name: '나사 크레카(융합창의교육)', href: '/curriculum/featured/nasa-creca' },
+          { name: '창의 교구활동', href: '/curriculum/featured/creative-tools' },
+          { name: '부모님이 들려 주시는 이야기 동화', href: '/curriculum/featured/parents-storytelling' },
+        ],
+      },
+      { name: '특별활동', href: '/curriculum/special-activities' },
+      { name: '행사 /체험활동', href: '/curriculum/events' },
     ],
   },
   admission: {
     title: '입학안내',
-    items: [
-      { name: '입학안내', href: '/admission/guide' },
-      { name: '모집요강', href: '/admission/recruitment' },
-    ],
+    items: [{ name: '신입원아적응지도 안내', href: '/admission/adaptation-guide' }],
   },
-  // 원본(jaramk.com) 구조: 교육활동이야기 = 반별 앨범 게시판. DB(menus)와 같은 순서·이름. DB 조회 실패 시 폴백.
+  // 원본(jaramk.com) 구조: 교육활동이야기 = 반별 앨범 게시판. DB(menus)와 같은 순서·이름.
   board: {
     title: '교육활동이야기',
     items: [
