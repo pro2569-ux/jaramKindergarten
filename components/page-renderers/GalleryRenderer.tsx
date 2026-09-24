@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Image as ImageIcon } from 'lucide-react'
 import { RendererProps } from './types'
 import EmptyState from '@/components/ui/EmptyState'
@@ -33,6 +34,9 @@ export default function GalleryRenderer({ page, layoutConfig }: RendererProps) {
   const [albums, setAlbums] = useState<Album[]>([])
   const [loading, setLoading] = useState(true)
   const category = typeof layoutConfig.category === 'string' ? layoutConfig.category : null
+  // 앨범 상세는 이 게시판 경로 아래(/board/<반>/<앨범>)로 열어 사이드바·헤더의 메뉴 위치가 유지되게 한다
+  const pathname = usePathname()
+  const detailBase = (pathname || '/board/album').replace(/\/+$/, '')
 
   const cols = colsMap[layoutConfig.columns as keyof typeof colsMap] || 'grid-cols-2 md:grid-cols-3'
   const gap = gapMap[layoutConfig.gap as keyof typeof gapMap] || 'gap-4'
@@ -81,7 +85,7 @@ export default function GalleryRenderer({ page, layoutConfig }: RendererProps) {
       )}
       <div className={`grid ${cols} ${gap}`}>
         {albums.map((album) => (
-          <Link key={album.id} href={`/board/album/${album.id}`} className="group">
+          <Link key={album.id} href={`${detailBase}/${album.id}`} className="group">
             <div className={`relative ${aspect} overflow-hidden rounded-control bg-page`}>
               {album.cover_image_url ? (
                 <Image

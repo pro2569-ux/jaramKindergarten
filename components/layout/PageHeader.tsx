@@ -50,7 +50,7 @@ export default function PageHeader({
     <div className={cn('border-b border-border', hero ? 'bg-gray-900' : 'bg-tint')} style={heroStyle}>
       <div className="mx-auto max-w-[1200px] px-4 py-6 sm:px-6 md:py-8 lg:px-8">
         {eyebrow && (
-          <p className={cn('mb-1 text-sm font-semibold', hero ? 'text-white/80' : 'text-primary-ink')}>
+          <p className={cn('page-eyebrow mb-1 text-sm font-semibold', hero ? 'text-white/80' : 'text-primary-ink')}>
             {eyebrowHref ? (
               <Link href={eyebrowHref} className="rounded-control hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-ink">
                 {eyebrow}

@@ -44,7 +44,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/about/teachers"
+                  href="/about/class"
                   className="text-sm hover:text-primary transition-colors"
                 >
                   교원 및 반편성

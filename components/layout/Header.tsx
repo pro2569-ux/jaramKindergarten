@@ -175,6 +175,8 @@ export default function Header() {
               const children = item.children ?? []
               const mega = children.some(isGroup)
               const open = activeDropdown === index
+              // 현재 경로가 속한 대분류 표시 (하위 항목·게시글 상세 포함)
+              const active = children.some((c) => contains(c, pathname))
               return (
                 <div
                   key={item.name}
@@ -184,7 +186,11 @@ export default function Header() {
                 >
                   <Link
                     href={item.href}
-                    className="text-gray-700 hover:text-primary-ink font-semibold transition-all py-2 px-3 block rounded-lg hover:bg-tint"
+                    aria-current={active ? 'true' : undefined}
+                    className={cn(
+                      'block rounded-lg px-3 py-2 font-semibold transition-all hover:bg-tint hover:text-primary-ink',
+                      active ? 'bg-tint text-primary-ink' : 'text-gray-700'
+                    )}
                   >
                     {item.name}
                   </Link>

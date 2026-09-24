@@ -39,6 +39,7 @@ const DESIGN_BLOCK_SNIPPETS: { name: string; desc: string; html: string }[] = [
   { name: '라벨-값 .kv', desc: '주소·연락처 등', html: '<div class="kv"><div class="kv-row"><span class="kv-key">주소</span><span class="kv-val">고양시 …</span></div></div>' },
   { name: '정돈된 표 .table-neat', desc: '첫 열 강조 + 줄무늬', html: '<table class="table-neat"><thead><tr><th>구분</th><th>내용</th></tr></thead><tbody><tr><td>항목</td><td>내용</td></tr></tbody></table>' },
   { name: '주석 .note', desc: '작은 회색 글', html: '<p class="note">☞ 원아의 흥미에 따라 변경 될 수 있습니다.</p>' },
+  { name: '버튼 링크 .btn', desc: '다운로드·바로가기 버튼 (btn-outline 은 테두리형). 파일은 주소 뒤에 ?download=파일명 을 붙이면 그 이름으로 내려받음', html: '<p><a class="btn" href="https://…/파일.hwp?download=입소신청서.hwp">📄 입소신청서 양식 다운로드</a></p>' },
 ]
 
 export default function RichTextEditor({
