@@ -10,7 +10,10 @@
  *
  * 원칙
  * - 대상 행은 pages.legacy_source_url (= 원본 URL http://jaramk.com/main/sub.html?pageCode=<n>) 로 찾는다
- * - 66(교원/반편성)은 캡처하지 않고 사이트에 이미 있는 /images/teacher.png 를 쓴다 (figcaption 링크 없음)
+ * - 66(교원/반편성)은 캡처하지 않고 사이트의 완성 이미지 public/images/teacher.png 를 WebP 로 변환해 같은 버킷에 올린다
+ * - 표시 폭: width:100%; max-width:900px (본문 폭 안에서 최대 900px, 모바일은 화면 폭)
+ * - 계획/백업 파일은 리포 안 gitignore 폴더(scripts/migrate-jaramk/data/out/pagemaker-full)에 둔다.
+ *   수집 데이터 폴더(JARAMK_DATA_DIR)는 읽기만 한다 (manifest 는 --upload 때만 갱신)
  * - 새 본문은 lib/sanitize.ts 를 그대로 통과해야 한다 (dry-run 에서 검사; decoding 속성은 허용 목록에 없어 넣지 않음)
  * - 이미 새 본문과 같은 행은 건너뛴다 (재실행 안전)
  * - --apply 는 문제(problems)가 하나라도 있으면 중단한다
@@ -19,7 +22,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import sharp from 'sharp'
 import { adminClient, supabaseUrl } from './lib/supabase-admin.ts'
-import { DATA_DIR, OUT_DIR, REPO_ROOT } from './lib/paths.ts'
+import { DATA_DIR, REPO_ROOT } from './lib/paths.ts'
 import { sanitizeHtml } from '../../lib/sanitize.ts'
 import type { Manifest, ManifestEntry } from './phase6-capture.ts'
 
@@ -38,11 +41,13 @@ const MAX_UPLOAD_BYTES = 700 * 1024 // 이 안에 들면 @2x, 아니면 @1x
 const WARN_BYTES = 1024 * 1024
 const FILES_DIR = join(DATA_DIR, 'files', 'pagemaker-full')
 const MANIFEST = join(FILES_DIR, 'manifest.json')
-const PLAN_DIR = join(OUT_DIR, 'pagemaker-full')
-/** 캡처 대신 사이트 정적 이미지를 쓰는 페이지 */
-const STATIC_IMAGE: Record<number, { src: string; file: string; note: string }> = {
-  66: { src: '/images/teacher.png', file: join(REPO_ROOT, 'public', 'images', 'teacher.png'), note: '캡처하지 않고 사이트의 완성 이미지(/images/teacher.png) 재사용' },
+/** 계획·백업·정적 변환본 출력 (리포 안, gitignore). 수집 데이터 폴더에는 쓰지 않는다 */
+const PLAN_DIR = join(REPO_ROOT, 'scripts', 'migrate-jaramk', 'data', 'out', 'pagemaker-full')
+/** 캡처 대신 사이트 정적 이미지를 WebP 로 변환해 쓰는 페이지 */
+const STATIC_IMAGE: Record<number, { file: string; note: string }> = {
+  66: { file: join(REPO_ROOT, 'public', 'images', 'teacher.png'), note: '캡처 대신 사이트 완성 이미지(public/images/teacher.png)를 WebP 로 변환해 업로드' },
 }
+const STATIC_WEBP_QUALITY = 85
 /** 기본 계획에서 빼는 페이지 (--include-excluded 로 포함) */
 const EXCLUDED: Record<number, string> = {
   67: '오시는길 — 비공개이고 /about/location 정적 라우트(지도)로 열림. 캡처본은 백업용',
@@ -106,7 +111,7 @@ function saveManifest(m: Manifest): void {
 /** 새 본문. sanitize-html 이 내는 직렬화(<img … />)와 같게 써서 dry-run 의 왕복 검사가 정확히 같아지게 한다 */
 function buildContent(t: Target): string {
   const alt = escapeAttr(`${t.title.endsWith('안내') ? t.title : `${t.title} 안내`} (원본 페이지 이미지)`)
-  const img = `<img src="${escapeAttr(t.src)}" alt="${alt}" width="${t.cssWidth}" height="${t.cssHeight}" loading="lazy" style="max-width:100%;height:auto;display:block;margin:0 auto" />`
+  const img = `<img src="${escapeAttr(t.src)}" alt="${alt}" width="${t.cssWidth}" height="${t.cssHeight}" loading="lazy" style="width:100%;max-width:900px;height:auto;display:block;margin:0 auto" />`
   const caption = t.publicUrl
     ? `<figcaption style="text-align:center;margin-top:8px"><a href="${escapeAttr(t.publicUrl)}" target="_blank" rel="noopener noreferrer">이미지 크게 보기</a></figcaption>`
     : ''
@@ -166,10 +171,27 @@ async function buildTargets(manifest: Manifest): Promise<{ targets: Target[]; pr
         problems.push(`${code}: 정적 이미지 없음 ${st.file}`)
         continue
       }
-      const m = await sharp(st.file).metadata()
+      // PNG → WebP 변환 (원본 해상도 유지) 후 캡처본과 같은 버킷 경로에 업로드 (upsert, 공개 자산이라 dry-run 에서도 수행)
+      mkdirSync(PLAN_DIR, { recursive: true })
+      const webp = await sharp(st.file).webp({ quality: STATIC_WEBP_QUALITY }).toBuffer({ resolveWithObject: true })
+      const webpPath = join(PLAN_DIR, `${code}.webp`)
+      writeFileSync(webpPath, webp.data)
+      const objectPath = `${OBJECT_PREFIX}/${code}.webp`
+      const publicUrl = `${supabaseUrl()}/storage/v1/object/public/${BUCKET}/${objectPath}`
+      const { error } = await db.storage.from(BUCKET).upload(objectPath, webp.data, { contentType: 'image/webp', upsert: true })
+      if (error) {
+        problems.push(`${code}: WebP 업로드 실패 ${error.message}`)
+        continue
+      }
+      const head = await fetch(publicUrl, { method: 'HEAD' })
+      if (!head.ok) {
+        problems.push(`${code}: 업로드한 WebP 공개 URL 확인 실패 HTTP ${head.status}`)
+        continue
+      }
+      log(`  ${code} 정적 이미지 → WebP ${webp.info.width}x${webp.info.height} ${kb(webp.data.byteLength)} 업로드: ${publicUrl}`)
       targets.push({
         pageCode: code, title: meta?.title ?? String(code), slug: meta?.proposed.slug ?? String(code), sourceUrl: PAGE_URL(code),
-        src: st.src, publicUrl: null, cssWidth: m.width ?? 0, cssHeight: m.height ?? 0, bytes: null, variant: 'static', notes: [st.note],
+        src: publicUrl, publicUrl, cssWidth: webp.info.width, cssHeight: webp.info.height, bytes: webp.data.byteLength, variant: 'static→webp', notes: [st.note],
       })
       continue
     }
