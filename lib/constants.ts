@@ -97,3 +97,10 @@ export const STORAGE_BUCKET = 'publicImage' as const
  */
 export const LEGACY_MEDIA_BUCKET = 'legacy-media' as const
 export const LEGACY_MEDIA_PREFIX = 'legacy-media:' as const
+
+/**
+ * 앨범 반(albums.category) 목록. 원본 사이트(jaramk.com) 교육활동이야기 게시판 순서와 같고,
+ * 이관 앨범에 들어 있는 category 값과 글자 그대로 일치한다. 반별 필터·메뉴·앨범 생성 폼이 이 목록을 쓴다.
+ */
+export const ALBUM_CATEGORIES = ['자람반', '산새반', '라온반', '맑은반', '햇살반', '자람이야기', '숲속반', '샘물반'] as const
+export type AlbumCategory = (typeof ALBUM_CATEGORIES)[number]
