@@ -1,31 +1,14 @@
-import { createClient } from '@/lib/supabase/server'
-import { withResolvedMedia } from '@/lib/storage/media'
 import { NextRequest, NextResponse } from 'next/server'
+import { getAlbumsByCategory } from '@/lib/public-data'
 
-// 공개 앨범 목록 (갤러리 렌더러용). 이관 앨범의 커버(legacy-media 버킷)는 서버에서 서명 URL 로 바꿔 내려준다.
-// ?category=자람반 으로 반별 필터. 서명 URL 만료(1시간)보다 짧게 캐시.
+// 공개 앨범 목록 (갤러리 렌더러의 브라우저 폴백용 — 보통은 페이지가 서버에서 initialAlbums 로 넘긴다).
+// 이관 앨범의 커버(legacy-media 버킷)는 로더가 서명 URL 로 바꿔 준다. ?category=자람반 으로 반별 필터.
 export const revalidate = 60
 
 export async function GET(request: NextRequest) {
   try {
     const category = request.nextUrl.searchParams.get('category')?.trim() || null
-    const supabase = await createClient()
-
-    let query = supabase
-      .from('albums')
-      .select('id, title, cover_image_url, event_date, created_at, category')
-      .eq('is_published', true)
-      .order('event_date', { ascending: false, nullsFirst: false })
-      .order('created_at', { ascending: false })
-    if (category) query = query.eq('category', category)
-
-    const { data, error } = await query
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    const albums = await withResolvedMedia(data ?? [], 'cover_image_url')
+    const albums = await getAlbumsByCategory(category)
     return NextResponse.json({ albums })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : '앨범 목록을 불러오지 못했습니다.'

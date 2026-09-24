@@ -1,9 +1,18 @@
-import { createClient } from '@/lib/supabase/server'
 import { notFound, permanentRedirect } from 'next/navigation'
 import PageShell from '@/components/layout/PageShell'
 import SideNav from '@/components/layout/SideNav'
 import AlbumDetail, { type AlbumRow } from '@/components/album/AlbumDetail'
 import { getMenuTree, getSectionNav } from '@/lib/site-nav'
+import { getGalleryPages, getPublishedAlbum } from '@/lib/public-data'
+
+// 정적(ISR): 공개 앨범만 태그 캐시 로더로 읽는다
+export const revalidate = 300 // lib/public-data PUBLIC_REVALIDATE 와 같은 값 (세그먼트 설정은 리터럴만 허용)
+
+// ISR: 빌드 때 미리 만들지 않고 첫 요청에서 만들어 캐시한다(revalidate·태그로 갱신).
+// 동적 세그먼트는 이 export 가 없으면 매 요청 서버 렌더링(캐시 없음)이 된다.
+export async function generateStaticParams() {
+  return []
+}
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -11,14 +20,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
   const { id } = await params
-  const supabase = await createClient()
-
-  const { data: album } = await supabase
-    .from('albums')
-    .select('title')
-    .eq('id', id)
-    .single()
-
+  const album = await getPublishedAlbum(id)
   return {
     title: album?.title || '앨범',
   }
@@ -30,26 +32,16 @@ export async function generateMetadata({ params }: PageProps) {
  */
 export default async function AlbumDetailPage({ params }: PageProps) {
   const { id } = await params
-  const supabase = await createClient()
-
-  const { data: album } = await supabase
-    .from('albums')
-    .select('*')
-    .eq('id', id)
-    .eq('is_published', true)
-    .single()
+  const album = await getPublishedAlbum(id)
 
   if (!album) {
     notFound()
   }
 
   if (album.category) {
-    const [tree, { data: galleryPages }] = await Promise.all([
-      getMenuTree(),
-      supabase.from('pages').select('slug, layout_config').eq('page_type', 'gallery').eq('is_published', true),
-    ])
+    const [tree, galleryPages] = await Promise.all([getMenuTree(), getGalleryPages()])
     const boardRoot = tree.find((r) => r.slug === 'board')
-    const classPage = (galleryPages ?? []).find((p) => (p.layout_config as { category?: unknown } | null)?.category === album.category)
+    const classPage = galleryPages.find((p) => (p.layout_config as { category?: unknown } | null)?.category === album.category)
     const classMenu = classPage && boardRoot ? boardRoot.children.find((c) => c.slug === classPage.slug && c.children.length === 0) : undefined
     if (classMenu) permanentRedirect(`${classMenu.path}/${album.id}`)
   }

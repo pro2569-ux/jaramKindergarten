@@ -1,5 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
-import { withResolvedMedia } from '@/lib/storage/media'
+import { getAlbumsPage } from '@/lib/public-data'
 import Link from 'next/link'
 import Image from 'next/image'
 import { PAGINATION } from '@/lib/constants'
@@ -30,27 +29,9 @@ export default async function AlbumPage({
   const currentPage = Number(params.page) || 1
   const pageSize = PAGINATION.ALBUM_PAGE_SIZE
 
-  const supabase = await createClient()
-  const nav = await getSectionNav('board')
-
-  // 전체 개수 가져오기
-  const { count } = await supabase
-    .from('albums')
-    .select('*', { count: 'exact', head: true })
-    .eq('is_published', true)
-
+  // 사이드바 메뉴와 앨범 목록(개수 포함, 커버는 서명 URL 로 해석)을 병렬로 — 태그 캐시
+  const [nav, { albums, count }] = await Promise.all([getSectionNav('board'), getAlbumsPage(currentPage, pageSize)])
   const totalPages = Math.ceil((count || 0) / pageSize)
-
-  // 앨범 목록 가져오기
-  const { data: albumRows } = await supabase
-    .from('albums')
-    .select('*')
-    .eq('is_published', true)
-    .order('created_at', { ascending: false })
-    .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
-
-  // 이관 앨범(legacy-media 버킷)의 커버는 서명 URL 로 해석
-  const albums = await withResolvedMedia(albumRows ?? [], 'cover_image_url')
 
   return (
     <PageShell

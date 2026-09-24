@@ -2,7 +2,7 @@ import { notFound, redirect, permanentRedirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createElement, type CSSProperties, type ReactNode } from 'react'
 import { Construction } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { getAlbumsByCategory, getPostsPage, getPublishedAlbum, getPublishedPage } from '@/lib/public-data'
 import { getRendererByType } from '@/components/page-renderers'
 import type { PageData } from '@/components/page-renderers/types'
 import GreetingRenderer from '@/components/page-renderers/GreetingRenderer'
@@ -14,7 +14,14 @@ import ButtonLink from '@/components/ui/ButtonLink'
 import AlbumDetail, { type AlbumRow } from '@/components/album/AlbumDetail'
 import { getMenuTree, hrefOf, sectionNavOf, type MenuNode, type NavItem } from '@/lib/site-nav'
 
-export const revalidate = 60
+// 정적(ISR) 페이지: 쿠키를 읽지 않고 태그 캐시 로더(lib/public-data)만 쓴다. 관리자 저장 시 태그로 즉시 갱신.
+export const revalidate = 300 // lib/public-data PUBLIC_REVALIDATE 와 같은 값 (세그먼트 설정은 리터럴만 허용)
+
+// ISR: 빌드 때 미리 만들지 않고 첫 요청에서 만들어 캐시한다(revalidate·태그로 갱신).
+// 동적 세그먼트는 이 export 가 없으면 매 요청 서버 렌더링(캐시 없음)이 된다.
+export async function generateStaticParams() {
+  return []
+}
 
 interface PageProps {
   params: Promise<{ slug: string[] }>
@@ -67,10 +74,8 @@ async function resolve(slugArray: string[]): Promise<Resolved | null> {
   } else if (leafSlug) {
     // 반별 앨범 게시판 아래 앨범 상세 (/board/<반>/<앨범 id>) — 사이드바·헤더의 메뉴 위치가 유지된다
     if (!node.pageId || !UUID_RE.test(leafSlug)) return null
-    const supabase = await createClient()
-    const { data: galleryPage } = await supabase.from('pages').select('*').eq('id', node.pageId).eq('is_published', true).single()
+    const [galleryPage, album] = await Promise.all([getPublishedPage(node.pageId), getPublishedAlbum(leafSlug)])
     if (!galleryPage || galleryPage.page_type !== 'gallery') return null
-    const { data: album } = await supabase.from('albums').select('*').eq('id', leafSlug).eq('is_published', true).single()
     if (!album) return null
     return { kind: 'album', parentMenu: root, childMenu: node, page: galleryPage as unknown as PageData, album: album as AlbumRow, siblings: sectionNavOf(root).items }
   }
@@ -78,13 +83,7 @@ async function resolve(slugArray: string[]): Promise<Resolved | null> {
   if (node.redirectTo) return { kind: 'redirect', to: node.redirectTo, permanent: false }
   if (!node.pageId) return null
 
-  const supabase = await createClient()
-  const { data: page } = await supabase
-    .from('pages')
-    .select('*')
-    .eq('id', node.pageId)
-    .eq('is_published', true)
-    .single()
+  const page = await getPublishedPage(node.pageId)
   if (!page) return null
 
   return { kind: 'page', parentMenu: root, childMenu: node, page: page as unknown as PageData, siblings: sectionNavOf(root).items }
@@ -188,11 +187,24 @@ export default async function DynamicPage({ params }: PageProps) {
     contentBgStyle.backgroundPosition = 'center'
   }
 
+  // 갤러리·리스트 렌더러(클라이언트)의 첫 화면 데이터는 서버에서 캐시 로더로 미리 읽어 넘긴다
+  // → 브라우저가 따로 조회하지 않아 목록이 HTML 에 바로 들어가고, 화면 전환이 즉시 끝난다
+  const lc = (page.layout_config || {}) as Record<string, unknown>
+  const initialData: Record<string, unknown> = {}
+  if (page.page_type === 'gallery') {
+    initialData.initialAlbums = await getAlbumsByCategory(typeof lc.category === 'string' ? lc.category : null)
+  } else if (page.page_type === 'list') {
+    const boardType = typeof lc.boardType === 'string' ? lc.boardType : page.slug
+    const pageSize = Number(lc.pageSize) || 15
+    const { posts } = await getPostsPage(boardType, 1, pageSize, lc.legacyOnly === true ? 'only' : 'all')
+    initialData.initialPosts = posts
+  }
+
   // 서버 컴포넌트라 상태가 없으므로 page_type 에 따라 고른 렌더러를 바로 그린다
   const rendered = isGreeting ? (
     <GreetingRenderer page={page} />
   ) : (
-    createElement(Renderer, { page, layoutConfig: page.layout_config || {}, styleConfig: page.style_config || {} })
+    createElement(Renderer, { page, layoutConfig: page.layout_config || {}, styleConfig: page.style_config || {}, ...initialData })
   )
 
   // 콘텐츠 컬럼 래핑: 배경 모드별 / 인사말(자체 카드) / 기본 ContentCard

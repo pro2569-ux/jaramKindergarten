@@ -25,9 +25,14 @@ interface Post {
  *  - detailBase  상세 링크 기준 경로 (기본 /board/{boardType})
  *  - pageSize    페이지당 글 수 (기본 15)
  */
-export default function ListBoardRenderer({ page, layoutConfig }: RendererProps) {
-  const [posts, setPosts] = useState<Post[]>([])
-  const [loading, setLoading] = useState(true)
+interface ListBoardRendererProps extends RendererProps {
+  /** 서버(페이지 캐시)에서 미리 읽어 넘긴 1페이지 글. 있으면 첫 화면은 브라우저 조회 없이 바로 그린다 */
+  initialPosts?: Post[]
+}
+
+export default function ListBoardRenderer({ page, layoutConfig, initialPosts }: ListBoardRendererProps) {
+  const [posts, setPosts] = useState<Post[]>(initialPosts ?? [])
+  const [loading, setLoading] = useState(!initialPosts)
   const [currentPage, setCurrentPage] = useState(1)
   const boardType = typeof layoutConfig.boardType === 'string' ? layoutConfig.boardType : page.slug
   const legacyOnly = layoutConfig.legacyOnly === true
@@ -36,6 +41,8 @@ export default function ListBoardRenderer({ page, layoutConfig }: RendererProps)
   const supabase = createClient()
 
   useEffect(() => {
+    // 1페이지는 서버가 넘긴 목록을 그대로 쓴다 (2페이지부터 브라우저 조회)
+    if (initialPosts && currentPage === 1) return
     const fetchPosts = async () => {
       setLoading(true)
       let query = supabase
@@ -55,7 +62,7 @@ export default function ListBoardRenderer({ page, layoutConfig }: RendererProps)
 
     fetchPosts()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, boardType, legacyOnly, pageSize])
+  }, [currentPage, boardType, legacyOnly, pageSize, initialPosts])
 
   if (loading) {
     return <div className="py-8 text-center text-muted">불러오는 중...</div>

@@ -1,0 +1,5 @@
+[
+  { "path": "/", "name": "old_home" },
+  { "path": "/main/sub.html?pageCode=4", "name": "old_교육환경(pageCode=4)" },
+  { "path": "/main/sub.html?pageCode=66", "name": "old_교원반편성(pageCode=66)", "click": { "selector": "a[href*='pageCode=5']", "expect": "/main/sub.html" } }
+]

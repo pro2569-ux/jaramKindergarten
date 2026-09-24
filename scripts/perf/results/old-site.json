@@ -1,0 +1,382 @@
+{
+  "base": "http://jaramk.com",
+  "label": "old",
+  "mobile": false,
+  "measuredAt": "2026-09-24T14:48:52.399Z",
+  "results": [
+    {
+      "path": "/",
+      "name": "old_home",
+      "run": 1,
+      "wallLoadMs": 628,
+      "ttfb": 152,
+      "dcl": 159,
+      "load": 625,
+      "docBytes": 1833,
+      "lcp": null,
+      "resources": 2,
+      "totalBytes": 25661,
+      "by": {
+        "frame": {
+          "count": 1,
+          "bytes": 23319
+        },
+        "other": {
+          "count": 1,
+          "bytes": 509
+        }
+      },
+      "fonts": [],
+      "imgs": [],
+      "external": [],
+      "prefetchRsc": 0,
+      "supabaseCalls": [],
+      "plainAnchors": 0,
+      "h1": "",
+      "prefetchBeforeClick": 0
+    },
+    {
+      "path": "/",
+      "name": "old_home",
+      "run": 2,
+      "wallLoadMs": 438,
+      "ttfb": 37,
+      "dcl": 42,
+      "load": 437,
+      "docBytes": 1833,
+      "lcp": null,
+      "resources": 1,
+      "totalBytes": 25151,
+      "by": {
+        "frame": {
+          "count": 1,
+          "bytes": 23318
+        }
+      },
+      "fonts": [],
+      "imgs": [],
+      "external": [],
+      "prefetchRsc": 0,
+      "supabaseCalls": [],
+      "plainAnchors": 0,
+      "h1": "",
+      "prefetchBeforeClick": 0
+    },
+    {
+      "path": "/main/sub.html?pageCode=4",
+      "name": "old_교육환경(pageCode=4)",
+      "run": 1,
+      "wallLoadMs": 298,
+      "ttfb": 75,
+      "dcl": 195,
+      "load": 296,
+      "docBytes": 22990,
+      "lcp": 284,
+      "resources": 67,
+      "totalBytes": 1320008,
+      "by": {
+        "link": {
+          "count": 6,
+          "bytes": 69932
+        },
+        "script": {
+          "count": 7,
+          "bytes": 136692
+        },
+        "img": {
+          "count": 33,
+          "bytes": 198429
+        },
+        "css": {
+          "count": 21,
+          "bytes": 891965
+        }
+      },
+      "fonts": [],
+      "imgs": [
+        {
+          "name": "/user/saveDir/contents/26_0.jpg",
+          "bytes": 57682,
+          "ms": 175,
+          "end": 260
+        },
+        {
+          "name": "user/saveDir/design/design090/design090_logo_0.png",
+          "bytes": 15493,
+          "ms": 26,
+          "end": 104
+        },
+        {
+          "name": "/user/saveDir/contents/137_0.jpg",
+          "bytes": 12955,
+          "ms": 193,
+          "end": 279
+        },
+        {
+          "name": "/user/saveDir/contents/137_1.jpg",
+          "bytes": 12760,
+          "ms": 194,
+          "end": 280
+        },
+        {
+          "name": "/user/saveDir/contents/29_0.jpg",
+          "bytes": 12255,
+          "ms": 199,
+          "end": 285
+        },
+        {
+          "name": "/user/saveDir/contents/30_1.jpg",
+          "bytes": 11697,
+          "ms": 198,
+          "end": 284
+        }
+      ],
+      "external": [],
+      "prefetchRsc": 0,
+      "supabaseCalls": [],
+      "plainAnchors": 0,
+      "h1": "",
+      "prefetchBeforeClick": 0
+    },
+    {
+      "path": "/main/sub.html?pageCode=4",
+      "name": "old_교육환경(pageCode=4)",
+      "run": 2,
+      "wallLoadMs": 317,
+      "ttfb": 73,
+      "dcl": 199,
+      "load": 315,
+      "docBytes": 22990,
+      "lcp": 312,
+      "resources": 67,
+      "totalBytes": 1320008,
+      "by": {
+        "link": {
+          "count": 6,
+          "bytes": 69932
+        },
+        "script": {
+          "count": 7,
+          "bytes": 136692
+        },
+        "img": {
+          "count": 33,
+          "bytes": 198429
+        },
+        "css": {
+          "count": 21,
+          "bytes": 891965
+        }
+      },
+      "fonts": [],
+      "imgs": [
+        {
+          "name": "/user/saveDir/contents/26_0.jpg",
+          "bytes": 57682,
+          "ms": 201,
+          "end": 284
+        },
+        {
+          "name": "user/saveDir/design/design090/design090_logo_0.png",
+          "bytes": 15493,
+          "ms": 38,
+          "end": 115
+        },
+        {
+          "name": "/user/saveDir/contents/137_0.jpg",
+          "bytes": 12955,
+          "ms": 215,
+          "end": 299
+        },
+        {
+          "name": "/user/saveDir/contents/137_1.jpg",
+          "bytes": 12760,
+          "ms": 219,
+          "end": 302
+        },
+        {
+          "name": "/user/saveDir/contents/29_0.jpg",
+          "bytes": 12255,
+          "ms": 220,
+          "end": 304
+        },
+        {
+          "name": "/user/saveDir/contents/30_1.jpg",
+          "bytes": 11697,
+          "ms": 224,
+          "end": 307
+        }
+      ],
+      "external": [],
+      "prefetchRsc": 0,
+      "supabaseCalls": [],
+      "plainAnchors": 0,
+      "h1": "",
+      "prefetchBeforeClick": 0
+    },
+    {
+      "path": "/main/sub.html?pageCode=66",
+      "name": "old_교원반편성(pageCode=66)",
+      "run": 1,
+      "wallLoadMs": 306,
+      "ttfb": 73,
+      "dcl": 160,
+      "load": 304,
+      "docBytes": 20331,
+      "lcp": 340,
+      "resources": 55,
+      "totalBytes": 1453360,
+      "by": {
+        "link": {
+          "count": 1,
+          "bytes": 3314
+        },
+        "script": {
+          "count": 7,
+          "bytes": 136692
+        },
+        "img": {
+          "count": 34,
+          "bytes": 444486
+        },
+        "css": {
+          "count": 13,
+          "bytes": 848537
+        }
+      },
+      "fonts": [],
+      "imgs": [
+        {
+          "name": "/user/saveDir/contents/66/page_image_1148.png",
+          "bytes": 152420,
+          "ms": 223,
+          "end": 303
+        },
+        {
+          "name": "/user/saveDir/contents/66/page_anyImage_1127.png",
+          "bytes": 122308,
+          "ms": 222,
+          "end": 302
+        },
+        {
+          "name": "/user/saveDir/contents/66/page_image_1147.png",
+          "bytes": 105473,
+          "ms": 212,
+          "end": 293
+        },
+        {
+          "name": "user/saveDir/design/design090/design090_logo_0.png",
+          "bytes": 15493,
+          "ms": 34,
+          "end": 110
+        },
+        {
+          "name": "/core/fonts/text.html",
+          "bytes": 4175,
+          "ms": 220,
+          "end": 300
+        },
+        {
+          "name": "/user/saveDir/contents/66/page_text_1129.png",
+          "bytes": 3625,
+          "ms": 135,
+          "end": 215
+        }
+      ],
+      "external": [],
+      "prefetchRsc": 0,
+      "supabaseCalls": [],
+      "plainAnchors": 0,
+      "h1": "",
+      "prefetchBeforeClick": 0,
+      "click": {
+        "text": "a[href*='pageCode=5']",
+        "href": "../main/sub.html?pageCode=5",
+        "ms": null,
+        "mode": "timeout"
+      }
+    },
+    {
+      "path": "/main/sub.html?pageCode=66",
+      "name": "old_교원반편성(pageCode=66)",
+      "run": 2,
+      "wallLoadMs": 323,
+      "ttfb": 80,
+      "dcl": 169,
+      "load": 321,
+      "docBytes": 20331,
+      "lcp": 336,
+      "resources": 55,
+      "totalBytes": 1453360,
+      "by": {
+        "link": {
+          "count": 1,
+          "bytes": 3314
+        },
+        "script": {
+          "count": 7,
+          "bytes": 136692
+        },
+        "img": {
+          "count": 34,
+          "bytes": 444486
+        },
+        "css": {
+          "count": 13,
+          "bytes": 848537
+        }
+      },
+      "fonts": [],
+      "imgs": [
+        {
+          "name": "/user/saveDir/contents/66/page_image_1148.png",
+          "bytes": 152420,
+          "ms": 201,
+          "end": 288
+        },
+        {
+          "name": "/user/saveDir/contents/66/page_anyImage_1127.png",
+          "bytes": 122308,
+          "ms": 214,
+          "end": 300
+        },
+        {
+          "name": "/user/saveDir/contents/66/page_image_1147.png",
+          "bytes": 105473,
+          "ms": 208,
+          "end": 295
+        },
+        {
+          "name": "user/saveDir/design/design090/design090_logo_0.png",
+          "bytes": 15493,
+          "ms": 36,
+          "end": 119
+        },
+        {
+          "name": "/core/fonts/text.html",
+          "bytes": 4175,
+          "ms": 192,
+          "end": 278
+        },
+        {
+          "name": "/user/saveDir/contents/66/page_text_1129.png",
+          "bytes": 3625,
+          "ms": 131,
+          "end": 218
+        }
+      ],
+      "external": [],
+      "prefetchRsc": 0,
+      "supabaseCalls": [],
+      "plainAnchors": 0,
+      "h1": "",
+      "prefetchBeforeClick": 0,
+      "click": {
+        "text": "a[href*='pageCode=5']",
+        "href": "../main/sub.html?pageCode=5",
+        "ms": null,
+        "mode": "timeout"
+      }
+    }
+  ]
+}

@@ -30,9 +30,14 @@ const aspectMap = {
  * layout_config.category 가 있으면 그 반(albums.category)의 공개 앨범만 보여준다 (반별 게시판).
  * 공개 앨범이 없으면 빈 화면 대신 안내를 보여준다.
  */
-export default function GalleryRenderer({ page, layoutConfig }: RendererProps) {
-  const [albums, setAlbums] = useState<Album[]>([])
-  const [loading, setLoading] = useState(true)
+interface GalleryRendererProps extends RendererProps {
+  /** 서버(페이지 캐시)에서 미리 읽어 넘긴 앨범 목록. 있으면 브라우저에서 /api/albums 를 부르지 않는다 */
+  initialAlbums?: Album[]
+}
+
+export default function GalleryRenderer({ page, layoutConfig, initialAlbums }: GalleryRendererProps) {
+  const [albums, setAlbums] = useState<Album[]>(initialAlbums ?? [])
+  const [loading, setLoading] = useState(!initialAlbums)
   const category = typeof layoutConfig.category === 'string' ? layoutConfig.category : null
   // 앨범 상세는 이 게시판 경로 아래(/board/<반>/<앨범>)로 열어 사이드바·헤더의 메뉴 위치가 유지되게 한다
   const pathname = usePathname()
@@ -43,6 +48,7 @@ export default function GalleryRenderer({ page, layoutConfig }: RendererProps) {
   const aspect = aspectMap[layoutConfig.aspectRatio as keyof typeof aspectMap] || 'aspect-[4/3]'
 
   useEffect(() => {
+    if (initialAlbums) return
     // 이관 앨범의 커버는 private 버킷이라 브라우저에서 직접 조회할 수 없다.
     // 서버 라우트가 공개 앨범만 골라 서명 URL 로 바꿔 내려준다.
     const fetchAlbums = async () => {
@@ -60,7 +66,7 @@ export default function GalleryRenderer({ page, layoutConfig }: RendererProps) {
     }
 
     fetchAlbums()
-  }, [category])
+  }, [category, initialAlbums])
 
   if (loading) {
     return <div className="py-8 text-center text-muted">불러오는 중...</div>

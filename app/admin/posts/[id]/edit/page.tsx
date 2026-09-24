@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { revalidateSite } from '@/lib/revalidate-client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
@@ -96,6 +97,8 @@ export default function EditPostPage({ params }: PageProps) {
 
       if (error) throw error
 
+      // 공개 페이지 캐시 즉시 갱신 (목록·상세·메인 공지)
+      await revalidateSite({ tags: ['posts'] })
       alert('게시글이 수정되었습니다.')
       router.push(`/admin/posts?type=${formData.board_type}`)
     } catch (error: any) {
@@ -118,6 +121,7 @@ export default function EditPostPage({ params }: PageProps) {
 
       if (error) throw error
 
+      await revalidateSite({ tags: ['posts'] })
       alert('게시글이 삭제되었습니다.')
       router.push(`/admin/posts?type=${formData.board_type}`)
     } catch (error: any) {

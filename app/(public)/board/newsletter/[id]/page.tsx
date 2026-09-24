@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getPublishedPost } from '@/lib/public-data'
 import { notFound } from 'next/navigation'
 import { formatDate } from '@/lib/utils'
 import { Eye, Calendar, ArrowLeft, Download } from 'lucide-react'
@@ -9,20 +9,22 @@ import SideNav from '@/components/layout/SideNav'
 import ButtonLink from '@/components/ui/ButtonLink'
 import { getSectionNav } from '@/lib/site-nav'
 
+// 정적(ISR) 상세: 공개 글만 태그 캐시 로더로 읽는다 (비공개 글은 404 그대로)
+export const revalidate = 300 // lib/public-data PUBLIC_REVALIDATE 와 같은 값 (세그먼트 설정은 리터럴만 허용)
+
+// ISR: 빌드 때 미리 만들지 않고 첫 요청에서 만들어 캐시한다(revalidate·태그로 갱신).
+// 동적 세그먼트는 이 export 가 없으면 매 요청 서버 렌더링(캐시 없음)이 된다.
+export async function generateStaticParams() {
+  return []
+}
+
 interface PageProps {
   params: Promise<{ id: string }>
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { id } = await params
-  const supabase = await createClient()
-
-  const { data: post } = await supabase
-    .from('posts')
-    .select('title')
-    .eq('id', id)
-    .single()
-
+  const post = await getPublishedPost('newsletter', id)
   return {
     title: post?.title || '가정통신문',
   }
@@ -30,22 +32,11 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function NewsletterDetailPage({ params }: PageProps) {
   const { id } = await params
-  const supabase = await createClient()
-
-  // 게시글 가져오기
-  const { data: post } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('id', id)
-    .eq('board_type', 'newsletter')
-    .eq('is_published', true)
-    .single()
+  const [post, nav] = await Promise.all([getPublishedPost('newsletter', id), getSectionNav('community')])
 
   if (!post) {
     notFound()
   }
-
-  const nav = await getSectionNav('community')
   const legacyMeta = (post.legacy_meta ?? null) as Record<string, unknown> | null
 
   return (
