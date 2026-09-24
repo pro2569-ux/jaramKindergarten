@@ -386,8 +386,11 @@ async function capturePage(cdp, page, vp) {
 
     // 이동 + load 대기
     const loadP = cdp.once(sessionId, 'Page.loadEventFired', LOAD_TIMEOUT)
-    const nav = await cdp.send('Page.navigate', { url }, sessionId)
-    if (nav.errorText) throw new Error(`이동 실패: ${nav.errorText}`)
+    // 서버 응답이 느려 Page.navigate 자체가 LOAD_TIMEOUT 보다 오래 걸리면 loadP 의 거부가
+    // 처리되지 않은 채 프로세스를 죽인다 → 미리 catch 를 달고, navigate 와 경합시켜 페이지 단위로 실패 처리
+    loadP.catch(() => {})
+    const nav = await Promise.race([cdp.send('Page.navigate', { url }, sessionId), loadP.then(() => ({}))])
+    if (nav && nav.errorText) throw new Error(`이동 실패: ${nav.errorText}`)
     await loadP
     const loadMs = Date.now() - started
     await sleep(1500)
@@ -530,6 +533,10 @@ async function main() {
   console.log(`\n완료: 성공 ${ok}, 실패 ${failed} → ${OUT}`)
   process.exitCode = failed > 0 ? 1 : 0
 }
+
+process.on('unhandledRejection', (err) => {
+  console.error('[unhandledRejection]', err instanceof Error ? err.message : err)
+})
 
 main().catch((err) => {
   console.error(err)
