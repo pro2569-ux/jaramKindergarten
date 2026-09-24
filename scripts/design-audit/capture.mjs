@@ -302,9 +302,24 @@ const METRICS_JS = (deviceWidth) => `(() => {
   const shellRect = shell ? shell.getBoundingClientRect() : null;
   const containerCenterDiff = shellRect ? Math.round(Math.abs(shellRect.left - (innerWidth - shellRect.right))) : null;
 
+  // 내비 일치 검사 (PR I): 사이드바 제목/활성 항목/그룹, 상단 띠 eyebrow(breadcrumb), 헤더 활성 대분류
+  const sideNav = document.querySelector('main nav[aria-label]');
+  const sideActive = sideNav ? sideNav.querySelector('a[aria-current="page"]') : null;
+  const groupOf = (a) => { if (!a) return null; const li = a.closest('li'); const outer = li && li.parentElement ? li.parentElement.closest('li') : null; const g = outer ? outer.querySelector(':scope > a') : null; return g ? g.textContent.trim() : null; };
+  const textOrNull = (el) => (el && el.textContent ? el.textContent.replace(/\\s+/g, ' ').trim() : null);
+  const nav = {
+    sidebarTitle: sideNav ? sideNav.getAttribute('aria-label') : null,
+    sidebarActive: textOrNull(sideActive),
+    sidebarGroup: groupOf(sideActive),
+    eyebrow: textOrNull(document.querySelector('.page-eyebrow')),
+    headerActive: textOrNull(document.querySelector('header a[aria-current="true"]')),
+    h1: textOrNull(document.querySelector('h1')),
+  };
+
   const header = document.querySelector('header');
   const body = document.body;
   return {
+    nav,
     smallTextCount: smallText.length, smallText: smallText.slice(0, 8),
     offCenterCount: offCenter.length, offCenter,
     containerCenterDiff,

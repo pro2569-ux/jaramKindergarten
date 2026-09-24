@@ -11,6 +11,7 @@ import SideNav from '@/components/layout/SideNav'
 import ContentCard from '@/components/ui/ContentCard'
 import EmptyState from '@/components/ui/EmptyState'
 import ButtonLink from '@/components/ui/ButtonLink'
+import AlbumDetail, { type AlbumRow } from '@/components/album/AlbumDetail'
 import { getMenuTree, hrefOf, sectionNavOf, type MenuNode, type NavItem } from '@/lib/site-nav'
 
 export const revalidate = 60
@@ -19,10 +20,13 @@ interface PageProps {
   params: Promise<{ slug: string[] }>
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 type Resolved =
   | { kind: 'redirect'; to: string; permanent: boolean }
   | { kind: 'empty'; parentMenu: MenuNode }
   | { kind: 'page'; parentMenu: MenuNode; childMenu: MenuNode; page: PageData; siblings: NavItem[] }
+  | { kind: 'album'; parentMenu: MenuNode; childMenu: MenuNode; page: PageData; album: AlbumRow; siblings: NavItem[] }
 
 /**
  * 경로 → 메뉴 트리 해석. 원본(jaramk.com)과 같은 3단: /대분류/소분류 또는 /대분류/그룹/항목
@@ -61,7 +65,14 @@ async function resolve(slugArray: string[]): Promise<Resolved | null> {
     if (!leaf) return null
     node = leaf
   } else if (leafSlug) {
-    return null
+    // 반별 앨범 게시판 아래 앨범 상세 (/board/<반>/<앨범 id>) — 사이드바·헤더의 메뉴 위치가 유지된다
+    if (!node.pageId || !UUID_RE.test(leafSlug)) return null
+    const supabase = await createClient()
+    const { data: galleryPage } = await supabase.from('pages').select('*').eq('id', node.pageId).eq('is_published', true).single()
+    if (!galleryPage || galleryPage.page_type !== 'gallery') return null
+    const { data: album } = await supabase.from('albums').select('*').eq('id', leafSlug).eq('is_published', true).single()
+    if (!album) return null
+    return { kind: 'album', parentMenu: root, childMenu: node, page: galleryPage as unknown as PageData, album: album as AlbumRow, siblings: sectionNavOf(root).items }
   }
 
   if (node.redirectTo) return { kind: 'redirect', to: node.redirectTo, permanent: false }
@@ -83,6 +94,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params
   const result = await resolve(slug)
 
+  if (result?.kind === 'album') {
+    return { title: result.album.title, description: result.album.description || result.album.title }
+  }
   if (!result || result.kind !== 'page') {
     return { title: '페이지를 찾을 수 없습니다' }
   }
@@ -118,6 +132,22 @@ export default async function DynamicPage({ params }: PageProps) {
           description="콘텐츠를 준비하고 있어요. 곧 찾아뵙겠습니다."
           action={<ButtonLink href="/">홈으로</ButtonLink>}
         />
+      </PageShell>
+    )
+  }
+
+  // 반별 앨범 게시판 아래 앨범 상세: 사이드바는 그 반, 상단 띠는 대분류 > 반 이름
+  if (result.kind === 'album') {
+    return (
+      <PageShell
+        eyebrow={result.parentMenu.label}
+        title={result.page.title}
+        titleAs="p"
+        titleHref={result.childMenu.path}
+        sidebar={<SideNav title={result.parentMenu.label} items={result.siblings} />}
+        card={false}
+      >
+        <AlbumDetail album={result.album} listHref={result.childMenu.path} />
       </PageShell>
     )
   }
