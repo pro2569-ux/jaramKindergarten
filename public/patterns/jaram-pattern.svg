@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <g fill-opacity="0.35" stroke-linecap="round" stroke-linejoin="round">
+    <path transform="translate(32 38) rotate(-12)" fill="#FFDD57" d="M0-11 3.2-4.4 10.5-3.4 5.2 1.7 6.5 9 0 5.5-6.5 9-5.2 1.7-10.5-3.4-3.2-4.4Z"/>
+    <g transform="translate(128 34)" fill="#A9D6F5"><circle cx="0" cy="4" r="8"/><circle cx="10" cy="-1" r="10"/><circle cx="21" cy="4" r="8"/><rect x="0" y="4" width="21" height="8"/></g>
+    <path transform="translate(158 122) scale(1.1)" fill="#FFADCB" d="M0 3C-5-4-13 1-8 7L0 14 8 7C13 1 5-4 0 3Z"/>
+    <g transform="translate(58 150)" fill="#9FDCC4" stroke="#9FDCC4" stroke-opacity="0.35"><path d="M0 8V-8" fill="none" stroke-width="2.5"/><ellipse cx="-6" cy="-9" rx="6" ry="3.5" transform="rotate(-30 -6 -9)"/><ellipse cx="6" cy="-12" rx="6" ry="3.5" transform="rotate(30 6 -12)"/></g>
+    <path transform="translate(96 92)" fill="none" stroke="#FFADCB" stroke-opacity="0.35" stroke-width="2.5" d="M-14 0q3.5-6 7 0t7 0 7 0 7 0"/>
+    <path transform="translate(150 178) rotate(14) scale(0.7)" fill="#9FDCC4" d="M0-11 3.2-4.4 10.5-3.4 5.2 1.7 6.5 9 0 5.5-6.5 9-5.2 1.7-10.5-3.4-3.2-4.4Z"/>
+    <circle cx="94" cy="20" r="3" fill="#FFADCB"/>
+    <circle cx="18" cy="104" r="3.5" fill="#A9D6F5"/>
+    <circle cx="186" cy="68" r="2.5" fill="#FFDD57"/>
+    <circle cx="110" cy="156" r="3" fill="#FFDD57"/>
+    <circle cx="176" cy="18" r="2" fill="#9FDCC4"/>
+    <circle cx="44" cy="84" r="2" fill="#FFADCB"/>
+  </g>
+</svg>

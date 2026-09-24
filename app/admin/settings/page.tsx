@@ -95,6 +95,30 @@ export default async function AdminSettingsPage({ searchParams }: PageProps) {
           </CardContent>
         </Card>
 
+        {/* 메인 화면 섹션 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>메인 화면 섹션</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-500">숨겨도 코드는 그대로 남아 있어 언제든 다시 켤 수 있습니다.</p>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-body">‘자람동산어린이집을 소개합니다’ 섹션</span>
+              <select name="home_show_intro" defaultValue={s.home_show_intro === 'false' ? 'false' : 'true'} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                <option value="true">표시</option>
+                <option value="false">숨김</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-body">‘최근 앨범’ 섹션</span>
+              <select name="home_show_albums" defaultValue={s.home_show_albums === 'false' ? 'false' : 'true'} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                <option value="true">표시</option>
+                <option value="false">숨김</option>
+              </select>
+            </label>
+          </CardContent>
+        </Card>
+
         {/* 지도 설정 */}
         <Card>
           <CardHeader>

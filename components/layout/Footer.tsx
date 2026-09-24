@@ -1,15 +1,15 @@
 import Link from 'next/link'
-import { Mail, Phone, MapPin, Printer, Smartphone } from 'lucide-react'
+import { Mail, Phone, MapPin, Printer } from 'lucide-react'
 import { fullAddress, getSiteSettings } from '@/lib/site-settings'
 
 // 연락처는 site_settings(관리자 > 사이트 설정)에서 읽는다. 값이 비어 있으면 그 줄은 표시하지 않는다.
+// 푸터에는 주소·대표 전화·팩스·이메일만 둔다 (휴대전화·운영시간은 오시는길/설정에서만).
 export default async function Footer() {
   const s = await getSiteSettings()
   const address = fullAddress(s)
   const contact = [
     { icon: MapPin, value: address, href: null as string | null, label: '주소' },
     { icon: Phone, value: s.phone, href: s.phone ? `tel:${s.phone.replace(/[^0-9+]/g, '')}` : null, label: '전화' },
-    { icon: Smartphone, value: s.mobile, href: s.mobile ? `tel:${s.mobile.replace(/[^0-9+]/g, '')}` : null, label: '휴대전화' },
     { icon: Printer, value: s.fax, href: null, label: '팩스' },
     { icon: Mail, value: s.email, href: s.email ? `mailto:${s.email}` : null, label: '이메일' },
   ].filter((c) => c.value && c.value.trim())
@@ -17,7 +17,7 @@ export default async function Footer() {
   return (
     <footer className="bg-gray-900 text-gray-300">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {/* 어린이집 정보 */}
           <div>
             <h3 className="text-lg font-semibold text-white mb-4">
@@ -44,7 +44,7 @@ export default async function Footer() {
           {/* 빠른 링크 */}
           <div>
             <h3 className="text-lg font-semibold text-white mb-4">빠른 링크</h3>
-            <ul className="space-y-2">
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
               <li>
                 <Link href="/about/greeting" className="text-sm hover:text-primary transition-colors">
                   원장 인사말
@@ -76,25 +76,6 @@ export default async function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
-
-          {/* 운영 시간 */}
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-4">운영 시간</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>평일</span>
-                <span>{s.business_hours ? s.business_hours.replace(/^평일\s*/, '') : '07:30 - 19:30'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>토요일</span>
-                <span>휴무</span>
-              </div>
-              <div className="flex justify-between">
-                <span>일요일 및 공휴일</span>
-                <span>휴무</span>
-              </div>
-            </div>
           </div>
         </div>
 

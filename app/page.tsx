@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { withResolvedMedia } from '@/lib/storage/media'
+import { getSiteSettings } from '@/lib/site-settings'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import ButtonLink from '@/components/ui/ButtonLink'
 import Badge from '@/components/ui/Badge'
@@ -9,23 +10,28 @@ import EmptyState from '@/components/ui/EmptyState'
 import ImageSlider from '@/components/ui/ImageSlider'
 import {
   Image as ImageIcon,
-  UtensilsCrossed,
   ArrowRight,
   Bell,
-  Users
+  Users,
+  Instagram,
+  BookOpen,
 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
+/** 메인 바로가기 4개 — 순서·링크는 여기서 관리 */
+const QUICK_LINKS = [
+  { name: '공지사항', href: '/board/notice', icon: Bell, card: 'from-tint to-tint-strong', circle: 'bg-primary', iconColor: 'text-on-primary', external: false },
+  { name: '인스타그램', href: 'https://www.instagram.com/jaramdongsan13/', icon: Instagram, card: 'from-pink-50 to-pink-100', circle: 'bg-secondary', iconColor: 'text-on-primary', external: true },
+  { name: '교육자료', href: '/community/archive', icon: BookOpen, card: 'from-blue-50 to-blue-100', circle: 'bg-accent', iconColor: 'text-white', external: false },
+  { name: '교직원', href: '/about/class', icon: Users, card: 'from-purple-50 to-purple-100', circle: 'bg-purple-500', iconColor: 'text-white', external: false },
+] as const
+
 export default async function Home() {
   const supabase = await createClient()
-
-  // 배너 가져오기
-  const { data: banners } = await supabase
-    .from('banners')
-    .select('*')
-    .eq('is_active', true)
-    .order('sort_order')
-    .limit(3)
+  // 메인 섹션 표시 여부 (관리자 > 사이트 설정 > 메인 화면 섹션). 값이 없으면 표시
+  const settings = await getSiteSettings()
+  const showIntro = settings.home_show_intro !== 'false'
+  const showAlbums = settings.home_show_albums !== 'false'
 
   // 공지사항 가져오기
   const { data: notices } = await supabase
@@ -37,16 +43,17 @@ export default async function Home() {
     .order('created_at', { ascending: false })
     .limit(5)
 
-  // 최근 앨범 가져오기
-  const { data: albumRows } = await supabase
-    .from('albums')
-    .select('*')
-    .eq('is_published', true)
-    .order('created_at', { ascending: false })
-    .limit(4)
-
-  // 이관 앨범(legacy-media 버킷) 커버는 서명 URL 로 해석한다. 실패하면 null → 플레이스홀더
-  const albums = await withResolvedMedia(albumRows ?? [], 'cover_image_url')
+  // 최근 앨범 (섹션이 켜져 있을 때만 조회). 이관 앨범(legacy-media 버킷) 커버는 서명 URL 로 해석
+  let albums: Array<{ id: string; title: string; cover_image_url: string | null; event_date: string | null; created_at: string }> = []
+  if (showAlbums) {
+    const { data: albumRows } = await supabase
+      .from('albums')
+      .select('id, title, cover_image_url, event_date, created_at')
+      .eq('is_published', true)
+      .order('created_at', { ascending: false })
+      .limit(4)
+    albums = await withResolvedMedia(albumRows ?? [], 'cover_image_url')
+  }
 
   return (
     <div className="flex flex-col">
@@ -95,140 +102,124 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* 하단 웨이브 */}
+        {/* 하단 웨이브 — 아래 바로가기 영역(패턴 배경)의 바탕색으로 이어진다 */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
-            <path d="M0 60L60 52.5C120 45 240 30 360 22.5C480 15 600 15 720 18.75C840 22.5 960 30 1080 33.75C1200 37.5 1320 37.5 1380 37.5L1440 37.5V60H1380C1320 60 1200 60 1080 60C960 60 840 60 720 60C600 60 480 60 360 60C240 60 120 60 60 60H0Z" fill="white"/>
+            <path d="M0 60L60 52.5C120 45 240 30 360 22.5C480 15 600 15 720 18.75C840 22.5 960 30 1080 33.75C1200 37.5 1320 37.5 1380 37.5L1440 37.5V60H1380C1320 60 1200 60 1080 60C960 60 840 60 720 60C600 60 480 60 360 60C240 60 120 60 60 60H0Z" style={{ fill: 'var(--page)' }} />
           </svg>
         </div>
       </section>
 
-      {/* 바로가기 섹션 */}
-      <section className="py-12 bg-white">
+      {/* 바로가기 섹션 (패턴 배경) */}
+      <section className="bg-pattern py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Link
-              href="/board/notice"
-              className="flex flex-col items-center p-6 rounded-card bg-gradient-to-br from-tint to-tint-strong hover:shadow-md transition-all"
-            >
-              <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center mb-3">
-                <Bell className="w-8 h-8 text-on-primary" />
-              </div>
-              <span className="font-semibold text-gray-900">공지사항</span>
-            </Link>
-
-            <Link
-              href="/board/meal-plan"
-              className="flex flex-col items-center p-6 rounded-card bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-md transition-all"
-            >
-              <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-3">
-                <UtensilsCrossed className="w-8 h-8 text-on-primary" />
-              </div>
-              <span className="font-semibold text-gray-900">식단표</span>
-            </Link>
-
-            <Link
-              href="/board/album"
-              className="flex flex-col items-center p-6 rounded-card bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-md transition-all"
-            >
-              <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center mb-3">
-                <ImageIcon className="w-8 h-8 text-white" />
-              </div>
-              <span className="font-semibold text-gray-900">앨범</span>
-            </Link>
-
-            <Link
-              href="/about/teachers"
-              className="flex flex-col items-center p-6 rounded-card bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-md transition-all"
-            >
-              <div className="w-16 h-16 rounded-full bg-purple-500 flex items-center justify-center mb-3">
-                <Users className="w-8 h-8 text-white" />
-              </div>
-              <span className="font-semibold text-gray-900">교직원</span>
-            </Link>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {QUICK_LINKS.map((q) => {
+              const cls = `flex flex-col items-center rounded-card bg-gradient-to-br ${q.card} p-6 shadow-sm transition-all hover:shadow-md`
+              const inner = (
+                <>
+                  <div className={`mb-3 flex h-16 w-16 items-center justify-center rounded-full ${q.circle}`}>
+                    <q.icon className={`h-8 w-8 ${q.iconColor}`} aria-hidden="true" />
+                  </div>
+                  <span className="font-semibold text-gray-900">{q.name}</span>
+                </>
+              )
+              return q.external ? (
+                <a key={q.name} href={q.href} target="_blank" rel="noopener noreferrer" className={cls}>
+                  {inner}
+                  <span className="sr-only">(새 창에서 열림)</span>
+                </a>
+              ) : (
+                <Link key={q.name} href={q.href} className={cls}>
+                  {inner}
+                </Link>
+              )
+            })}
           </div>
         </div>
       </section>
 
-      {/* 어린이집 소개 섹션 */}
-      <section className="py-20 bg-gradient-to-b from-white to-tint">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            {/* 이미지 (장식 원이 모바일에서 가로 스크롤을 만들지 않게 overflow-hidden) */}
-            <div className="relative overflow-hidden rounded-2xl">
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
-                {/* TODO: public/images/about/kindergarten.jpg 파일을 추가하면 아래 주석을 해제하세요 */}
-                {/* <Image
-                  src="/images/about/kindergarten.jpg"
-                  alt="자람동산어린이집"
-                  fill
-                  className="object-cover"
-                /> */}
-                {/* Placeholder */}
-                <div className="w-full h-full bg-gradient-to-br from-tint-strong via-blue-100 to-purple-100 flex items-center justify-center">
-                  <div className="text-center text-primary-ink">
-                    <ImageIcon className="w-24 h-24 mx-auto mb-4 opacity-50" />
-                    <p className="text-sm font-medium">어린이집 사진</p>
+      {/* 어린이집 소개 섹션 (설정 home_show_intro 로 표시/숨김) */}
+      {showIntro && (
+        <section className="py-20 bg-gradient-to-b from-white to-tint">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              {/* 이미지 (장식 원이 모바일에서 가로 스크롤을 만들지 않게 overflow-hidden) */}
+              <div className="relative overflow-hidden rounded-2xl">
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
+                  {/* TODO: public/images/about/kindergarten.jpg 파일을 추가하면 아래 주석을 해제하세요 */}
+                  {/* <Image
+                    src="/images/about/kindergarten.jpg"
+                    alt="자람동산어린이집"
+                    fill
+                    className="object-cover"
+                  /> */}
+                  {/* Placeholder */}
+                  <div className="w-full h-full bg-gradient-to-br from-tint-strong via-blue-100 to-purple-100 flex items-center justify-center">
+                    <div className="text-center text-primary-ink">
+                      <ImageIcon className="w-24 h-24 mx-auto mb-4 opacity-50" />
+                      <p className="text-sm font-medium">어린이집 사진</p>
+                    </div>
                   </div>
                 </div>
+                {/* 장식 요소 */}
+                <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-yellow-300 rounded-full opacity-20 blur-2xl" />
+                <div className="absolute -top-6 -left-6 w-24 h-24 bg-secondary rounded-full opacity-30 blur-2xl" />
               </div>
-              {/* 장식 요소 */}
-              <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-yellow-300 rounded-full opacity-20 blur-2xl" />
-              <div className="absolute -top-6 -left-6 w-24 h-24 bg-secondary rounded-full opacity-30 blur-2xl" />
-            </div>
 
-            {/* 텍스트 */}
-            <div>
-              <div className="inline-block px-4 py-2 bg-tint-strong rounded-full text-primary-ink font-semibold text-sm mb-4">
-                ABOUT US
+              {/* 텍스트 */}
+              <div>
+                <div className="inline-block px-4 py-2 bg-tint-strong rounded-full text-primary-ink font-semibold text-sm mb-4">
+                  ABOUT US
+                </div>
+                <h2 className="text-4xl font-bold text-gray-900 mb-6">
+                  자람동산어린이집을<br />
+                  소개합니다
+                </h2>
+                <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                  아이들의 건강한 성장과 행복한 배움을 위해<br />
+                  최선을 다하는 자람동산어린이집입니다.
+                </p>
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1">
+                      <span className="text-on-primary text-sm font-bold">✓</span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-1">자연주의 교육</h3>
+                      <p className="text-gray-600">자연 속에서 건강하게 성장하는 교육 프로그램</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1">
+                      <span className="text-on-primary text-sm font-bold">✓</span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-1">전문 교사진</h3>
+                      <p className="text-gray-600">아이들을 사랑으로 돌보는 경험 많은 선생님들</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1">
+                      <span className="text-on-primary text-sm font-bold">✓</span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-1">안전한 환경</h3>
+                      <p className="text-gray-600">쾌적하고 안전한 교육 시설과 환경</p>
+                    </div>
+                  </div>
+                </div>
+                <ButtonLink href="/about/greeting" size="lg" className="gap-2">
+                  자세히 보기 <ArrowRight className="w-5 h-5" />
+                </ButtonLink>
               </div>
-              <h2 className="text-4xl font-bold text-gray-900 mb-6">
-                자람동산어린이집을<br />
-                소개합니다
-              </h2>
-              <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                아이들의 건강한 성장과 행복한 배움을 위해<br />
-                최선을 다하는 자람동산어린이집입니다.
-              </p>
-              <div className="space-y-4 mb-8">
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-on-primary text-sm font-bold">✓</span>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">자연주의 교육</h3>
-                    <p className="text-gray-600">자연 속에서 건강하게 성장하는 교육 프로그램</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-on-primary text-sm font-bold">✓</span>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">전문 교사진</h3>
-                    <p className="text-gray-600">아이들을 사랑으로 돌보는 경험 많은 선생님들</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-on-primary text-sm font-bold">✓</span>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">안전한 환경</h3>
-                    <p className="text-gray-600">쾌적하고 안전한 교육 시설과 환경</p>
-                  </div>
-                </div>
-              </div>
-              <ButtonLink href="/about/greeting" size="lg" className="gap-2">
-                자세히 보기 <ArrowRight className="w-5 h-5" />
-              </ButtonLink>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 특징 섹션 */}
-      <section className="py-20 bg-white">
+      <section className="py-16 bg-white md:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -276,8 +267,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 공지사항 섹션 */}
-      <section className="py-16 bg-page">
+      {/* 공지사항 섹션 (패턴 배경, 카드는 흰색) */}
+      <section className="bg-pattern py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
             <h2 className="typo-h2 text-heading">공지사항</h2>
@@ -318,52 +309,55 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 앨범 섹션 */}
-      <section className="py-16 bg-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="typo-h2 text-heading">최근 앨범</h2>
-            <ButtonLink href="/board/album" variant="ghost" className="gap-2">
-              더보기 <ArrowRight className="w-4 h-4" />
-            </ButtonLink>
-          </div>
+      {/* 앨범 섹션 (설정 home_show_albums 로 표시/숨김) */}
+      {showAlbums && (
+        <section className="py-16 bg-white">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="typo-h2 text-heading">최근 앨범</h2>
+              <ButtonLink href="/board/album" variant="ghost" className="gap-2">
+                더보기 <ArrowRight className="w-4 h-4" />
+              </ButtonLink>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {albums && albums.length > 0 ? (
-              albums.map((album) => (
-                <Link key={album.id} href={`/board/album/${album.id}`}>
-                  <Card className="overflow-hidden hover:shadow-md transition-shadow">
-                    <div className="aspect-video bg-gray-200 relative">
-                      {album.cover_image_url ? (
-                        <Image
-                          src={album.cover_image_url}
-                          alt={album.title}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <ImageIcon className="w-12 h-12 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
-                    <CardHeader>
-                      <CardTitle className="text-base line-clamp-1">
-                        {album.title}
-                      </CardTitle>
-                      <p className="text-sm text-gray-500">
-                        {album.event_date ? formatDate(album.event_date) : formatDate(album.created_at)}
-                      </p>
-                    </CardHeader>
-                  </Card>
-                </Link>
-              ))
-            ) : (
-              <div className="col-span-full rounded-card border border-border bg-surface"><EmptyState icon={ImageIcon} title="등록된 앨범이 없습니다." description="아이들의 소중한 순간을 곧 만나보실 수 있어요." /></div>
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {albums.length > 0 ? (
+                albums.map((album) => (
+                  <Link key={album.id} href={`/board/album/${album.id}`}>
+                    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+                      <div className="aspect-video bg-gray-200 relative">
+                        {album.cover_image_url ? (
+                          <Image
+                            src={album.cover_image_url}
+                            alt={album.title}
+                            fill
+                            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <ImageIcon className="w-12 h-12 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      <CardHeader>
+                        <CardTitle className="text-base line-clamp-1">
+                          {album.title}
+                        </CardTitle>
+                        <p className="text-sm text-gray-500">
+                          {album.event_date ? formatDate(album.event_date) : formatDate(album.created_at)}
+                        </p>
+                      </CardHeader>
+                    </Card>
+                  </Link>
+                ))
+              ) : (
+                <div className="col-span-full rounded-card border border-border bg-surface"><EmptyState icon={ImageIcon} title="등록된 앨범이 없습니다." description="아이들의 소중한 순간을 곧 만나보실 수 있어요." /></div>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   )
 }

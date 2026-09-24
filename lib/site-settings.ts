@@ -21,6 +21,9 @@ export const CONTACT_KEYS = [
   'kakao_map_lng',
 ] as const
 
+/** 메인 화면 섹션 표시 여부 ('true' / 'false', 없으면 표시) */
+export const HOME_KEYS = ['home_show_intro', 'home_show_albums'] as const
+
 // 쿠키 없는 anon 클라이언트 + 태그 캐시(60초) — 푸터처럼 모든 페이지에 들어가는 곳에서 써도 정적 렌더를 막지 않는다.
 async function fetchSiteSettings(): Promise<SiteSettings> {
   try {

@@ -223,6 +223,8 @@ export default async function DynamicPage({ params }: PageProps) {
       heroImageUrl={page.hero_image_url ?? undefined}
       sidebar={<SideNav title={parentMenu.label} items={siblings} />}
       card={false}
+      // 인사말 전용 디자인은 배경 패턴 없이 단색 유지
+      className={isGreeting ? 'bg-solid' : undefined}
       style={styleVars as CSSProperties}
     >
       {content}

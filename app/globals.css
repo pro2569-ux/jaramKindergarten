@@ -84,11 +84,27 @@ body {
 }
 
 body {
-  background: var(--page);
+  /* 단색 페이지 배경 + 귀여운 패턴 타일 (PR M). 흰 카드·헤더·푸터·상단 띠는 각자 배경이 있어 패턴이 비치지 않는다 */
+  background-color: var(--page);
+  background-image: url('/patterns/jaram-pattern.svg');
+  background-size: 200px 200px;
+  background-repeat: repeat;
   color: var(--body);
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* 패턴 배경 유틸: 페이지 바탕색 + 패턴 타일 (메인 바로가기·공지 영역, 페이지 셸). 패턴을 빼고 단색만 쓰려면 .bg-solid */
+.bg-pattern {
+  background-color: var(--page);
+  background-image: url('/patterns/jaram-pattern.svg');
+  background-size: 200px 200px;
+  background-repeat: repeat;
+}
+.bg-solid {
+  background-color: var(--page);
+  background-image: none;
 }
 
 /* ------------------------------------------------------------
