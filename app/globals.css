@@ -169,7 +169,14 @@ body {
   .content [style] { font-family: inherit !important; line-height: inherit !important; letter-spacing: inherit !important; }
   .content :where(p, div, span, li, td, th, font, b, strong, em, i, u, s, small, blockquote)[style] { font-size: inherit !important; color: inherit !important; }
   .content font { font-size: inherit !important; color: inherit !important; }
-  /* 옛 스킨 class(Skin_*, moduleConTitle, 바탕글, TopBg …)에는 스타일이 없다 — 정의하지 않는다 */
+  /* 옛 스킨 class(Skin_*, moduleConTitle, 바탕글, TopBg …)에는 스타일이 없다 — 정의하지 않는다.
+     단, 옛 스킨이 본문을 <ul class="h30"><li> 로 감싸므로 그 목록에는 기호를 붙이지 않는다 */
+  .content ul.h30, .content ul.ul { list-style: none; padding-left: 0; }
+  .content li.moduleConTitle, .content li.Text { list-style: none; margin: 0; }
+  /* 옛 스킨 컨테이너(div.Skin_NN) 안의 목록은 레이아웃용 — 기호 없이, 사진은 원본처럼 왼쪽 정렬 */
+  .content [class^="Skin_"] ul, .content [class*=" Skin_"] ul { list-style: none; padding-left: 0; margin: 0; }
+  .content [class^="Skin_"] li, .content [class*=" Skin_"] li { margin: 0; }
+  .content [class^="Skin_"] li > img, .content [class*=" Skin_"] li > img { display: inline-block; margin: 0.25em 0; }
   .content .moduleConTitle { font-size: 1.375rem; font-weight: 700; color: var(--heading); margin: 0 0 0.75em; }
   /* 빈 문단 */
   .content p:empty { display: none; }
