@@ -103,7 +103,9 @@ npm run dev
 
 ## 4. 관리자 계정 생성
 
-### Step 1: 회원가입
+### Step 1: Supabase 대시보드에서 사용자 생성
+> 사이트의 회원가입 기능은 제거됐다(비로그인 방문자 + 관리자 계정만 사용). 관리자 계정은 아래처럼 대시보드에서만 만든다.
+
 1. Supabase 대시보드에서 "Authentication" 클릭
 2. "Add user" > "Create new user" 클릭
 3. 정보 입력:

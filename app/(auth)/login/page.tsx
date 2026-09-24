@@ -2,7 +2,6 @@
 
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
@@ -103,9 +102,9 @@ function LoginForm() {
 
       setSuccessMessage(`${userName || formData.username}님, 환영합니다!`)
 
-      // 역할에 따라 다른 페이지로 이동
-      const isAdmin = profile?.role === 'admin' || profile?.role === 'teacher'
-      const destination = isAdmin ? '/admin' : '/'
+      // 관리자만 관리 화면으로 (redirectTo 는 같은 사이트 경로만 허용). 그 외 계정은 홈으로
+      const safeRedirect = redirectTo.startsWith('/') && !redirectTo.startsWith('//') ? redirectTo : '/admin'
+      const destination = profile?.role === 'admin' ? safeRedirect : '/'
 
       setTimeout(() => {
         window.location.href = destination
@@ -125,9 +124,9 @@ function LoginForm() {
           <div className="inline-flex h-16 w-16 rounded-full bg-primary items-center justify-center mb-4">
             <span className="text-white font-bold text-2xl">자</span>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">로그인</h2>
+          <h2 className="text-3xl font-bold text-gray-900">관리자 로그인</h2>
           <p className="mt-2 text-sm text-gray-600">
-            자람동산어린이집에 오신 것을 환영합니다
+            자람동산어린이집 관리자 전용 로그인입니다
           </p>
         </div>
 
@@ -195,14 +194,6 @@ function LoginForm() {
           </CardContent>
         </Card>
 
-        <div className="mt-4 text-center space-y-2">
-          <p className="text-sm text-gray-600">
-            계정이 없으신가요?{' '}
-            <Link href="/register" className="text-primary hover:text-primary-dark font-medium">
-              회원가입
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   )

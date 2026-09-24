@@ -15,6 +15,10 @@ function getSupabaseHostname(): string | null {
 const supabaseHostname = getSupabaseHostname();
 
 const nextConfig: NextConfig = {
+  // 회원가입 기능 제거(비로그인 방문자 + 관리자 계정만 사용). 남아 있는 옛 링크는 로그인으로 보낸다.
+  async redirects() {
+    return [{ source: '/register', destination: '/login', permanent: true }]
+  },
   images: {
     remotePatterns: supabaseHostname
       ? [
