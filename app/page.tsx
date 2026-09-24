@@ -56,9 +56,11 @@ export default async function Home() {
   }
 
   return (
-    <div className="flex flex-col">
-      {/* 히어로 배너 섹션 */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-tint to-white py-12 md:py-20">
+    // 패턴 배경은 메인 전체를 감싸는 이 한 곳에만 깐다(PageShell 과 같은 방식). 각 섹션은 배경 투명 →
+    // 무늬가 섹션 경계에서 잘리지 않고 위아래로 이어진다. background-attachment: fixed 는 iOS 문제로 쓰지 않음.
+    <div className="bg-pattern flex flex-col">
+      {/* 히어로 배너 섹션 — 위쪽은 단색(tint), 아래로 갈수록 투명해져 패턴이 서서히 드러난다 */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-tint from-35% to-transparent py-12 md:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
             {/* 왼쪽: 텍스트 콘텐츠 */}
@@ -101,17 +103,10 @@ export default async function Home() {
             </div>
           </div>
         </div>
-
-        {/* 하단 웨이브 — 아래 바로가기 영역(패턴 배경)의 바탕색으로 이어진다 */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
-            <path d="M0 60L60 52.5C120 45 240 30 360 22.5C480 15 600 15 720 18.75C840 22.5 960 30 1080 33.75C1200 37.5 1320 37.5 1380 37.5L1440 37.5V60H1380C1320 60 1200 60 1080 60C960 60 840 60 720 60C600 60 480 60 360 60C240 60 120 60 60 60H0Z" style={{ fill: 'var(--page)' }} />
-          </svg>
-        </div>
       </section>
 
-      {/* 바로가기 섹션 (패턴 배경) */}
-      <section className="bg-pattern py-12">
+      {/* 바로가기 섹션 (배경 투명 — 감싸는 패턴이 비친다) */}
+      <section className="py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {QUICK_LINKS.map((q) => {
@@ -141,7 +136,7 @@ export default async function Home() {
 
       {/* 어린이집 소개 섹션 (설정 home_show_intro 로 표시/숨김) */}
       {showIntro && (
-        <section className="py-20 bg-gradient-to-b from-white to-tint">
+        <section className="py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               {/* 이미지 (장식 원이 모바일에서 가로 스크롤을 만들지 않게 overflow-hidden) */}
@@ -218,8 +213,8 @@ export default async function Home() {
         </section>
       )}
 
-      {/* 특징 섹션 */}
-      <section className="py-16 bg-white md:py-20">
+      {/* 특징 섹션 — 구역을 흰 띠로 칠하지 않고 카드만 파스텔 배경 */}
+      <section className="py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -267,8 +262,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 공지사항 섹션 (패턴 배경, 카드는 흰색) */}
-      <section className="bg-pattern py-16">
+      {/* 공지사항 섹션 (배경 투명, 카드는 흰색) */}
+      <section className="py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
             <h2 className="typo-h2 text-heading">공지사항</h2>
@@ -311,7 +306,7 @@ export default async function Home() {
 
       {/* 앨범 섹션 (설정 home_show_albums 로 표시/숨김) */}
       {showAlbums && (
-        <section className="py-16 bg-white">
+        <section className="py-16">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-8">
               <h2 className="typo-h2 text-heading">최근 앨범</h2>
@@ -358,6 +353,9 @@ export default async function Home() {
           </div>
         </section>
       )}
+
+      {/* 푸터로 넘어가기 전 페이드 — 무늬가 푸터 경계에서 잘리지 않게 바탕색으로 서서히 가라앉힌다 */}
+      <div aria-hidden="true" className="h-20 bg-gradient-to-b from-transparent to-page" />
     </div>
   )
 }
