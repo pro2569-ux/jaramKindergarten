@@ -1,90 +1,71 @@
-import { MapPin, Phone, Clock } from 'lucide-react'
 import PageShell from '@/components/layout/PageShell'
 import SideNav from '@/components/layout/SideNav'
 import { getSectionNav } from '@/lib/site-nav'
+import { fullAddress, getSiteSettings } from '@/lib/site-settings'
+import { sanitizeHtml } from '@/lib/sanitize'
 import LocationMap from './LocationMap'
 
 export const metadata = {
   title: '오시는길',
 }
 
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+const num = (v: string | undefined) => {
+  const n = v ? Number(v) : NaN
+  return Number.isFinite(n) ? n : null
+}
+
+/**
+ * 오시는길 — 지도 + 주소·연락처 카드 + 교통편 카드. 값은 전부 site_settings(관리자 > 사이트 설정)에서 온다.
+ * 카드는 본문 디자인 블록(.content 의 card / kv / entry)으로 그려 다른 정보 페이지와 톤을 맞춘다.
+ */
 export default async function LocationPage() {
-  const nav = await getSectionNav('about')
+  const [nav, s] = await Promise.all([getSectionNav('about'), getSiteSettings()])
+  const name = s.site_name || '자람동산어린이집'
+  const address = fullAddress(s)
+
+  const kv = [
+    ['주소', address],
+    ['TEL', s.phone],
+    ['PHONE', s.mobile],
+    ['FAX', s.fax],
+    ['이메일', s.email],
+  ].filter(([, v]) => v && v.trim())
+  const addressCard = `
+<div class="card card-accent">
+<span class="card-icon">📍</span>
+<h3>${esc(name)}</h3>
+<div class="kv">
+${kv.map(([k, v]) => `<div class="kv-row"><span class="kv-key">${esc(k!)}</span><span class="kv-val">${esc(v!)}</span></div>`).join('\n')}
+</div>
+</div>`
+
+  const transit: string[] = []
+  if (s.transit_bus || s.transit_subway) {
+    transit.push(`<div class="card"><span class="card-icon">🚌</span><h3>대중교통 이용시</h3>
+${s.transit_bus ? `<div class="entry"><div class="entry-head">버스</div><p>${esc(s.transit_bus)}</p></div>` : ''}
+${s.transit_subway ? `<div class="entry"><div class="entry-head">지하철</div><p>${esc(s.transit_subway)}</p></div>` : ''}
+</div>`)
+  }
+  if (s.transit_car) {
+    transit.push(`<div class="card"><span class="card-icon">🚗</span><h3>자가용 이용시</h3><p>${esc(s.transit_car)}</p></div>`)
+  }
+  const transitHtml = transit.length ? `<h2>오시는 길</h2><div class="cards cards-2">${transit.join('')}</div>` : ''
 
   return (
     <PageShell
       eyebrow={nav.label}
       title="오시는길"
-      subtitle="자람동산어린이집을 찾아오시는 방법을 안내합니다"
+      subtitle={`${name}을 찾아오시는 방법을 안내합니다`}
       sidebar={<SideNav title={nav.label} items={nav.items} />}
     >
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* 지도 */}
-        <div className="lg:col-span-2">
-          <LocationMap />
-        </div>
-
-        {/* 정보 */}
-        <div className="space-y-6">
-          <div className="rounded-card border border-border bg-surface p-5">
-            <div className="mb-6 flex items-start gap-4">
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-tint">
-                <MapPin className="h-6 w-6 text-primary-ink" aria-hidden="true" />
-              </div>
-              <div>
-                <h2 className="typo-h3 mb-1 text-heading">주소</h2>
-                <p className="text-body">서울특별시 강남구 테헤란로 123</p>
-              </div>
-            </div>
-
-            <div className="mb-6 flex items-start gap-4">
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-secondary/20">
-                <Phone className="h-6 w-6 text-secondary-dark" aria-hidden="true" />
-              </div>
-              <div>
-                <h2 className="typo-h3 mb-1 text-heading">연락처</h2>
-                <p className="text-body">
-                  전화: 02-1234-5678
-                  <br />
-                  팩스: 02-1234-5679
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-accent/10">
-                <Clock className="h-6 w-6 text-accent-dark" aria-hidden="true" />
-              </div>
-              <div>
-                <h2 className="typo-h3 mb-1 text-heading">운영시간</h2>
-                <p className="text-body">
-                  평일: 07:30 - 19:30
-                  <br />
-                  토/일/공휴일: 휴무
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-card border border-border bg-surface p-5">
-            <h2 className="typo-h3 mb-4 text-heading">대중교통</h2>
-            <div className="space-y-3 text-sm text-body">
-              <div>
-                <span className="font-medium text-heading">지하철:</span>
-                <p className="mt-1">2호선 강남역 3번 출구에서 도보 5분</p>
-              </div>
-              <div>
-                <span className="font-medium text-heading">버스:</span>
-                <p className="mt-1">
-                  간선버스: 146, 401, 472
-                  <br />
-                  지선버스: 3414, 4319
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="content">
+        <h2>약도</h2>
       </div>
+      <div className="mb-6">
+        <LocationMap address={address || name} name={name} lat={num(s.kakao_map_lat)} lng={num(s.kakao_map_lng)} />
+      </div>
+      <div className="content" dangerouslySetInnerHTML={{ __html: sanitizeHtml(`<h2>주소</h2>${addressCard}${transitHtml}`) }} />
     </PageShell>
   )
 }
