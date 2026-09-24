@@ -27,7 +27,7 @@ const ALLOWED_TAGS = [
 const ALLOWED_ATTR = [
   'style', 'class', 'id',
   'href', 'target', 'rel',
-  'src', 'alt', 'title', 'width', 'height', 'loading',
+  'src', 'alt', 'title', 'width', 'height', 'loading', 'decoding',
   // 표 속성
   'colspan', 'rowspan', 'scope', 'align', 'valign',
 ]
@@ -54,9 +54,20 @@ for (const prop of ALLOWED_STYLE_PROPS) {
   ALLOWED_STYLES_MAP[prop] = ANY
 }
 
+/**
+ * 표 가로 스크롤 래퍼. 새니타이즈된 HTML 의 <table> 을 <div class="table-scroll"> 로 감싼다.
+ * (이미 감싸진 표는 건너뜀. 중첩 표는 안쪽도 각각 감싸지며 td 안의 div 는 유효한 구조)
+ */
+function wrapTables(html: string): string {
+  if (!/<table\b/i.test(html)) return html
+  return html
+    .replace(/(<div class="table-scroll">)?<table\b/gi, (m, wrapped: string | undefined) => (wrapped ? m : '<div class="table-scroll"><table'))
+    .replace(/<\/table>(<\/div>)?/gi, (m, closed: string | undefined) => (closed ? m : '</table></div>'))
+}
+
 export function sanitizeHtml(html: string): string {
   if (!html) return ''
-  return sanitizeHtmlLib(html, {
+  const clean = sanitizeHtmlLib(html, {
     allowedTags: ALLOWED_TAGS,
     allowedAttributes: { '*': ALLOWED_ATTR },
     allowedStyles: { '*': ALLOWED_STYLES_MAP },
@@ -64,5 +75,13 @@ export function sanitizeHtml(html: string): string {
     allowedSchemes: ['http', 'https', 'mailto', 'tel'],
     // script/style 등은 태그+내용 모두 제거 (sanitize-html 기본 nonTextTags 동작).
     disallowedTagsMode: 'discard',
+    transformTags: {
+      // 본문 이미지는 지연 로딩 (이관 페이지는 이미지가 수십 장)
+      img: (tagName, attribs) => ({
+        tagName,
+        attribs: { ...attribs, loading: attribs.loading ?? 'lazy', decoding: attribs.decoding ?? 'async' },
+      }),
+    },
   })
+  return wrapTables(clean)
 }

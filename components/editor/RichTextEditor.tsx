@@ -48,7 +48,7 @@ export default function RichTextEditor({
     editorProps: {
       attributes: {
         class:
-          'prose prose-sm max-w-none min-h-[300px] p-4 focus:outline-none',
+          'content min-h-[300px] p-4 focus:outline-none',
       },
     },
   })

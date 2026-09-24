@@ -109,6 +109,72 @@ body {
   }
 }
 
+/* ------------------------------------------------------------
+   본문(.content) 규칙 (PR B) — 이관 HTML 이든 새 글이든 같은 모습.
+   @tailwindcss/typography 대신 자체 규칙. 게시글 상세·CMS 단일 페이지·에디터가 같이 쓴다.
+   ------------------------------------------------------------ */
+@layer components {
+  .content {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--body);
+    overflow-wrap: anywhere;
+  }
+  .content > :first-child { margin-top: 0; }
+  .content > :last-child { margin-bottom: 0; }
+
+  .content p { margin: 0 0 1em; }
+  .content h1, .content h2 { font-size: 1.375rem; line-height: 1.35; font-weight: 700; color: var(--heading); margin: 1.5em 0 0.6em; }
+  .content h3 { font-size: 1.125rem; line-height: 1.45; font-weight: 600; color: var(--heading); margin: 1.5em 0 0.5em; }
+  .content h4, .content h5, .content h6 { font-size: 1rem; font-weight: 600; color: var(--heading); margin: 1.25em 0 0.5em; }
+  .content strong, .content b { font-weight: 700; }
+  .content a { color: var(--primary-ink); text-decoration: underline; text-underline-offset: 2px; }
+  .content a:hover { color: var(--heading); }
+  .content hr { border: 0; border-top: 1px solid var(--border); margin: 2em 0; }
+  .content blockquote { margin: 1.25em 0; padding: 0.75em 1em; border-left: 4px solid var(--primary); background: var(--tint); color: var(--body); }
+  .content pre { overflow-x: auto; padding: 1em; border-radius: var(--radius-control); background: #F3F4F6; font-size: 0.875rem; }
+  .content code { font-size: 0.9em; padding: 0.1em 0.3em; border-radius: 4px; background: #F3F4F6; }
+  .content pre code { padding: 0; background: none; }
+
+  /* 목록 기호 복원 (preflight 가 지운 것) */
+  .content ul { list-style: disc; padding-left: 1.25em; margin: 0 0 1em; }
+  .content ol { list-style: decimal; padding-left: 1.25em; margin: 0 0 1em; }
+  .content li { margin: 0.25em 0; }
+  .content li > ul, .content li > ol { margin-bottom: 0; }
+
+  /* 이미지: 반응형·가운데 정렬. 이미지만 있는 문단은 여백 축소 */
+  .content img { max-width: 100%; height: auto; display: block; margin: 1.25em auto; }
+  .content p > img:only-child { margin: 0.5em auto; }
+  .content figure { margin: 1.5em 0; }
+  .content figcaption { font-size: 0.75rem; line-height: 1.4; color: var(--muted); text-align: center; margin-top: 0.5em; }
+  .content figcaption a { color: var(--muted); }
+  /* 통짜 이미지 페이지(E1): 본문 폭 안에서 최대 900px */
+  .content figure.legacy-full { margin: 0; }
+  .content figure.legacy-full img { width: 100%; max-width: 900px; margin: 0 auto; }
+  /* 옛 pageMaker 조각(아직 남아 있는 페이지용): 가운데 정렬, 폭 제한 */
+  .content .legacy-pagemaker { max-width: 700px; margin: 0 auto; }
+  .content .legacy-pagemaker img { margin: 0 auto; }
+
+  /* 표: 가로 스크롤 래퍼(sanitize 가 감쌈) + 기본 테두리·패딩·헤더 배경 */
+  .content .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1.25em 0; }
+  .content .table-scroll > table { margin: 0; }
+  .content table { border-collapse: collapse; max-width: 100%; font-size: 0.9375rem; line-height: 1.5; }
+  .content table[width], .content table[style*="width"] { max-width: 100% !important; }
+  .content th, .content td { border: 1px solid var(--border); padding: 0.5em 0.75em; vertical-align: top; }
+  .content th { background: var(--tint); font-weight: 600; color: var(--heading); }
+  .content caption { caption-side: top; font-size: 0.875rem; color: var(--muted); padding: 0 0 0.5em; }
+
+  /* 이관 HTML 안전망: 인라인 글꼴·크기·색·줄간격은 무시하고 본문 체계를 따른다.
+     (표 셀의 배경색·정렬·테두리는 유지. 제목/링크의 색은 위 규칙이 적용) */
+  .content [style] { font-family: inherit !important; line-height: inherit !important; letter-spacing: inherit !important; }
+  .content :where(p, div, span, li, td, th, font, b, strong, em, i, u, s, small, blockquote)[style] { font-size: inherit !important; color: inherit !important; }
+  .content font { font-size: inherit !important; color: inherit !important; }
+  /* 옛 스킨 class(Skin_*, moduleConTitle, 바탕글, TopBg …)에는 스타일이 없다 — 정의하지 않는다 */
+  .content .moduleConTitle { font-size: 1.375rem; font-weight: 700; color: var(--heading); margin: 0 0 0.75em; }
+  /* 빈 문단 */
+  .content p:empty { display: none; }
+}
+
 /* 스크롤바 스타일링 */
 ::-webkit-scrollbar {
   width: 10px;

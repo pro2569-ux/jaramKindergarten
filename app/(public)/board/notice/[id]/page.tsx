@@ -86,10 +86,10 @@ export default async function NoticeDetailPage({ params }: PageProps) {
           </div>
         </header>
 
-        {/* 내용 (본문 CSS는 PR B) */}
+        {/* 내용 */}
         <div className="px-4 py-6 md:px-6 md:py-8">
           <div
-            className="prose prose-lg max-w-none"
+            className="content"
             dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content || '') }}
           />
         </div>
