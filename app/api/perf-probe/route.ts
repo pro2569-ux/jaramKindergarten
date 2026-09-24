@@ -5,18 +5,25 @@ import { getSiteSettings } from '@/lib/site-settings'
 import { resolveMediaUrl } from '@/lib/storage/media'
 
 /**
- * 서버 쪽 시간 분해 프로브 — 프리뷰 배포와 로컬에서만 응답(운영에서는 404).
- * 함수 실행 지역, 콜드 스타트 여부, Supabase 쿼리·인증·서명 URL·캐시 조회 각각의 소요 시간을 돌려준다.
- * 데이터를 바꾸지 않고 비밀 값을 노출하지 않는다.
+ * 서버 쪽 시간 분해 프로브 — 함수 실행 지역, 콜드 스타트 여부, Supabase 쿼리·인증·서명 URL·캐시 조회 각각의 소요 시간.
+ * 프리뷰 배포는 Vercel 로그인 보호가 걸려 밖에서 부를 수 없어 운영에서도 응답한다.
+ * 숫자(밀리초)와 지역 이름만 돌려주고, 데이터를 바꾸지 않으며 비밀 값을 노출하지 않는다. IP 당 분당 6회로 제한.
  */
 export const dynamic = 'force-dynamic'
 
 const bootedAt = Date.now()
 let invocations = 0
+const hits = new Map<string, number[]>()
+const RATE_LIMIT = 6
+const RATE_WINDOW_MS = 60_000
 
-export async function GET() {
-  const allowed = process.env.VERCEL_ENV === 'preview' || !process.env.VERCEL
-  if (!allowed) return new NextResponse(null, { status: 404 })
+export async function GET(request: Request) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  const now = Date.now()
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS)
+  if (recent.length >= RATE_LIMIT) return NextResponse.json({ error: '잠시 후 다시 시도하세요.' }, { status: 429 })
+  recent.push(now)
+  hits.set(ip, recent)
   invocations += 1
   const t: Record<string, number | string> = {}
   const time = async (name: string, fn: () => PromiseLike<unknown>) => {
