@@ -118,6 +118,8 @@ body {
     font-size: 1rem;
     line-height: 1.7;
     color: var(--body);
+    /* 한국어는 어절 단위로 줄바꿈(keep-all), 긴 URL 같은 한 덩어리만 어디서든 끊는다 */
+    word-break: keep-all;
     overflow-wrap: anywhere;
   }
   .content > :first-child { margin-top: 0; }
@@ -158,12 +160,24 @@ body {
   .content .legacy-pagemaker { max-width: 700px; margin: 0 auto; }
   .content .legacy-pagemaker img { margin: 0 auto; }
 
-  /* 표: 가로 스크롤 래퍼(sanitize 가 감쌈) + 기본 테두리·패딩·헤더 배경 */
+  /* 표: 가로 스크롤 래퍼(sanitize 가 감쌈) + 기본 테두리·패딩·헤더 배경.
+     본문보다 좁은 표는 가운데(PR G), 넓은 표는 래퍼 안에서 가로 스크롤 */
   .content .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1.25em 0; }
-  .content .table-scroll > table { margin: 0; }
+  .content .table-scroll > table { margin: 0 auto; }
   .content table { border-collapse: collapse; max-width: 100%; font-size: 0.9375rem; line-height: 1.5; }
   .content table[width], .content table[style*="width"] { max-width: 100% !important; }
   .content th, .content td { border: 1px solid var(--border); padding: 0.5em 0.75em; vertical-align: top; }
+  /* 셀 안은 어절 단위로만 끊어 좁은 열이 글자 하나씩 세로로 쪼개지지 않게 (넘치면 래퍼가 스크롤) */
+  .content th, .content td { overflow-wrap: break-word; }
+  /* 옛 고정 폭(≈700px) 블록: 본문 폭 안에서 가운데, 넘치지 않게 */
+  .content div[style*="width"], .content p[style*="width"] { max-width: 100% !important; margin-left: auto !important; margin-right: auto !important; }
+  /* 옛 레이아웃 목록 잔재 안전망: 표·이미지만 담은 항목과 빈 항목은 기호 없이 (본문 정리 스크립트가 못 잡은 경우) */
+  .content li:has(> .table-scroll:only-child), .content li:has(> img:only-child), .content li:has(> figure:only-child), .content li:empty { list-style: none; }
+  /* 사진 격자 (phase8 이 옛 목록형 사진 배치를 변환): 가운데 정렬, 줄바꿈, 모바일은 화면 폭에 맞춤 */
+  .content .photo-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin: 1.25em 0; }
+  .content .photo-grid figure { margin: 0; flex: 0 1 auto; max-width: 100%; text-align: center; }
+  .content .photo-grid img { margin: 0 auto; }
+  .content .photo-grid figcaption { margin-top: 0.4em; font-size: 0.875rem; color: var(--body); }
   .content th { background: var(--tint); font-weight: 600; color: var(--heading); }
   .content caption { caption-side: top; font-size: 0.875rem; color: var(--muted); padding: 0 0 0.5em; }
 

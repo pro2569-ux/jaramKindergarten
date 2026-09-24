@@ -289,6 +289,7 @@ const METRICS_JS = (deviceWidth) => `(() => {
     const cr = c.getBoundingClientRect(); if (cr.width === 0) continue;
     for (const el of Array.from(c.querySelectorAll('table, img, figure, iframe, video, div[style*="width"]'))) {
       if (el.tagName !== 'TABLE' && el.closest('table')) continue; // 표 안의 요소는 제외
+      if (el.closest('.photo-grid')) continue; // 사진 격자는 줄 전체가 가운데 정렬 (개별 사진은 좌우가 다른 게 정상)
       if (el.tagName === 'TABLE' && el.parentElement && el.parentElement.closest('table')) continue; // 중첩 표 제외
       const r = el.getBoundingClientRect(); if (r.width === 0 || !visibleEl(el)) continue;
       if (r.width >= cr.width * 0.6) continue;

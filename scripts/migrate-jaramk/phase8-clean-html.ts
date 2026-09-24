@@ -28,6 +28,9 @@ const ROLLBACK_IDX = process.argv.indexOf('--rollback')
 const ROLLBACK_FILE = ROLLBACK_IDX >= 0 ? (process.argv[ROLLBACK_IDX + 1] ?? null) : null
 const SAMPLE_IDX = process.argv.indexOf('--sample')
 const SAMPLES = SAMPLE_IDX >= 0 ? Number(process.argv[SAMPLE_IDX + 1] ?? 3) : 3
+const ONLY_IDX = process.argv.indexOf('--only')
+/** --only <slug|id 조각>: 해당 행만 대상으로 (검토용) */
+const ONLY = ONLY_IDX >= 0 ? (process.argv[ONLY_IDX + 1] ?? null) : null
 const OUT = join(REPO_ROOT, 'scripts', 'migrate-jaramk', 'data', 'out', 'clean-html')
 
 const log = (m = '') => process.stdout.write(m + '\n')
@@ -39,7 +42,7 @@ const DROP_STYLE_PROPS = new Set(['font-family', 'font-size', 'color', 'line-hei
 const KEEP_ON_TABLE = new Set(['background', 'background-color', 'width', 'height', 'border', 'border-collapse', 'border-spacing', 'border-color', 'border-width', 'border-style', 'border-top', 'border-right', 'border-bottom', 'border-left', 'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left', 'text-align', 'vertical-align'])
 const KEEP_ON_IMG = new Set(['width', 'height', 'max-width', 'display', 'margin', 'margin-left', 'margin-right', 'margin-top', 'margin-bottom', 'float'])
 const KEEP_GENERAL = new Set(['text-align', 'width', 'max-width', 'margin', 'margin-left', 'margin-right', 'padding-left'])
-const KEEP_CLASSES = new Set(['legacy-full', 'legacy-pagemaker', 'table-scroll'])
+const KEEP_CLASSES = new Set(['legacy-full', 'legacy-pagemaker', 'table-scroll', 'photo-grid'])
 
 export interface CleanStats {
   styleProps: number
@@ -51,8 +54,20 @@ export interface CleanStats {
   brCollapsed: number
   moduleTitles: number
   titleDupRemoved: number
+  /** PR G: 옛 목록형 사진 배치 → 사진 격자 */
+  photoGrids: number
+  /** PR G: 레이아웃용 <li>/<ul> 풀기 */
+  layoutLists: number
+  /** PR G: 고정 폭에 맞춰 줄마다 끊긴 문단 잇기 */
+  linesMerged: number
 }
-const emptyStats = (): CleanStats => ({ styleProps: 0, stylesEmptied: 0, fontTags: 0, spansUnwrapped: 0, classesRemoved: 0, emptyBlocksRemoved: 0, brCollapsed: 0, moduleTitles: 0, titleDupRemoved: 0 })
+const emptyStats = (): CleanStats => ({ styleProps: 0, stylesEmptied: 0, fontTags: 0, spansUnwrapped: 0, classesRemoved: 0, emptyBlocksRemoved: 0, brCollapsed: 0, moduleTitles: 0, titleDupRemoved: 0, photoGrids: 0, layoutLists: 0, linesMerged: 0 })
+
+const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+/** 문장이 끝난 문단 (부호 또는 한국어 종결 어미) */
+const SENTENCE_END = /[.!?。…:;)\]」』"”'’]\s*$|(다|요|죠|음|함|임|됨|것)\s*$/
+/** 글머리 기호·번호로 시작하는 줄 (잇지 않는다) */
+const LIST_LIKE = /^\s*([-•·※▶►■□○●◆◇▷▪–—]|\d+[.)]|[①-⑳])/
 
 function isBlank(text: string): boolean {
   return text.replace(/ |&nbsp;/g, ' ').trim() === ''
@@ -76,6 +91,90 @@ export function cleanHtml(html: string, title: string | null): { html: string; s
       else node.replaceWith(node.html() ?? '')
     })
   }
+
+  // 1b) 옛 레이아웃 목록 정리 (PR G) — 원본 스킨이 문단·표·사진을 <ul><li> 로 감싸 놓은 것을 푼다
+  //  - 사진 격자: <ul><li><ul><li><img></li><li>설명</li></ul></li>…</ul> → <div class="photo-grid"><figure><img><figcaption>설명</figcaption></figure>…</div>
+  //  - 부모가 ul/ol 이 아닌 고아 <li>, 블록(p/div/table/h*/목록)을 담은 <li>, 이미지만 담은 <li>, 빈 <li> → 목록 항목이 아니라 레이아웃 → 푼다
+  //  - li 가 안 남은 목록은 풀고, 항목이 하나뿐인 목록은 문단으로
+  const BLOCK_SEL = 'p, div, table, h1, h2, h3, h4, h5, h6, figure, blockquote, ul, ol'
+  const isPhotoCard = (li: Element): boolean => {
+    const kids = $(li).children()
+    if (kids.length !== 1 || !kids.first().is('ul')) return false
+    const inner = kids.first().children('li')
+    if (inner.length < 1 || inner.length > 2) return false
+    const first = inner.eq(0)
+    if (first.children().length !== 1 || first.children('img').length !== 1 || !isBlank(first.text())) return false
+    if (inner.length === 2 && inner.eq(1).children().length > 0) return false
+    return true
+  }
+  $('ul').each((_, el) => {
+    const ul = $(el)
+    const items = ul.children('li')
+    if (items.length === 0 || !items.toArray().every((li) => isPhotoCard(li as Element))) return
+    const figures = items.toArray().map((li) => {
+      const inner = $(li).children('ul').children('li')
+      const img = $.html(inner.eq(0).children('img'))
+      const caption = inner.length === 2 ? inner.eq(1).text().replace(/[​﻿]/g, '').trim() : ''
+      return `<figure>${img}${caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : ''}</figure>`
+    })
+    ul.replaceWith(`<div class="photo-grid">${figures.join('')}</div>`)
+    stats.photoGrids += 1
+  })
+  for (let pass = 0; pass < 4; pass += 1) {
+    let changed = 0
+    $('li').each((_, el) => {
+      const li = $(el)
+      const parent = (el as Element).parent
+      const parentTag = parent && parent.type === 'tag' ? (parent as Element).name : ''
+      const orphan = parentTag !== 'ul' && parentTag !== 'ol'
+      const hasBlock = li.children(BLOCK_SEL).length > 0
+      const onlyImg = li.children().length === 1 && li.children('img').length === 1 && isBlank(li.text())
+      const empty = li.children().length === 0 && isBlank(li.text())
+      if (!orphan && !hasBlock && !onlyImg && !empty) return // 진짜 글머리 항목
+      if (empty) li.remove()
+      else li.replaceWith(hasBlock ? (li.html() ?? '') : `<p>${li.html() ?? ''}</p>`)
+      changed += 1
+    })
+    $('ul, ol').each((_, el) => {
+      const list = $(el)
+      const items = list.children('li')
+      if (items.length === 0) {
+        list.replaceWith(list.html() ?? '')
+        changed += 1
+      } else if (items.length === 1 && items.children(BLOCK_SEL).length === 0) {
+        list.replaceWith(`<p>${items.html() ?? ''}</p>`)
+        changed += 1
+      }
+    })
+    stats.layoutLists += changed
+    if (!changed) break
+  }
+
+  // 1c) 원본의 고정 폭(≈700px)에 맞춰 줄마다 <p> 로 끊긴 문장 잇기 —
+  //     문장이 끝나지 않은 문단 바로 뒤에 문단이 오면 한 문단으로 (글머리 줄·이미지·표·짧은 줄은 제외)
+  // 문단 사이에 낀 빈 인라인 태그(<b></b> 등)는 잇기를 방해하므로 먼저 지운다
+  $('b, strong, i, em, u, span, font').each((_, el) => {
+    const node = $(el)
+    if (node.children().length === 0 && isBlank(node.text())) node.remove()
+  })
+  $('p').each((_, el) => {
+    const cur = $(el)
+    if (!(el as Element).parent) return // 앞 문단에 이미 합쳐져 떨어져 나간 노드
+    for (;;) {
+      const text = cur.text().replace(/ /g, ' ').trim()
+      // 한 줄이 가득 찬 문단(≈700px 폭에서 28자 이상)만 이어붙인다 — 짧은 소제목 줄은 그대로
+      if (text.length < 28 || SENTENCE_END.test(text) || LIST_LIKE.test(text) || cur.find('img, table, br').length) break
+      let next: AnyNode | null = (cur[0] as Element).next
+      while (next && next.type === 'text' && !(next as { data: string }).data.trim()) next = next.next
+      if (!next || next.type !== 'tag' || (next as Element).name !== 'p') break
+      const np = $(next as Element)
+      const ntext = np.text().replace(/ /g, ' ').trim()
+      if (!ntext || LIST_LIKE.test(ntext) || np.find('img, table').length || (np.attr('style') ?? '') !== (cur.attr('style') ?? '')) break
+      cur.append(' ' + (np.html() ?? '').trim())
+      np.remove()
+      stats.linesMerged += 1
+    }
+  })
 
   // 2) 인라인 스타일 정리
   $('[style]').each((_, el) => {
@@ -109,7 +208,7 @@ export function cleanHtml(html: string, title: string | null): { html: string; s
     $(el).replaceWith($(el).html() ?? '')
     stats.fontTags += 1
   })
-  for (let pass = 0; pass < 6; pass += 1) {
+  for (let pass = 0; pass < 40; pass += 1) {
     let changed = 0
     $('span').each((_, el) => {
       const attrs = Object.keys((el as Element).attribs ?? {})
@@ -183,7 +282,8 @@ export function cleanHtml(html: string, title: string | null): { html: string; s
     }
   })
 
-  const out = sanitizeHtml($.root().html() ?? '')
+  // 보이지 않는 문자(BOM·zero-width) 제거 후 sanitize
+  const out = sanitizeHtml(($.root().html() ?? '').replace(/[​﻿]/g, ''))
   return { html: out, stats }
 }
 
@@ -202,7 +302,12 @@ async function main(): Promise<void> {
   mkdirSync(OUT, { recursive: true })
   if (ROLLBACK_FILE) return rollback(ROLLBACK_FILE)
 
-  const { posts, pages } = await loadTargets()
+  let { posts, pages } = await loadTargets()
+  if (ONLY) {
+    const hit = (r: Row) => r.id.includes(ONLY) || (r.slug ?? '').includes(ONLY) || r.title.includes(ONLY)
+    posts = posts.filter(hit)
+    pages = pages.filter(hit)
+  }
   const plan: Plan = []
   const total = emptyStats()
   const run = (table: 'posts' | 'pages', rows: Row[]) => {
@@ -227,8 +332,9 @@ async function main(): Promise<void> {
   for (const p of plan.slice(0, SAMPLES)) {
     log(`\n--- 샘플 ${p.label} (${p.before} → ${p.after}자) ${JSON.stringify(p.stats)}`)
     const src = [...posts, ...pages].find((r) => r.id === p.id)!
-    log(`  전: ${(src.content ?? '').replace(/\s+/g, ' ').slice(0, 400)}`)
-    log(`  후: ${p.html.replace(/\s+/g, ' ').slice(0, 400)}`)
+    const width = ONLY ? 4000 : 400
+    log(`  전: ${(src.content ?? '').replace(/\s+/g, ' ').slice(0, width)}`)
+    log(`  후: ${p.html.replace(/\s+/g, ' ').slice(0, width)}`)
   }
   const planPath = join(OUT, `plan-${stamp()}.json`)
   writeFileSync(planPath, JSON.stringify({ createdAt: new Date().toISOString(), apply: APPLY, total, rows: plan.map((p) => ({ table: p.table, id: p.id, label: p.label, before: p.before, after: p.after, stats: p.stats })) }, null, 2))
