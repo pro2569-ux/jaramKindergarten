@@ -12,7 +12,7 @@ export const menuData: Record<string, { title: string; items: StaticMenuItem[] }
     items: [
       { name: '원장 인사말', href: '/about/greeting' },
       { name: '교육이념 및 원훈', href: '/about/philosophy' },
-      { name: '교원 및 반편성', href: '/about/teachers' },
+      { name: '교원 및 반편성', href: '/about/class' },
       { name: '교육환경', href: '/about/environment' },
       { name: '시설현황', href: '/about/facilities' },
       { name: '오시는길', href: '/about/location' },

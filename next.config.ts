@@ -21,6 +21,8 @@ const nextConfig: NextConfig = {
       { source: '/register', destination: '/login', permanent: true },
       // 입소신청서: 공지사항 글(이관, 비공개 전환) → 입학안내 아래 독립 페이지 (PR I)
       { source: '/board/notice/86fb8f3b-2ce5-4f09-b447-57fda6c0924d', destination: '/admission/application-form', permanent: true },
+      // 교원/반편성: 옛 정적 라우트 → 메뉴와 같은 CMS 페이지 (PR M)
+      { source: '/about/teachers', destination: '/about/class', permanent: true },
     ]
   },
   images: {
