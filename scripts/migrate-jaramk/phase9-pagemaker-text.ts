@@ -36,6 +36,10 @@ const BUCKET = 'publicImage'
 const OBJECT_PREFIX = 'legacy/pagemaker-full'
 const PAGE_URL = (code: number) => `http://jaramk.com/main/sub.html?pageCode=${code}`
 const IMAGE_URL = (code: number) => `${supabaseUrl()}/storage/v1/object/public/${BUCKET}/${OBJECT_PREFIX}/${code}.webp`
+/** pageMaker 캡처본이 없는 페이지(원래 richtext 페이지) — 원본 이미지 링크를 붙이지 않는다 */
+const NO_ORIGINAL_IMAGE = new Set<number>([4, 5])
+/** 디자인 재구성(PR H)에서 빠져도 되는 표 머리글 등 구조 낱말 — 이 외의 낱말·숫자가 빠지면 반영 중단 */
+const ALLOWED_DROPS = new Set(['구분', '인원', '월', '절기', '내용', '놀이프로그램', '시간', '활동내용'])
 /** 같은 경로를 정적 라우트가 먼저 받는 페이지 — DB 는 갱신하되 화면 반영은 라우트 쪽 */
 const STATIC_ROUTE: Record<number, string> = {
   66: '/about/teachers 정적 라우트가 우선 — 라우트가 이 행의 content 를 "글로 보기" 로 함께 보여줌',
@@ -46,7 +50,16 @@ const log = (m = '') => process.stdout.write(m + '\n')
 const stamp = () => new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
 const escapeAttr = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 const count = (html: string, re: RegExp) => (html.match(re) ?? []).length
-const textOf = (html: string) => cheerio.load(html, null, false).root().text().replace(/\s+/g, ' ').trim()
+/** 보이는 텍스트. 블록 요소 경계에는 공백을 넣고(셀·항목이 붙지 않게), 인라인 강조 태그는 붙여 읽는다 (4<small>명</small> → 4명) */
+const textOf = (html: string) =>
+  cheerio
+    .load(html.replace(/<(?!\/?(?:small|strong|b|em|i|u|s|a|sup|sub|mark)\b)/gi, ' <'), null, false)
+    .root()
+    .text()
+    .replace(/\s+/g, ' ')
+    .trim()
+/** 내용 보존 검사용 낱말 집합: 한글·영문·숫자 덩어리 (기호·공백 제거) */
+const tokensOf = (text: string) => new Set((text.replace(/[​﻿]/g, '').match(/[가-힣A-Za-z0-9:~.%()/·-]+/g) ?? []).map((t) => t.replace(/^[().:~·/-]+|[().:~·/-]+$/g, '')).filter((t) => t.length >= 1 && !/^[.:~·/()-]*$/.test(t)))
 
 interface PageRow {
   id: string
@@ -87,6 +100,7 @@ function listCodes(): number[] {
 
 /** 전사 HTML + 원본 이미지 링크 문단. 저장본은 sanitize 를 통과시킨 결과 */
 function compose(code: number, transcript: string): string {
+  if (NO_ORIGINAL_IMAGE.has(code)) return transcript.trim()
   const link = `<p class="legacy-source"><a href="${escapeAttr(IMAGE_URL(code))}" target="_blank" rel="noopener noreferrer">원본 페이지 이미지 보기</a></p>`
   return `${transcript.trim()}\n${link}`
 }
@@ -128,13 +142,22 @@ async function buildPlan(codes: number[], rows: Map<string, PageRow>): Promise<P
       plan.problems.push(`${code} ${row.title}: sanitize 후 텍스트가 달라짐 (허용되지 않는 태그/속성이 있는지 확인)\n    전: ${textOf(composed).slice(0, 200)}\n    후: ${textOf(after).slice(0, 200)}`)
       continue
     }
-    const head = await fetch(IMAGE_URL(code), { method: 'HEAD' })
-    if (!head.ok) {
-      plan.problems.push(`${code} ${row.title}: 원본 이미지 URL 확인 실패 HTTP ${head.status} ${IMAGE_URL(code)}`)
-      continue
+    if (!NO_ORIGINAL_IMAGE.has(code)) {
+      const head = await fetch(IMAGE_URL(code), { method: 'HEAD' })
+      if (!head.ok) {
+        plan.problems.push(`${code} ${row.title}: 원본 이미지 URL 확인 실패 HTTP ${head.status} ${IMAGE_URL(code)}`)
+        continue
+      }
     }
     if ((row.content ?? '') === after) {
       plan.skipped.push({ pageCode: code, reason: '이미 새 본문과 같음' })
+      continue
+    }
+    // 내용 보존 검사: 현재 본문의 낱말·숫자가 새 본문에 모두 있어야 한다 (디자인만 바뀌고 내용은 그대로)
+    const newTokens = tokensOf(textOf(after))
+    const missing = [...tokensOf(textOf(row.content ?? ''))].filter((t) => !newTokens.has(t) && !ALLOWED_DROPS.has(t) && t !== '원본' && t !== '페이지' && t !== '이미지' && t !== '보기')
+    if (missing.length > 0) {
+      plan.problems.push(`${code} ${row.title}: 현재 본문의 낱말이 새 본문에 없음 (${missing.length}개): ${missing.slice(0, 30).join(', ')}`)
       continue
     }
     const notes: string[] = []
