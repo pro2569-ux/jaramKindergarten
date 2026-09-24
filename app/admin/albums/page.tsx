@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { withResolvedMedia } from '@/lib/storage/media'
-import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -31,12 +30,11 @@ export default async function AdminAlbumsPage() {
           <h1 className="text-3xl font-bold text-gray-900">앨범 관리</h1>
           <p className="mt-2 text-gray-600">앨범과 사진을 관리합니다</p>
         </div>
-        <Link href="/admin/albums/create">
-          <Button className="gap-2">
-            <Plus className="w-5 h-5" />
-            새 앨범
-          </Button>
-        </Link>
+        {/* 앨범 생성·수정·삭제 화면은 아직 없다 — 없는 경로로 보내지 않고 비활성화 (PR L) */}
+        <Button className="gap-2" disabled title="준비 중인 기능입니다">
+          <Plus className="w-5 h-5" />
+          새 앨범 (준비 중)
+        </Button>
       </div>
 
       {/* 앨범 목록 */}
@@ -90,16 +88,16 @@ export default async function AdminAlbumsPage() {
 
                 {/* 버튼 */}
                 <div className="flex gap-2">
-                  <Link href={`/admin/albums/${album.id}/edit`} className="flex-1">
-                    <Button variant="outline" size="sm" className="w-full gap-1">
-                      <Edit className="w-4 h-4" />
-                      수정
-                    </Button>
-                  </Link>
+                  <Button variant="outline" size="sm" className="flex-1 w-full gap-1" disabled title="준비 중인 기능입니다">
+                    <Edit className="w-4 h-4" />
+                    수정
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     className="gap-1 text-red-600 hover:text-red-700"
+                    disabled
+                    title="준비 중인 기능입니다"
                   >
                     <Trash2 className="w-4 h-4" />
                     삭제

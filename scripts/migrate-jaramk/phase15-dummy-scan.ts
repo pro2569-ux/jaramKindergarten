@@ -22,7 +22,7 @@ async function scan(table: string, select: string, fields: string[], label: (r: 
     return 0
   }
   let hits = 0
-  for (const row of (data ?? []) as Record<string, unknown>[]) {
+  for (const row of (data ?? []) as unknown as Record<string, unknown>[]) {
     for (const f of fields) {
       const v = row[f]
       if (typeof v !== 'string' || !v) continue

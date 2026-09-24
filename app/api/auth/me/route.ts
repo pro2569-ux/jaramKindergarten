@@ -1,67 +1,33 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+// 로그인한 사용자의 표시 이름·역할. 내부 오류 상세(userId, DB 힌트 등)는 응답에 싣지 않고 서버 로그에만 남긴다.
 export async function GET() {
   try {
     const supabase = await createClient()
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError) {
-      return NextResponse.json(
-        { error: `인증 오류: ${authError.message}`, authError },
-        { status: 401 }
-      )
-    }
-
-    if (!user) {
-      return NextResponse.json(
-        { error: '로그인된 사용자가 없습니다.' },
-        { status: 401 }
-      )
+    if (authError || !user) {
+      return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
     }
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('name, role')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
     if (profileError) {
-      return NextResponse.json(
-        {
-          error: `profiles 조회 오류: ${profileError.message}`,
-          code: profileError.code,
-          details: profileError.details,
-          hint: profileError.hint,
-          userId: user.id,
-        },
-        { status: 500 }
-      )
-    }
-
-    if (!profile) {
-      return NextResponse.json(
-        { error: 'profiles 테이블에 해당 사용자의 레코드가 없습니다.', userId: user.id },
-        { status: 404 }
-      )
-    }
-
-    if (!profile.name) {
-      return NextResponse.json(
-        { error: 'profiles.name 컬럼이 비어있습니다.', profile, userId: user.id },
-        { status: 404 }
-      )
+      console.error('[auth/me] profiles 조회 오류:', profileError.message)
+      return NextResponse.json({ error: '프로필을 불러오지 못했습니다.' }, { status: 500 })
     }
 
     return NextResponse.json({
-      name: profile.name,
-      role: profile.role || 'parent',
+      name: profile?.name || user.email?.split('@')[0] || '사용자',
+      role: profile?.role || 'parent',
     })
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: `서버 예외: ${error.message}`, stack: error.stack },
-      { status: 500 }
-    )
+  } catch (error: unknown) {
+    console.error('[auth/me] 예외:', error instanceof Error ? error.message : error)
+    return NextResponse.json({ error: '사용자 정보를 확인하지 못했습니다.' }, { status: 500 })
   }
 }

@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -26,12 +25,11 @@ export default async function AdminTeachersPage() {
           <h1 className="text-3xl font-bold text-gray-900">교직원 관리</h1>
           <p className="mt-2 text-gray-600">교직원 정보를 관리합니다</p>
         </div>
-        <Link href="/admin/teachers/create">
-          <Button className="gap-2">
-            <Plus className="w-5 h-5" />
-            교직원 추가
-          </Button>
-        </Link>
+        {/* 교직원 추가·수정·삭제 화면은 아직 없다 — 없는 경로로 보내지 않고 비활성화 (PR L) */}
+        <Button className="gap-2" disabled title="준비 중인 기능입니다">
+          <Plus className="w-5 h-5" />
+          교직원 추가 (준비 중)
+        </Button>
       </div>
 
       {/* 교직원 목록 */}
@@ -86,16 +84,16 @@ export default async function AdminTeachersPage() {
 
                 {/* 버튼 */}
                 <div className="flex gap-2 mt-4">
-                  <Link href={`/admin/teachers/${teacher.id}/edit`} className="flex-1">
-                    <Button variant="outline" size="sm" className="w-full gap-1">
-                      <Edit className="w-4 h-4" />
-                      수정
-                    </Button>
-                  </Link>
+                  <Button variant="outline" size="sm" className="flex-1 w-full gap-1" disabled title="준비 중인 기능입니다">
+                    <Edit className="w-4 h-4" />
+                    수정
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     className="gap-1 text-red-600 hover:text-red-700"
+                    disabled
+                    title="준비 중인 기능입니다"
                   >
                     <Trash2 className="w-4 h-4" />
                     삭제
