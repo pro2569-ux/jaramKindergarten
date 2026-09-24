@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getPostsPage } from '@/lib/public-data'
 import Link from 'next/link'
 import { PAGINATION } from '@/lib/constants'
 import Pagination from '@/components/ui/Pagination'
@@ -27,28 +27,9 @@ export default async function NewsletterPage({
   const currentPage = Number(params.page) || 1
   const pageSize = PAGINATION.DEFAULT_PAGE_SIZE
 
-  const supabase = await createClient()
-  const nav = await getSectionNav('community')
-
-  // 전체 개수 가져오기 (이관 교육자료실 글은 /community/archive 에서 따로 보여주므로 제외)
-  const { count } = await supabase
-    .from('posts')
-    .select('*', { count: 'exact', head: true })
-    .eq('board_type', 'newsletter')
-    .is('legacy_source_url', null)
-    .eq('is_published', true)
-
+  // 사이드바 메뉴와 글 목록(개수 포함)을 병렬로. 이관 교육자료실 글은 /community/archive 가 맡으므로 제외('exclude')
+  const [nav, { posts, count }] = await Promise.all([getSectionNav('community'), getPostsPage('newsletter', currentPage, pageSize, 'exclude')])
   const totalPages = Math.ceil((count || 0) / pageSize)
-
-  // 가정통신문 목록 가져오기
-  const { data: posts } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('board_type', 'newsletter')
-    .is('legacy_source_url', null)
-    .eq('is_published', true)
-    .order('created_at', { ascending: false })
-    .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
 
   return (
     <PageShell

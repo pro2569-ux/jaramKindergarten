@@ -1,0 +1,785 @@
+{
+  "base": "https://jaramk.vercel.app",
+  "label": "before-mobile",
+  "mobile": true,
+  "measuredAt": "2026-09-24T14:51:43.111Z",
+  "results": [
+    {
+      "path": "/",
+      "name": "home",
+      "run": 1,
+      "wallLoadMs": 1685,
+      "ttfb": 77,
+      "dcl": 866,
+      "load": 1682,
+      "docBytes": 9463,
+      "lcp": 1716,
+      "resources": 42,
+      "totalBytes": 4130239,
+      "by": {
+        "link": {
+          "count": 5,
+          "bytes": 147976
+        },
+        "script": {
+          "count": 13,
+          "bytes": 254110
+        },
+        "css": {
+          "count": 5,
+          "bytes": 3123409
+        },
+        "img": {
+          "count": 4,
+          "bytes": 570504
+        },
+        "fetch": {
+          "count": 14,
+          "bytes": 15168
+        },
+        "other": {
+          "count": 1,
+          "bytes": 9609
+        }
+      },
+      "fonts": [
+        {
+          "name": "ard/dist/web/static/woff2/Pretendard-Regular.woff2",
+          "ms": 109,
+          "bytes": 766192
+        },
+        {
+          "name": "rd/dist/web/static/woff2/Pretendard-SemiBold.woff2",
+          "ms": 115,
+          "bytes": 786156
+        },
+        {
+          "name": "endard/dist/web/static/woff2/Pretendard-Bold.woff2",
+          "ms": 148,
+          "bytes": 791456
+        },
+        {
+          "name": "dard/dist/web/static/woff2/Pretendard-Medium.woff2",
+          "ms": 151,
+          "bytes": 778732
+        }
+      ],
+      "imgs": [
+        {
+          "name": "/_next/image",
+          "bytes": 161836,
+          "ms": 967,
+          "end": 1811
+        },
+        {
+          "name": "/_next/image",
+          "bytes": 146260,
+          "ms": 1455,
+          "end": 2299
+        },
+        {
+          "name": "/_next/image",
+          "bytes": 135904,
+          "ms": 1129,
+          "end": 1973
+        },
+        {
+          "name": "/_next/image",
+          "bytes": 126736,
+          "ms": 946,
+          "end": 1682
+        },
+        {
+          "name": "/_next/image",
+          "bytes": 126504,
+          "ms": 698,
+          "end": 1542
+        },
+        {
+          "name": "/_next/image",
+          "bytes": 3820,
+          "ms": 41,
+          "end": 778
+        }
+      ],
+      "external": [
+        "cdn.jsdelivr.net"
+      ],
+      "prefetchRsc": 13,
+      "supabaseCalls": [],
+      "plainAnchors": 58,
+      "h1": "아이들이 건강하게자라는 곳",
+      "prefetchBeforeClick": 13,
+      "click": {
+        "text": "공지사항",
+        "href": "/board/notice",
+        "ms": 882,
+        "mode": "client",
+        "to": "/board/notice",
+        "h1": "공지사항"
+      }
+    },
+    {
+      "path": "/about/class",
+      "name": "about-class",
+      "run": 1,
+      "wallLoadMs": 2005,
+      "ttfb": 7,
+      "dcl": 1819,
+      "load": 1988,
+      "docBytes": 9247,
+      "lcp": 1860,
+      "resources": 26,
+      "totalBytes": 4273735,
+      "by": {
+        "link": {
+          "count": 4,
+          "bytes": 21240
+        },
+        "script": {
+          "count": 12,
+          "bytes": 313520
+        },
+        "css": {
+          "count": 6,
+          "bytes": 3917249
+        },
+        "fetch": {
+          "count": 3,
+          "bytes": 2870
+        },
+        "other": {
+          "count": 1,
+          "bytes": 9609
+        }
+      },
+      "fonts": [
+        {
+          "name": "ard/dist/web/static/woff2/Pretendard-Regular.woff2",
+          "ms": 150,
+          "bytes": 766192
+        },
+        {
+          "name": "rd/dist/web/static/woff2/Pretendard-SemiBold.woff2",
+          "ms": 154,
+          "bytes": 786156
+        },
+        {
+          "name": "endard/dist/web/static/woff2/Pretendard-Bold.woff2",
+          "ms": 157,
+          "bytes": 791456
+        },
+        {
+          "name": "dard/dist/web/static/woff2/Pretendard-Medium.woff2",
+          "ms": 151,
+          "bytes": 778732
+        },
+        {
+          "name": "d/dist/web/static/woff2/Pretendard-ExtraBold.woff2",
+          "ms": 156,
+          "bytes": 793840
+        }
+      ],
+      "imgs": [
+        {
+          "name": "/_next/image",
+          "bytes": 3820,
+          "ms": 17,
+          "end": 1743
+        }
+      ],
+      "external": [
+        "cdn.jsdelivr.net"
+      ],
+      "prefetchRsc": 2,
+      "supabaseCalls": [],
+      "plainAnchors": 56,
+      "h1": "교원/반편성",
+      "prefetchBeforeClick": 2,
+      "click": {
+        "text": "시설현황",
+        "href": "/about/facilities",
+        "ms": 603,
+        "mode": "client",
+        "to": "/about/facilities",
+        "h1": "시설현황"
+      }
+    },
+    {
+      "path": "/curriculum/standard",
+      "name": "curriculum-standard",
+      "run": 1,
+      "wallLoadMs": 1006,
+      "ttfb": 7,
+      "dcl": 836,
+      "load": 988,
+      "docBytes": 12237,
+      "lcp": 880,
+      "resources": 26,
+      "totalBytes": 4276728,
+      "by": {
+        "link": {
+          "count": 4,
+          "bytes": 21240
+        },
+        "script": {
+          "count": 12,
+          "bytes": 313520
+        },
+        "css": {
+          "count": 6,
+          "bytes": 3917249
+        },
+        "fetch": {
+          "count": 3,
+          "bytes": 2873
+        },
+        "other": {
+          "count": 1,
+          "bytes": 9609
+        }
+      },
+      "fonts": [
+        {
+          "name": "ard/dist/web/static/woff2/Pretendard-Regular.woff2",
+          "ms": 140,
+          "bytes": 766192
+        },
+        {
+          "name": "rd/dist/web/static/woff2/Pretendard-SemiBold.woff2",
+          "ms": 158,
+          "bytes": 786156
+        },
+        {
+          "name": "endard/dist/web/static/woff2/Pretendard-Bold.woff2",
+          "ms": 162,
+          "bytes": 791456
+        },
+        {
+          "name": "dard/dist/web/static/woff2/Pretendard-Medium.woff2",
+          "ms": 160,
+          "bytes": 778732
+        },
+        {
+          "name": "d/dist/web/static/woff2/Pretendard-ExtraBold.woff2",
+          "ms": 160,
+          "bytes": 793840
+        }
+      ],
+      "imgs": [
+        {
+          "name": "/_next/image",
+          "bytes": 3820,
+          "ms": 21,
+          "end": 755
+        }
+      ],
+      "external": [
+        "cdn.jsdelivr.net"
+      ],
+      "prefetchRsc": 2,
+      "supabaseCalls": [],
+      "plainAnchors": 66,
+      "h1": "표준보육과정",
+      "prefetchBeforeClick": 2,
+      "click": {
+        "text": "누리과정",
+        "href": "/curriculum/nuri",
+        "ms": 558,
+        "mode": "client",
+        "to": "/curriculum/nuri",
+        "h1": "누리과정"
+      }
+    },
+    {
+      "path": "/board/notice",
+      "name": "notice-list",
+      "run": 1,
+      "wallLoadMs": 914,
+      "ttfb": 7,
+      "dcl": 769,
+      "load": 904,
+      "docBytes": 7623,
+      "lcp": 836,
+      "resources": 48,
+      "totalBytes": 3443109,
+      "by": {
+        "link": {
+          "count": 4,
+          "bytes": 21240
+        },
+        "script": {
+          "count": 14,
+          "bytes": 257987
+        },
+        "css": {
+          "count": 5,
+          "bytes": 3123409
+        },
+        "fetch": {
+          "count": 24,
+          "bytes": 23241
+        },
+        "other": {
+          "count": 1,
+          "bytes": 9609
+        }
+      },
+      "fonts": [
+        {
+          "name": "ard/dist/web/static/woff2/Pretendard-Regular.woff2",
+          "ms": 50,
+          "bytes": 766192
+        },
+        {
+          "name": "rd/dist/web/static/woff2/Pretendard-SemiBold.woff2",
+          "ms": 66,
+          "bytes": 786156
+        },
+        {
+          "name": "endard/dist/web/static/woff2/Pretendard-Bold.woff2",
+          "ms": 70,
+          "bytes": 791456
+        },
+        {
+          "name": "dard/dist/web/static/woff2/Pretendard-Medium.woff2",
+          "ms": 70,
+          "bytes": 778732
+        }
+      ],
+      "imgs": [
+        {
+          "name": "/_next/image",
+          "bytes": 3820,
+          "ms": 20,
+          "end": 777
+        }
+      ],
+      "external": [
+        "cdn.jsdelivr.net"
+      ],
+      "prefetchRsc": 23,
+      "supabaseCalls": [],
+      "plainAnchors": 57,
+      "h1": "공지사항",
+      "prefetchBeforeClick": 27,
+      "click": {
+        "text": "main a[href^='/board/notice/']",
+        "href": "/board/notice/54e5482d-1835-405a-a35f-629e594918f6",
+        "ms": 1020,
+        "mode": "client",
+        "to": "/board/notice/54e5482d-1835-405a-a35f-629e594918f6",
+        "h1": "2025년 신입생 모집 안내"
+      }
+    },
+    {
+      "path": "/board/notice/54e5482d-1835-405a-a35f-629e594918f6",
+      "name": "notice-detail",
+      "run": 1,
+      "wallLoadMs": 789,
+      "ttfb": 7,
+      "dcl": 580,
+      "load": 778,
+      "docBytes": 7467,
+      "lcp": 668,
+      "resources": 30,
+      "totalBytes": 3381836,
+      "by": {
+        "link": {
+          "count": 4,
+          "bytes": 21240
+        },
+        "script": {
+          "count": 11,
+          "bytes": 212356
+        },
+        "css": {
+          "count": 5,
+          "bytes": 3123409
+        },
+        "fetch": {
+          "count": 9,
+          "bytes": 7755
+        },
+        "other": {
+          "count": 1,
+          "bytes": 9609
+        }
+      },
+      "fonts": [
+        {
+          "name": "ard/dist/web/static/woff2/Pretendard-Regular.woff2",
+          "ms": 118,
+          "bytes": 766192
+        },
+        {
+          "name": "rd/dist/web/static/woff2/Pretendard-SemiBold.woff2",
+          "ms": 123,
+          "bytes": 786156
+        },
+        {
+          "name": "endard/dist/web/static/woff2/Pretendard-Bold.woff2",
+          "ms": 123,
+          "bytes": 791456
+        },
+        {
+          "name": "dard/dist/web/static/woff2/Pretendard-Medium.woff2",
+          "ms": 122,
+          "bytes": 778732
+        }
+      ],
+      "imgs": [
+        {
+          "name": "/_next/image",
+          "bytes": 3820,
+          "ms": 23,
+          "end": 577
+        }
+      ],
+      "external": [
+        "cdn.jsdelivr.net"
+      ],
+      "prefetchRsc": 8,
+      "supabaseCalls": [],
+      "plainAnchors": 58,
+      "h1": "2025년 신입생 모집 안내",
+      "prefetchBeforeClick": 8
+    },
+    {
+      "path": "/community/archive",
+      "name": "archive-list",
+      "run": 1,
+      "wallLoadMs": 797,
+      "ttfb": 7,
+      "dcl": 650,
+      "load": 786,
+      "docBytes": 7000,
+      "lcp": 696,
+      "resources": 39,
+      "totalBytes": 3484085,
+      "by": {
+        "link": {
+          "count": 4,
+          "bytes": 21240
+        },
+        "script": {
+          "count": 12,
+          "bytes": 313520
+        },
+        "css": {
+          "count": 5,
+          "bytes": 3123409
+        },
+        "fetch": {
+          "count": 17,
+          "bytes": 9307
+        },
+        "other": {
+          "count": 1,
+          "bytes": 9609
+        }
+      },
+      "fonts": [
+        {
+          "name": "ard/dist/web/static/woff2/Pretendard-Regular.woff2",
+          "ms": 88,
+          "bytes": 766192
+        },
+        {
+          "name": "rd/dist/web/static/woff2/Pretendard-SemiBold.woff2",
+          "ms": 89,
+          "bytes": 786156
+        },
+        {
+          "name": "endard/dist/web/static/woff2/Pretendard-Bold.woff2",
+          "ms": 90,
+          "bytes": 791456
+        },
+        {
+          "name": "dard/dist/web/static/woff2/Pretendard-Medium.woff2",
+          "ms": 81,
+          "bytes": 778732
+        }
+      ],
+      "imgs": [
+        {
+          "name": "/_next/image",
+          "bytes": 3820,
+          "ms": 19,
+          "end": 631
+        }
+      ],
+      "external": [
+        "cdn.jsdelivr.net",
+        "dpiqfxsvujyoxxjwbisw.supabase.co"
+      ],
+      "prefetchRsc": 15,
+      "supabaseCalls": [
+        {
+          "name": "/rest/v1/posts",
+          "ms": 62
+        }
+      ],
+      "plainAnchors": 70,
+      "h1": "교육자료실",
+      "prefetchBeforeClick": 19,
+      "click": {
+        "text": "main a[href^='/community/archive/']",
+        "href": "/community/archive/d949dfcd-d515-46fc-a6e1-7838c875a1ad",
+        "ms": 604,
+        "mode": "client",
+        "to": "/community/archive/d949dfcd-d515-46fc-a6e1-7838c875a1ad",
+        "h1": "아이들의 거짓말"
+      }
+    },
+    {
+      "path": "/board/story",
+      "name": "class-album-list",
+      "run": 1,
+      "wallLoadMs": 741,
+      "ttfb": 7,
+      "dcl": 612,
+      "load": 727,
+      "docBytes": 7053,
+      "lcp": 616,
+      "resources": 41,
+      "totalBytes": 3533646,
+      "by": {
+        "link": {
+          "count": 4,
+          "bytes": 21240
+        },
+        "script": {
+          "count": 14,
+          "bytes": 355764
+        },
+        "css": {
+          "count": 5,
+          "bytes": 3123409
+        },
+        "fetch": {
+          "count": 17,
+          "bytes": 16571
+        },
+        "other": {
+          "count": 1,
+          "bytes": 9609
+        }
+      },
+      "fonts": [
+        {
+          "name": "ard/dist/web/static/woff2/Pretendard-Regular.woff2",
+          "ms": 84,
+          "bytes": 766192
+        },
+        {
+          "name": "rd/dist/web/static/woff2/Pretendard-SemiBold.woff2",
+          "ms": 92,
+          "bytes": 786156
+        },
+        {
+          "name": "dard/dist/web/static/woff2/Pretendard-Medium.woff2",
+          "ms": 90,
+          "bytes": 778732
+        },
+        {
+          "name": "endard/dist/web/static/woff2/Pretendard-Bold.woff2",
+          "ms": 91,
+          "bytes": 791456
+        }
+      ],
+      "imgs": [
+        {
+          "name": "/_next/image",
+          "bytes": 3820,
+          "ms": 11,
+          "end": 560
+        }
+      ],
+      "external": [
+        "cdn.jsdelivr.net"
+      ],
+      "prefetchRsc": 16,
+      "supabaseCalls": [],
+      "plainAnchors": 58,
+      "h1": "자람이야기",
+      "prefetchBeforeClick": 20,
+      "click": {
+        "text": "main a[href^='/board/story/']",
+        "error": "link not found"
+      }
+    },
+    {
+      "path": "/board/story/14967c28-1efb-43ed-b665-e2b9e711c40b",
+      "name": "album-detail",
+      "run": 1,
+      "wallLoadMs": 1475,
+      "ttfb": 6,
+      "dcl": 1329,
+      "load": 1460,
+      "docBytes": 11100,
+      "lcp": 1712,
+      "resources": 39,
+      "totalBytes": 3964694,
+      "by": {
+        "link": {
+          "count": 4,
+          "bytes": 21240
+        },
+        "script": {
+          "count": 12,
+          "bytes": 313520
+        },
+        "css": {
+          "count": 5,
+          "bytes": 3123409
+        },
+        "img": {
+          "count": 16,
+          "bytes": 484498
+        },
+        "fetch": {
+          "count": 1,
+          "bytes": 1318
+        },
+        "other": {
+          "count": 1,
+          "bytes": 9609
+        }
+      },
+      "fonts": [
+        {
+          "name": "ard/dist/web/static/woff2/Pretendard-Regular.woff2",
+          "ms": 79,
+          "bytes": 766192
+        },
+        {
+          "name": "rd/dist/web/static/woff2/Pretendard-SemiBold.woff2",
+          "ms": 88,
+          "bytes": 786156
+        },
+        {
+          "name": "endard/dist/web/static/woff2/Pretendard-Bold.woff2",
+          "ms": 87,
+          "bytes": 791456
+        },
+        {
+          "name": "dard/dist/web/static/woff2/Pretendard-Medium.woff2",
+          "ms": 86,
+          "bytes": 778732
+        }
+      ],
+      "imgs": [
+        {
+          "name": "/_next/image",
+          "bytes": 65106,
+          "ms": 1145,
+          "end": 2471
+        },
+        {
+          "name": "/_next/image",
+          "bytes": 35942,
+          "ms": 1056,
+          "end": 2383
+        },
+        {
+          "name": "/_next/image",
+          "bytes": 33426,
+          "ms": 1060,
+          "end": 2387
+        },
+        {
+          "name": "/_next/image",
+          "bytes": 32760,
+          "ms": 1032,
+          "end": 2359
+        },
+        {
+          "name": "/_next/image",
+          "bytes": 32046,
+          "ms": 1213,
+          "end": 2540
+        },
+        {
+          "name": "/_next/image",
+          "bytes": 29548,
+          "ms": 371,
+          "end": 1697
+        }
+      ],
+      "external": [
+        "cdn.jsdelivr.net"
+      ],
+      "prefetchRsc": 0,
+      "supabaseCalls": [
+        {
+          "name": "/_next/image",
+          "ms": 347
+        },
+        {
+          "name": "/_next/image",
+          "ms": 731
+        },
+        {
+          "name": "/_next/image",
+          "ms": 360
+        },
+        {
+          "name": "/_next/image",
+          "ms": 362
+        },
+        {
+          "name": "/_next/image",
+          "ms": 371
+        },
+        {
+          "name": "/_next/image",
+          "ms": 682
+        },
+        {
+          "name": "/_next/image",
+          "ms": 791
+        },
+        {
+          "name": "/_next/image",
+          "ms": 716
+        },
+        {
+          "name": "/_next/image",
+          "ms": 862
+        },
+        {
+          "name": "/_next/image",
+          "ms": 725
+        },
+        {
+          "name": "/_next/image",
+          "ms": 1145
+        },
+        {
+          "name": "/_next/image",
+          "ms": 1032
+        },
+        {
+          "name": "/_next/image",
+          "ms": 1060
+        },
+        {
+          "name": "/_next/image",
+          "ms": 1056
+        },
+        {
+          "name": "/_next/image",
+          "ms": 1144
+        },
+        {
+          "name": "/_next/image",
+          "ms": 1213
+        }
+      ],
+      "plainAnchors": 61,
+      "h1": "자람동산 한마음 운동회8",
+      "prefetchBeforeClick": 2
+    }
+  ]
+}

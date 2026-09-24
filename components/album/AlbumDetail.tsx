@@ -1,5 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
-import { withResolvedMedia } from '@/lib/storage/media'
+import { getAlbumPhotos } from '@/lib/public-data'
 import Image from 'next/image'
 import { formatDate } from '@/lib/utils'
 import { Calendar, ArrowLeft, Image as ImageIcon } from 'lucide-react'
@@ -26,16 +25,8 @@ interface AlbumDetailProps {
  * 공개 앨범만 여기까지 온다 — 호출한 쪽에서 is_published 를 확인한다.
  */
 export default async function AlbumDetail({ album, listHref }: AlbumDetailProps) {
-  const supabase = await createClient()
-  const { data: photoRows } = await supabase
-    .from('album_photos')
-    .select('*')
-    .eq('album_id', album.id)
-    .order('sort_order')
-    .order('created_at')
-
-  // 이관 사진(legacy-media 버킷)은 서명 URL 로 해석
-  const photos = await withResolvedMedia(photoRows ?? [], 'image_url')
+  // 태그 캐시 로더(쿠키 없음) — 이관 사진(legacy-media 버킷)은 서명 URL 로 해석돼 온다
+  const photos = await getAlbumPhotos(album.id)
 
   return (
     <>

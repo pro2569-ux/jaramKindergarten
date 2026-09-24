@@ -119,6 +119,23 @@ export async function getMenuTree(): Promise<MenuNode[]> {
   return getCachedMenuTree()
 }
 
+/** 헤더(Header)용 항목: 대분류 > 소분류/그룹 > 항목. 링크 페이지는 목적지로, 그룹·대분류는 첫 하위 항목으로 */
+export interface HeaderNavItem {
+  name: string
+  href: string
+  children?: HeaderNavItem[]
+}
+
+/** 메뉴 트리 → 헤더 항목 (/api/menus 와 같은 모양). 대분류는 children 을 항상 배열로 둔다 */
+export function headerNavOf(tree: MenuNode[]): HeaderNavItem[] {
+  const toItem = (n: MenuNode): HeaderNavItem => ({
+    name: n.label,
+    href: hrefOf(n),
+    ...(n.children.length > 0 ? { children: n.children.map(toItem) } : {}),
+  })
+  return tree.map((root) => ({ name: root.label, href: hrefOf(root), children: root.children.map(toItem) }))
+}
+
 /** 대분류 노드 → 사이드바용 소분류 목록 (그룹은 children 포함, 링크는 실제 목적지) */
 export function sectionNavOf(root: MenuNode): SectionNav {
   return {

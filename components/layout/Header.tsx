@@ -42,8 +42,13 @@ function columnsOf(children: NavItem[]): NavItem[][] {
   return cols
 }
 
-export default function Header() {
-  const [navigation, setNavigation] = useState<NavItem[]>(fallbackNavigation)
+interface HeaderProps {
+  /** 루트 레이아웃이 서버에서(태그 캐시) 읽어 넘기는 메뉴. 있으면 /api/menus 를 다시 부르지 않는다 */
+  initialNav?: NavItem[]
+}
+
+export default function Header({ initialNav }: HeaderProps) {
+  const [navigation, setNavigation] = useState<NavItem[]>(initialNav && initialNav.length > 0 ? initialNav : fallbackNavigation)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null)
   const [user, setUser] = useState<User | null>(null)
@@ -67,8 +72,9 @@ export default function Header() {
   const mobileOpenGroup = groupChoice?.path === pathname ? groupChoice.name : (currentGroup?.name ?? null)
   const setMobileOpenGroup = (name: string | null) => setGroupChoice({ path: pathname, name })
 
-  // menus 테이블에서 네비게이션 조회
+  // menus 테이블에서 네비게이션 조회 (서버가 initialNav 를 넘겼으면 생략)
   useEffect(() => {
+    if (initialNav && initialNav.length > 0) return
     const fetchMenus = async () => {
       try {
         const response = await fetch('/api/menus')
@@ -84,7 +90,7 @@ export default function Header() {
     }
 
     fetchMenus()
-  }, [])
+  }, [initialNav])
 
   // 인증 상태 확인
   useEffect(() => {

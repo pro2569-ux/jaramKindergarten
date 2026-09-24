@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/server'
-import { withResolvedMedia } from '@/lib/storage/media'
+import { getHomeAlbums, getHomeNotices } from '@/lib/public-data'
 import { getSiteSettings } from '@/lib/site-settings'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import ButtonLink from '@/components/ui/ButtonLink'
@@ -26,34 +25,25 @@ const QUICK_LINKS = [
   { name: '교직원', href: '/about/class', icon: Users, card: 'from-purple-50 to-purple-100', circle: 'bg-purple-500', iconColor: 'text-white', external: false },
 ] as const
 
+// 정적(ISR) 페이지: 쿠키를 읽지 않고 태그 캐시 로더만 쓴다. 관리자 저장 시 /api/revalidate 가 즉시 갱신.
+export const revalidate = 300 // lib/public-data PUBLIC_REVALIDATE 와 같은 값 (세그먼트 설정은 리터럴만 허용)
+
+interface NoticeRow {
+  id: string
+  title: string
+  is_pinned: boolean
+  created_at: string
+}
+
 export default async function Home() {
-  const supabase = await createClient()
   // 메인 섹션 표시 여부 (관리자 > 사이트 설정 > 메인 화면 섹션). 값이 없으면 표시
   const settings = await getSiteSettings()
   const showIntro = settings.home_show_intro !== 'false'
   const showAlbums = settings.home_show_albums !== 'false'
 
-  // 공지사항 가져오기
-  const { data: notices } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('board_type', 'notice')
-    .eq('is_published', true)
-    .order('is_pinned', { ascending: false })
-    .order('created_at', { ascending: false })
-    .limit(5)
-
-  // 최근 앨범 (섹션이 켜져 있을 때만 조회). 이관 앨범(legacy-media 버킷) 커버는 서명 URL 로 해석
-  let albums: Array<{ id: string; title: string; cover_image_url: string | null; event_date: string | null; created_at: string }> = []
-  if (showAlbums) {
-    const { data: albumRows } = await supabase
-      .from('albums')
-      .select('id, title, cover_image_url, event_date, created_at')
-      .eq('is_published', true)
-      .order('created_at', { ascending: false })
-      .limit(4)
-    albums = await withResolvedMedia(albumRows ?? [], 'cover_image_url')
-  }
+  // 공지 5건 + 최근 앨범 4건(섹션이 켜져 있을 때만) 을 병렬로. 이관 앨범 커버는 로더가 서명 URL 로 해석
+  const [noticeRows, albums] = await Promise.all([getHomeNotices(), showAlbums ? getHomeAlbums() : Promise.resolve([])])
+  const notices = noticeRows as unknown as NoticeRow[]
 
   return (
     // 패턴 배경은 메인 전체를 감싸는 이 한 곳에만 깐다(PageShell 과 같은 방식). 각 섹션은 배경 투명 →

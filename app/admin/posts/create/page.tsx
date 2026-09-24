@@ -3,6 +3,7 @@
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { revalidateSite } from '@/lib/revalidate-client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
@@ -62,6 +63,8 @@ function CreatePostForm() {
 
       if (error) throw error
 
+      // 공개 페이지 캐시 즉시 갱신 (목록·메인 공지)
+      await revalidateSite({ tags: ['posts'] })
       alert('게시글이 등록되었습니다.')
       router.push(`/admin/posts?type=${boardType}`)
     } catch (error: any) {

@@ -1,7 +1,20 @@
-import { type NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
+/** 관리자·인증 관련 경로 — 항상 세션을 확인·갱신한다 */
+const AUTH_PATH_RE = /^\/(admin|login|api\/auth|api\/admin|api\/revalidate)(\/|$)/
+
+/** Supabase 세션 쿠키가 있는지 (이름: sb-<ref>-auth-token[.n]) */
+function hasSupabaseSession(request: NextRequest): boolean {
+  return request.cookies.getAll().some((c) => c.name.startsWith('sb-') && c.name.includes('auth-token'))
+}
+
 export async function middleware(request: NextRequest) {
+  // 비로그인 방문자의 공개 페이지: 세션 확인을 생략해 요청마다 Supabase 클라이언트를 만들지 않는다.
+  // (/admin 은 아래 updateSession 이 예전처럼 /login 으로 보낸다 — 보호 동작은 그대로)
+  if (!AUTH_PATH_RE.test(request.nextUrl.pathname) && !hasSupabaseSession(request)) {
+    return NextResponse.next()
+  }
   return await updateSession(request)
 }
 

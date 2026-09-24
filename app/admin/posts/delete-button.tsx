@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { revalidateSite } from '@/lib/revalidate-client'
 import Button from '@/components/ui/Button'
 import { Trash2 } from 'lucide-react'
 
@@ -25,6 +26,8 @@ export default function DeletePostButton({ postId, boardType }: DeletePostButton
 
       if (error) throw error
 
+      // 공개 페이지 캐시 즉시 갱신
+      await revalidateSite({ tags: ['posts'] })
       alert('게시글이 삭제되었습니다.')
       router.refresh()
     } catch (error: any) {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, type ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { revalidateSite } from '@/lib/revalidate-client'
 import { PAGE_TYPES, PageType } from '@/lib/page-types'
 import {
   Plus,
@@ -110,6 +111,7 @@ export default function MenuManagementPage() {
     } else {
       setAddForm({ label: '', slug: '', page_type: 'single' })
       setAddingParentId(null)
+      await revalidateSite({ tags: ['menus'] }) // 헤더·사이드바 메뉴 캐시 즉시 갱신
       await fetchMenus()
     }
     setSaving(false)
@@ -160,6 +162,7 @@ export default function MenuManagementPage() {
     } else {
       setAddForm({ label: '', slug: '', page_type: 'single' })
       setAddingParentId(null)
+      await revalidateSite({ tags: ['menus'] }) // 헤더·사이드바 메뉴 캐시 즉시 갱신
       await fetchMenus()
     }
     setSaving(false)
@@ -182,6 +185,7 @@ export default function MenuManagementPage() {
       alert(`수정 실패: ${error.message}`)
     } else {
       setEditingId(null)
+      await revalidateSite({ tags: ['menus'] }) // 헤더·사이드바 메뉴 캐시 즉시 갱신
       await fetchMenus()
     }
     setSaving(false)
@@ -199,6 +203,7 @@ export default function MenuManagementPage() {
     if (error) {
       alert(`삭제 실패: ${error.message}`)
     } else {
+      await revalidateSite({ tags: ['menus'] }) // 헤더·사이드바 메뉴 캐시 즉시 갱신
       await fetchMenus()
     }
   }
@@ -213,6 +218,7 @@ export default function MenuManagementPage() {
     if (error) {
       alert(`변경 실패: ${error.message}`)
     } else {
+      await revalidateSite({ tags: ['menus'] }) // 헤더·사이드바 메뉴 캐시 즉시 갱신
       await fetchMenus()
     }
   }
@@ -230,7 +236,8 @@ export default function MenuManagementPage() {
     ]
 
     await Promise.all(batch)
-    await fetchMenus()
+    await revalidateSite({ tags: ['menus'] }) // 헤더·사이드바 메뉴 캐시 즉시 갱신
+      await fetchMenus()
   }
 
   const editInputs = (menu: Menu) => (

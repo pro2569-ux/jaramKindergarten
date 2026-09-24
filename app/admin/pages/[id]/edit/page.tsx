@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { revalidateSite } from '@/lib/revalidate-client'
 import { PAGE_TYPES, PageType } from '@/lib/page-types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
@@ -151,6 +152,8 @@ export default function EditPagePage({ params }: PageProps) {
 
       if (error) throw error
 
+      // 이 페이지를 쓰는 공개 화면 캐시 즉시 갱신 (메뉴 트리도 pages 를 참조)
+      await revalidateSite({ tags: ['pages', 'menus'] })
       alert('페이지가 저장되었습니다.')
     } catch (error: any) {
       alert('저장 실패: ' + (error.message || ''))

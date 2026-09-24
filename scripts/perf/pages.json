@@ -1,0 +1,10 @@
+[
+  { "path": "/", "name": "home", "click": { "text": "공지사항", "within": "main", "expect": "/board/notice" } },
+  { "path": "/about/class", "name": "about-class", "click": { "text": "시설현황", "within": "main" } },
+  { "path": "/curriculum/standard", "name": "curriculum-standard", "click": { "text": "누리과정", "within": "main" } },
+  { "path": "/board/notice", "name": "notice-list", "click": { "selector": "main a[href^='/board/notice/']" } },
+  { "path": "/board/notice/54e5482d-1835-405a-a35f-629e594918f6", "name": "notice-detail" },
+  { "path": "/community/archive", "name": "archive-list", "click": { "selector": "main a[href^='/community/archive/']" } },
+  { "path": "/board/story", "name": "class-album-list", "click": { "selector": "main a[href^='/board/story/']" } },
+  { "path": "/board/story/14967c28-1efb-43ed-b665-e2b9e711c40b", "name": "album-detail" }
+]

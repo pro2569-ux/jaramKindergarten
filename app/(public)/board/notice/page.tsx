@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getPostsPage } from '@/lib/public-data'
 import Link from 'next/link'
 import { PAGINATION } from '@/lib/constants'
 import Pagination from '@/components/ui/Pagination'
@@ -28,27 +28,9 @@ export default async function NoticePage({
   const currentPage = Number(params.page) || 1
   const pageSize = PAGINATION.DEFAULT_PAGE_SIZE
 
-  const supabase = await createClient()
-  const nav = await getSectionNav('community')
-
-  // 전체 개수 가져오기
-  const { count } = await supabase
-    .from('posts')
-    .select('*', { count: 'exact', head: true })
-    .eq('board_type', 'notice')
-    .eq('is_published', true)
-
+  // 사이드바 메뉴와 글 목록(개수 포함, 쿼리 1번)을 병렬로 — 둘 다 태그 캐시 (?page= 때문에 라우트는 동적)
+  const [nav, { posts, count }] = await Promise.all([getSectionNav('community'), getPostsPage('notice', currentPage, pageSize, 'all')])
   const totalPages = Math.ceil((count || 0) / pageSize)
-
-  // 공지사항 목록 가져오기
-  const { data: posts } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('board_type', 'notice')
-    .eq('is_published', true)
-    .order('is_pinned', { ascending: false })
-    .order('created_at', { ascending: false })
-    .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
 
   return (
     <PageShell
