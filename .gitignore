@@ -42,3 +42,6 @@ next-env.d.ts
 
 # jaramk.com 이관 수집 데이터 (아이들 사진 포함 — 절대 커밋 금지)
 scripts/migrate-jaramk/data/
+
+# 디자인 감사 스크린샷 산출물
+scripts/design-audit/screenshots/
