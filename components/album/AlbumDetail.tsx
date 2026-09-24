@@ -1,5 +1,5 @@
 import { getAlbumPhotos } from '@/lib/public-data'
-import Image from 'next/image'
+import AlbumPhotoGrid from './AlbumPhotoGrid'
 import { formatDate } from '@/lib/utils'
 import { Calendar, ArrowLeft, Image as ImageIcon } from 'lucide-react'
 import ButtonLink from '@/components/ui/ButtonLink'
@@ -51,33 +51,10 @@ export default async function AlbumDetail({ album, listHref }: AlbumDetailProps)
         </header>
 
         {photos && photos.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-3 md:gap-4 md:p-6 lg:grid-cols-4">
-            {photos.map((photo) => (
-              <div
-                key={photo.id}
-                className="group relative aspect-square overflow-hidden rounded-control bg-gray-100 transition-shadow hover:shadow-md"
-              >
-                {photo.image_url ? (
-                  <Image
-                    src={photo.image_url}
-                    alt={photo.caption || album.title}
-                    fill
-                    sizes="(min-width: 1024px) 210px, (min-width: 768px) 33vw, 50vw"
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center">
-                    <ImageIcon className="h-10 w-10 text-disabled" aria-hidden="true" />
-                  </div>
-                )}
-                {photo.caption && (
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 transition-opacity group-hover:opacity-100">
-                    <p className="line-clamp-2 text-sm text-white">{photo.caption}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          <AlbumPhotoGrid
+            albumTitle={album.title}
+            photos={photos.map((p) => ({ id: p.id, image_url: p.image_url ?? null, caption: p.caption ?? null }))}
+          />
         ) : (
           <EmptyState icon={ImageIcon} title="등록된 사진이 없습니다." />
         )}
