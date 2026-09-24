@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
-import { Menu, X, LogIn, LogOut, Settings, ChevronDown } from 'lucide-react'
+import { Menu, X, LogOut, Settings, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
@@ -192,7 +192,12 @@ export default function Header() {
                       className={cn(
                         'absolute top-full z-50 rounded-card bg-white shadow-lg ring-1 ring-black/5 transition-all duration-200',
                         // 그룹이 있는 대분류(교육프로그램)는 메가메뉴: 열마다 그룹 소제목 + 항목. 항목 아래 가운데 정렬
-                        mega ? 'left-1/2 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2' : 'left-0 w-56',
+                        // 마지막 대분류(커뮤니티)는 오른쪽 끝에 붙어 있어 드롭다운을 오른쪽 기준으로 (뷰포트 밖으로 삐져나가 가로 스크롤 생기는 것 방지)
+                        mega
+                          ? 'left-1/2 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2'
+                          : index === navigation.length - 1
+                            ? 'right-0 w-56'
+                            : 'left-0 w-56',
                         open ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-2 opacity-0'
                       )}
                       onMouseEnter={() => setActiveDropdown(index)}
@@ -241,43 +246,32 @@ export default function Header() {
               )
             })}
 
-            {/* 로그인/로그아웃 버튼 */}
-            <div className="flex items-center gap-2 ml-6 pl-6 border-l border-gray-200">
-              {user ? (
-                <>
-                  {userName && (
-                    <span className="text-sm font-medium text-gray-700 px-2">
-                      {userName}님
-                    </span>
-                  )}
-                  <Link
-                    href="/admin"
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-ink hover:bg-tint rounded-lg transition-colors"
-                  >
-                    <Settings className="w-4 h-4" />
-                    관리자
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-primary bg-primary hover:bg-primary-dark rounded-control transition-colors disabled:opacity-50"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-primary bg-primary hover:bg-primary-dark rounded-control transition-colors"
-                  >
-                    <LogIn className="w-4 h-4" />
-                    로그인
-                  </Link>
-                </>
-              )}
-            </div>
+            {/* 관리자 로그인 상태에서만 "관리자"·"로그아웃" 표시. 비로그인 방문자에게는 로그인 링크를 두지 않는다
+                (관리자는 /admin 으로 직접 접속 → /login → 로그인 후 /admin 복귀) */}
+            {user && (
+              <div className="flex items-center gap-2 ml-6 pl-6 border-l border-gray-200">
+                {userName && (
+                  <span className="text-sm font-medium text-gray-700 px-2">
+                    {userName}님
+                  </span>
+                )}
+                <Link
+                  href="/admin"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-ink hover:bg-tint rounded-lg transition-colors"
+                >
+                  <Settings className="w-4 h-4" />
+                  관리자
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-primary bg-primary hover:bg-primary-dark rounded-control transition-colors disabled:opacity-50"
+                >
+                  <LogOut className="w-4 h-4" />
+                  {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* 모바일 메뉴 버튼 */}
@@ -398,46 +392,35 @@ export default function Header() {
               )
             })}
 
-            {/* 모바일 로그인/로그아웃 버튼 */}
-            <div className="border-t border-gray-200 pt-3 mt-3 space-y-2">
-              {user ? (
-                <>
+            {/* 모바일: 관리자 로그인 상태에서만 관리자·로그아웃. 비로그인이면 이 블록 자체를 그리지 않는다 */}
+            {user && (
+              <div className="border-t border-gray-200 pt-3 mt-3 space-y-2">
+                {userName && (
                   <div className="px-3 py-2 text-sm font-medium text-gray-700 bg-tint rounded-control">
-                    {userName ? `${userName}님 환영합니다` : ''}
+                    {userName}님 환영합니다
                   </div>
-                  <Link
-                    href="/admin"
-                    className="flex items-center gap-2 px-3 py-2 text-base font-medium text-gray-900 hover:bg-tint hover:text-primary-ink rounded-md"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Settings className="w-5 h-5" />
-                    관리자 페이지
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false)
-                      handleLogout()
-                    }}
-                    disabled={isLoggingOut}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-base font-medium text-on-primary bg-primary hover:bg-primary-dark rounded-control disabled:opacity-50"
-                  >
-                    <LogOut className="w-5 h-5" />
-                    {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className="flex items-center gap-2 w-full px-3 py-2 text-base font-medium text-on-primary bg-primary hover:bg-primary-dark rounded-control"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <LogIn className="w-5 h-5" />
-                    로그인
-                  </Link>
-                </>
-              )}
-            </div>
+                )}
+                <Link
+                  href="/admin"
+                  className="flex items-center gap-2 px-3 py-2 text-base font-medium text-gray-900 hover:bg-tint hover:text-primary-ink rounded-md"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Settings className="w-5 h-5" />
+                  관리자 페이지
+                </Link>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    handleLogout()
+                  }}
+                  disabled={isLoggingOut}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-base font-medium text-on-primary bg-primary hover:bg-primary-dark rounded-control disabled:opacity-50"
+                >
+                  <LogOut className="w-5 h-5" />
+                  {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
