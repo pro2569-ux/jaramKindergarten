@@ -1,10 +1,15 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
+import type { Metadata } from 'next'
+import type { CSSProperties, ReactNode } from 'react'
+import { Construction } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getRendererByType } from '@/components/page-renderers'
 import GreetingRenderer from '@/components/page-renderers/GreetingRenderer'
-import DynamicPageSidebar from './DynamicPageSidebar'
-import type { Metadata } from 'next'
+import PageShell from '@/components/layout/PageShell'
+import SideNav from '@/components/layout/SideNav'
+import ContentCard from '@/components/ui/ContentCard'
+import EmptyState from '@/components/ui/EmptyState'
+import ButtonLink from '@/components/ui/ButtonLink'
 
 export const revalidate = 60
 
@@ -91,8 +96,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: '페이지를 찾을 수 없습니다' }
   }
 
+  // 사이트명은 루트 레이아웃의 title.template 이 한 번만 붙인다.
   return {
-    title: `${result.page.title} | 자람동산어린이집`,
+    title: result.page.title,
     description: result.page.hero_subtitle || result.page.title,
   }
 }
@@ -115,23 +121,14 @@ export default async function DynamicPage({ params }: PageProps) {
   if (!('page' in result)) {
     const label = ('parentMenu' in result && result.parentMenu?.label) || '페이지'
     return (
-      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
-        <div className="relative bg-gradient-to-r from-primary/10 to-primary/5 border-b border-green-100">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">{label}</h1>
-          </div>
-        </div>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 text-center">
-          <p className="text-2xl font-semibold text-gray-700">준비 중입니다</p>
-          <p className="mt-3 text-gray-500">콘텐츠를 준비하고 있어요. 곧 찾아뵙겠습니다.</p>
-          <Link
-            href="/"
-            className="mt-8 inline-block rounded-lg bg-primary px-5 py-2.5 text-white transition-colors hover:opacity-90"
-          >
-            홈으로
-          </Link>
-        </div>
-      </div>
+      <PageShell title={label} width="reading">
+        <EmptyState
+          icon={Construction}
+          title="준비 중입니다"
+          description="콘텐츠를 준비하고 있어요. 곧 찾아뵙겠습니다."
+          action={<ButtonLink href="/">홈으로</ButtonLink>}
+        />
+      </PageShell>
     )
   }
 
@@ -141,7 +138,7 @@ export default async function DynamicPage({ params }: PageProps) {
   const isGreeting = childMenu?.slug === 'greeting'
   const Renderer = getRendererByType(page.page_type || 'single')
 
-  const sc = (page.style_config || {}) as Record<string, any>
+  const sc = (page.style_config || {}) as Record<string, string | undefined>
 
   // style_config를 CSS 변수로 변환
   const styleVars: Record<string, string> = {}
@@ -150,7 +147,7 @@ export default async function DynamicPage({ params }: PageProps) {
   if (sc.fontFamily) styleVars['--page-font'] = sc.fontFamily
 
   // 페이지 배경: backgroundImage가 있고 모드가 full/subtle일 때만 활성화.
-  // 그 외(미설정/none/이미지 없음)는 기존 화면 경로를 그대로 탄다 → 회귀 없음.
+  // 그 외(미설정/none/이미지 없음)는 기본 카드 경로를 탄다 → 회귀 없음.
   const bgImage: string = sc.backgroundImage || ''
   const bgMode: 'none' | 'full' | 'subtle' =
     bgImage && (sc.backgroundMode === 'full' || sc.backgroundMode === 'subtle')
@@ -158,8 +155,7 @@ export default async function DynamicPage({ params }: PageProps) {
       : 'none'
 
   // 배경은 "콘텐츠 컬럼(우측 영역)"에만 적용한다.
-  // 최외곽 래퍼 / 좌측 사이드바 / 바깥 여백은 배경 미설정 때와 동일하게 유지.
-  const contentBgStyle: React.CSSProperties = {}
+  const contentBgStyle: CSSProperties = {}
   if (bgMode === 'full') {
     // 가독성용 어두운 스크림 + 이미지 (cover/center).
     // 모바일 호환을 위해 background-attachment: fixed는 쓰지 않음(iOS 깨짐 방지).
@@ -183,62 +179,42 @@ export default async function DynamicPage({ params }: PageProps) {
     />
   )
 
+  // 콘텐츠 컬럼 래핑: 배경 모드별 / 인사말(자체 카드) / 기본 ContentCard
+  let content: ReactNode
+  if (bgMode === 'full') {
+    content = (
+      <div className="rounded-card p-4 shadow-md sm:p-6" style={contentBgStyle}>
+        <div className="rounded-card bg-surface/85 p-4 backdrop-blur md:p-6">{rendered}</div>
+      </div>
+    )
+  } else if (bgMode === 'subtle') {
+    content = (
+      <div className="rounded-card border border-border p-4 shadow-sm md:p-6" style={contentBgStyle}>
+        {rendered}
+      </div>
+    )
+  } else if (isGreeting) {
+    content = rendered
+  } else {
+    content = <ContentCard>{rendered}</ContentCard>
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white" style={styleVars as React.CSSProperties}>
-      {/* 페이지 헤더 (Hero) */}
-      <div
-        className="relative bg-gradient-to-r from-primary/10 to-primary/5 border-b border-green-100"
-        style={page.hero_image_url ? {
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${page.hero_image_url})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        } : undefined}
-      >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className={`text-3xl md:text-4xl font-bold ${page.hero_image_url ? 'text-white' : 'text-gray-900'}`}>
-            {page.hero_title || parentMenu.label}
-          </h1>
-          {page.hero_subtitle && (
-            <p className={`mt-2 text-lg ${page.hero_image_url ? 'text-white/80' : 'text-gray-600'}`}>
-              {page.hero_subtitle}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* 메인 콘텐츠 */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* 사이드바 */}
-          <aside className="lg:col-span-1">
-            <DynamicPageSidebar
-              parentLabel={parentMenu.label}
-              parentSlug={parentSlug}
-              siblings={siblings ?? []}
-              currentSlug={slug}
-            />
-          </aside>
-
-          {/* 콘텐츠 (배경은 이 컬럼에만 적용됨) */}
-          <div className="lg:col-span-3">
-            {bgMode === 'full' ? (
-              // 꽉찬 배경: 콘텐츠 컬럼에만 이미지+스크림, 실제 콘텐츠는 반투명 카드로 가독성 확보
-              <div className="rounded-2xl p-4 sm:p-6 shadow-lg" style={contentBgStyle}>
-                <div className="bg-white/85 backdrop-blur rounded-xl p-6 sm:p-8">
-                  {rendered}
-                </div>
-              </div>
-            ) : bgMode === 'subtle' ? (
-              // 은은한 배경: 콘텐츠 컬럼에만 옅은 이미지, 콘텐츠는 평소대로
-              <div className="rounded-2xl p-6 sm:p-8 shadow-sm" style={contentBgStyle}>
-                {rendered}
-              </div>
-            ) : (
-              rendered
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+    <PageShell
+      eyebrow={parentMenu.label}
+      title={page.title}
+      subtitle={page.hero_subtitle}
+      heroImageUrl={page.hero_image_url}
+      sidebar={
+        <SideNav
+          title={parentMenu.label}
+          items={(siblings ?? []).map((s) => ({ label: s.label, href: `/${parentSlug}/${s.slug}` }))}
+        />
+      }
+      card={false}
+      style={styleVars as CSSProperties}
+    >
+      {content}
+    </PageShell>
   )
 }

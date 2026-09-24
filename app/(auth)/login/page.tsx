@@ -109,23 +109,23 @@ function LoginForm() {
       setTimeout(() => {
         window.location.href = destination
       }, 1000)
-    } catch (error: any) {
-      setErrorMessage(error.message || '로그인에 실패했습니다.')
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '로그인에 실패했습니다.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
+    <div className="bg-page px-4 py-12 sm:px-6 md:py-16 lg:px-8">
+      <div className="mx-auto w-full max-w-md">
         {/* 로고 */}
-        <div className="text-center mb-8">
-          <div className="inline-flex h-16 w-16 rounded-full bg-primary items-center justify-center mb-4">
-            <span className="text-white font-bold text-2xl">자</span>
+        <div className="mb-8 text-center">
+          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary">
+            <span className="text-2xl font-bold text-on-primary">자</span>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">관리자 로그인</h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="typo-h1 text-heading">관리자 로그인</h1>
+          <p className="mt-2 text-sm text-muted">
             자람동산어린이집 관리자 전용 로그인입니다
           </p>
         </div>
@@ -137,15 +137,15 @@ function LoginForm() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               {errorMessage && (
-                <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+                <div className="rounded-control border border-red-200 bg-red-50 p-3" role="alert">
                   <p className="text-sm text-red-600">{errorMessage}</p>
                 </div>
               )}
 
               {successMessage && (
-                <div className="p-3 rounded-lg bg-green-50 border border-green-200">
-                  <p className="text-sm text-green-600 font-medium">{successMessage}</p>
-                  <p className="text-xs text-green-500 mt-1">잠시 후 이동합니다...</p>
+                <div className="rounded-control border border-green-200 bg-green-50 p-3" role="status">
+                  <p className="text-sm font-medium text-green-700">{successMessage}</p>
+                  <p className="mt-1 text-xs text-green-700">잠시 후 이동합니다...</p>
                 </div>
               )}
 
@@ -185,7 +185,7 @@ function LoginForm() {
                   '로그인 성공!'
                 ) : (
                   <>
-                    <LogIn className="w-5 h-5" />
+                    <LogIn className="h-5 w-5" aria-hidden="true" />
                     로그인
                   </>
                 )}
@@ -202,8 +202,8 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-600">로딩 중...</div>
+      <div className="flex items-center justify-center bg-page py-24">
+        <div className="text-muted">로딩 중...</div>
       </div>
     }>
       <LoginForm />

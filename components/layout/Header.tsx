@@ -94,8 +94,8 @@ export default function Header() {
 
         setUserName(data.name)
         localStorage.setItem('userName', data.name)
-      } catch (error: any) {
-        alert(`프로필 조회 중 예외 발생: ${error.message}`)
+      } catch (error) {
+        alert(`프로필 조회 중 예외 발생: ${error instanceof Error ? error.message : String(error)}`)
         console.error('프로필 조회 예외:', error)
       }
     }
@@ -149,14 +149,13 @@ export default function Header() {
               >
                 <Link
                   href={item.href}
-                  className="text-gray-700 hover:text-primary font-semibold transition-all py-2 px-3 block rounded-lg hover:bg-green-50"
-                  style={{ fontFamily: "'Noto Sans KR', 'Pretendard', sans-serif" }}
+                  className="text-gray-700 hover:text-primary-ink font-semibold transition-all py-2 px-3 block rounded-lg hover:bg-tint"
                 >
                   {item.name}
                 </Link>
                 {item.children && (
                   <div
-                    className={`absolute left-0 top-full mt-0 w-56 rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-200 ${
+                    className={`absolute left-0 top-full mt-0 w-56 rounded-card bg-white shadow-lg ring-1 ring-black/5 transition-all duration-200 ${
                       activeDropdown === index
                         ? 'opacity-100 visible translate-y-0'
                         : 'opacity-0 invisible -translate-y-2'
@@ -169,7 +168,7 @@ export default function Header() {
                         <Link
                           key={child.name}
                           href={child.href}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-primary transition-colors"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-tint hover:text-primary-ink transition-colors"
                         >
                           {child.name}
                         </Link>
@@ -191,7 +190,7 @@ export default function Header() {
                   )}
                   <Link
                     href="/admin"
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-green-50 rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-ink hover:bg-tint rounded-lg transition-colors"
                   >
                     <Settings className="w-4 h-4" />
                     관리자
@@ -199,7 +198,7 @@ export default function Header() {
                   <button
                     onClick={handleLogout}
                     disabled={isLoggingOut}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-primary bg-primary hover:bg-primary-dark rounded-control transition-colors disabled:opacity-50"
                   >
                     <LogOut className="w-4 h-4" />
                     {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
@@ -209,7 +208,7 @@ export default function Header() {
                 <>
                   <Link
                     href="/login"
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-primary bg-primary hover:bg-primary-dark rounded-control transition-colors"
                   >
                     <LogIn className="w-4 h-4" />
                     로그인
@@ -223,7 +222,7 @@ export default function Header() {
           <div className="lg:hidden">
             <button
               type="button"
-              className="inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-primary"
+              className="inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-primary-ink"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               <span className="sr-only">메뉴 열기</span>
@@ -245,7 +244,7 @@ export default function Header() {
               <div key={item.name} className="space-y-1">
                 <Link
                   href={item.href}
-                  className="block px-3 py-2 text-base font-medium text-gray-900 hover:bg-green-50 hover:text-primary rounded-md"
+                  className="block px-3 py-2 text-base font-medium text-gray-900 hover:bg-tint hover:text-primary-ink rounded-md"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {item.name}
@@ -256,7 +255,7 @@ export default function Header() {
                       <Link
                         key={child.name}
                         href={child.href}
-                        className="block px-3 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-primary rounded-md"
+                        className="block px-3 py-2 text-sm text-gray-700 hover:bg-tint hover:text-primary-ink rounded-md"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         {child.name}
@@ -271,12 +270,12 @@ export default function Header() {
             <div className="border-t border-gray-200 pt-3 mt-3 space-y-2">
               {user ? (
                 <>
-                  <div className="px-3 py-2 text-sm font-medium text-gray-700 bg-green-50 rounded-md">
+                  <div className="px-3 py-2 text-sm font-medium text-gray-700 bg-tint rounded-control">
                     {userName ? `${userName}님 환영합니다` : ''}
                   </div>
                   <Link
                     href="/admin"
-                    className="flex items-center gap-2 px-3 py-2 text-base font-medium text-gray-900 hover:bg-green-50 hover:text-primary rounded-md"
+                    className="flex items-center gap-2 px-3 py-2 text-base font-medium text-gray-900 hover:bg-tint hover:text-primary-ink rounded-md"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <Settings className="w-5 h-5" />
@@ -288,7 +287,7 @@ export default function Header() {
                       handleLogout()
                     }}
                     disabled={isLoggingOut}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-base font-medium text-white bg-primary hover:bg-primary-dark rounded-md disabled:opacity-50"
+                    className="flex items-center gap-2 w-full px-3 py-2 text-base font-medium text-on-primary bg-primary hover:bg-primary-dark rounded-control disabled:opacity-50"
                   >
                     <LogOut className="w-5 h-5" />
                     {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
@@ -298,7 +297,7 @@ export default function Header() {
                 <>
                   <Link
                     href="/login"
-                    className="flex items-center gap-2 w-full px-3 py-2 text-base font-medium text-white bg-primary hover:bg-primary-dark rounded-md"
+                    className="flex items-center gap-2 w-full px-3 py-2 text-base font-medium text-on-primary bg-primary hover:bg-primary-dark rounded-control"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <LogIn className="w-5 h-5" />

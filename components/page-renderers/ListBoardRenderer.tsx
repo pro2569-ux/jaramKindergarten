@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { RendererProps } from './types'
+import Badge from '@/components/ui/Badge'
 
 interface Post {
   id: string
@@ -40,12 +41,11 @@ export default function ListBoardRenderer({ page, layoutConfig }: RendererProps)
   }, [currentPage, page.slug, pageSize])
 
   if (loading) {
-    return <div className="max-w-4xl mx-auto px-4 py-8 text-center text-gray-500">로딩 중...</div>
+    return <div className="py-8 text-center text-muted">로딩 중...</div>
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">{page.title}</h1>
+    <div className="max-w-4xl mx-auto">
       <div className="border-t-2 border-gray-800">
         <div className="grid grid-cols-[1fr_120px_80px] gap-4 px-4 py-3 bg-gray-50 text-sm font-medium text-gray-600 border-b">
           <span>제목</span>
@@ -53,16 +53,16 @@ export default function ListBoardRenderer({ page, layoutConfig }: RendererProps)
           <span className="text-center">조회</span>
         </div>
         {posts.length === 0 ? (
-          <div className="px-4 py-12 text-center text-gray-400">게시글이 없습니다.</div>
+          <div className="px-4 py-12 text-center text-muted">게시글이 없습니다.</div>
         ) : (
           posts.map((post) => (
             <Link
               key={post.id}
               href={`/board/${page.slug}/${post.id}`}
-              className="grid grid-cols-[1fr_120px_80px] gap-4 px-4 py-3 border-b hover:bg-green-50 transition-colors"
+              className="grid grid-cols-[1fr_120px_80px] gap-4 px-4 py-3 border-b border-border hover:bg-tint transition-colors"
             >
               <span className="text-gray-800">
-                {post.is_pinned && <span className="text-primary font-bold mr-2">[공지]</span>}
+                {post.is_pinned && <Badge className="mr-2">공지</Badge>}
                 {post.title}
               </span>
               <span className="text-center text-sm text-gray-500">
@@ -77,7 +77,7 @@ export default function ListBoardRenderer({ page, layoutConfig }: RendererProps)
         <button
           onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
           disabled={currentPage === 1}
-          className="px-3 py-1 border rounded text-sm disabled:opacity-30"
+          className="px-3 py-1 border border-border rounded-control text-sm disabled:opacity-30"
         >
           이전
         </button>
@@ -85,7 +85,7 @@ export default function ListBoardRenderer({ page, layoutConfig }: RendererProps)
         <button
           onClick={() => setCurrentPage((p) => p + 1)}
           disabled={posts.length < pageSize}
-          className="px-3 py-1 border rounded text-sm disabled:opacity-30"
+          className="px-3 py-1 border border-border rounded-control text-sm disabled:opacity-30"
         >
           다음
         </button>

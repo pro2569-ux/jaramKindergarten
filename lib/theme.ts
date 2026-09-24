@@ -10,6 +10,8 @@ const FONT_FAMILY: Record<string, string> = {
   notoserif:  "'Noto Serif KR', serif",
 }
 
+const HEX6 = /^#[0-9a-fA-F]{6}$/
+
 // revalidateTag(SITE_THEME_TAG)로 테마 캐시 무효화 (admin 저장 시)
 export const SITE_THEME_TAG = 'site-theme'
 
@@ -41,14 +43,21 @@ export const getActiveTheme = unstable_cache(fetchActiveTheme, ['active-site-the
   revalidate: 60,
 })
 
-// 전역 주입용 CSS 변수 (T1: --primary, --secondary, body 폰트).
-// T2(--primary-dark/-light 등)는 globals.css에서 color-mix로 --primary에서 파생되므로 여기서 주입 불필요.
-// T3(--background/--foreground)는 이번 범위에서 제외.
+// 전역 주입용 CSS 변수.
+// - --primary / --secondary: 브랜드 색 (site_theme.primary_color / secondary_color)
+// - --page / --body: 페이지 배경 / 본문 글자색 (site_theme.background_color / text_color, 6자리 hex 일 때만)
+// - 파생 토큰(--primary-dark/-light, --tint 등)은 globals.css 가 body 에서 color-mix 로 계산하므로 주입 불필요.
+// - heading_font 는 아직 토큰으로 노출하지 않음 (제목 폰트 분리는 이번 범위 밖 — 필요 시 --font-heading 추가).
 export function themeToCssVars(theme: SiteTheme | null): CSSProperties | undefined {
   if (!theme) return undefined
-  return {
+  const vars: Record<string, string> = {
     '--primary':   theme.primary_color,
     '--secondary': theme.secondary_color,
-    fontFamily:    FONT_FAMILY[theme.body_font] ?? FONT_FAMILY.pretendard,
+  }
+  if (theme.background_color && HEX6.test(theme.background_color)) vars['--page'] = theme.background_color
+  if (theme.text_color && HEX6.test(theme.text_color)) vars['--body'] = theme.text_color
+  return {
+    ...vars,
+    fontFamily: FONT_FAMILY[theme.body_font] ?? FONT_FAMILY.pretendard,
   } as CSSProperties
 }

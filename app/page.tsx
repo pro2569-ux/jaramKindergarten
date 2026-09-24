@@ -3,11 +3,11 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { withResolvedMedia } from '@/lib/storage/media'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import Button from '@/components/ui/Button'
+import ButtonLink from '@/components/ui/ButtonLink'
+import Badge from '@/components/ui/Badge'
+import EmptyState from '@/components/ui/EmptyState'
 import ImageSlider from '@/components/ui/ImageSlider'
 import {
-  Calendar,
-  FileText,
   Image as ImageIcon,
   UtensilsCrossed,
   ArrowRight,
@@ -51,33 +51,29 @@ export default async function Home() {
   return (
     <div className="flex flex-col">
       {/* 히어로 배너 섹션 */}
-      <section className="relative bg-gradient-to-b from-green-50 to-white py-12 md:py-20">
+      <section className="relative overflow-hidden bg-gradient-to-b from-tint to-white py-12 md:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
             {/* 왼쪽: 텍스트 콘텐츠 */}
             <div className="order-1 md:order-1">
-              <div className="inline-block mb-4 px-4 py-2 bg-primary/10 rounded-full text-primary font-semibold text-sm">
+              <div className="inline-block mb-4 px-4 py-2 bg-tint-strong rounded-full text-primary-ink font-semibold text-sm">
                 🌱 건강한 성장, 행복한 배움
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight text-gray-900">
                 아이들이 건강하게<br />
-                <span className="text-primary">자라는 곳</span>
+                <span className="underline decoration-primary decoration-8 underline-offset-4">자라는 곳</span>
               </h1>
               <p className="text-lg md:text-xl mb-6 md:mb-8 text-gray-600 leading-relaxed">
                 자람동산어린이집에서<br />
                 우리 아이의 밝은 미래를 시작하세요
               </p>
               <div className="flex flex-wrap gap-4">
-                <Link href="/about/greeting">
-                  <Button size="lg" className="shadow-lg">
-                    어린이집 소개
-                  </Button>
-                </Link>
-                <Link href="/community/inquiry">
-                  <Button size="lg" variant="outline">
-                    문의하기
-                  </Button>
-                </Link>
+                <ButtonLink href="/about/greeting" size="lg" className="shadow-md">
+                  어린이집 소개
+                </ButtonLink>
+                <ButtonLink href="/community/inquiry" size="lg" variant="outline">
+                  문의하기
+                </ButtonLink>
               </div>
             </div>
 
@@ -113,27 +109,27 @@ export default async function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Link
               href="/board/notice"
-              className="flex flex-col items-center p-6 rounded-xl bg-gradient-to-br from-green-50 to-green-100 hover:shadow-lg transition-all"
+              className="flex flex-col items-center p-6 rounded-card bg-gradient-to-br from-tint to-tint-strong hover:shadow-md transition-all"
             >
               <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center mb-3">
-                <Bell className="w-8 h-8 text-white" />
+                <Bell className="w-8 h-8 text-on-primary" />
               </div>
               <span className="font-semibold text-gray-900">공지사항</span>
             </Link>
 
             <Link
               href="/board/meal-plan"
-              className="flex flex-col items-center p-6 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-lg transition-all"
+              className="flex flex-col items-center p-6 rounded-card bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-md transition-all"
             >
               <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-3">
-                <UtensilsCrossed className="w-8 h-8 text-white" />
+                <UtensilsCrossed className="w-8 h-8 text-on-primary" />
               </div>
               <span className="font-semibold text-gray-900">식단표</span>
             </Link>
 
             <Link
               href="/board/album"
-              className="flex flex-col items-center p-6 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-lg transition-all"
+              className="flex flex-col items-center p-6 rounded-card bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-md transition-all"
             >
               <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center mb-3">
                 <ImageIcon className="w-8 h-8 text-white" />
@@ -143,7 +139,7 @@ export default async function Home() {
 
             <Link
               href="/about/teachers"
-              className="flex flex-col items-center p-6 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-lg transition-all"
+              className="flex flex-col items-center p-6 rounded-card bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-md transition-all"
             >
               <div className="w-16 h-16 rounded-full bg-purple-500 flex items-center justify-center mb-3">
                 <Users className="w-8 h-8 text-white" />
@@ -155,7 +151,7 @@ export default async function Home() {
       </section>
 
       {/* 어린이집 소개 섹션 */}
-      <section className="py-20 bg-gradient-to-b from-white to-green-50">
+      <section className="py-20 bg-gradient-to-b from-white to-tint">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             {/* 이미지 */}
@@ -169,8 +165,8 @@ export default async function Home() {
                   className="object-cover"
                 /> */}
                 {/* Placeholder */}
-                <div className="w-full h-full bg-gradient-to-br from-green-200 via-blue-200 to-purple-200 flex items-center justify-center">
-                  <div className="text-center text-green-700">
+                <div className="w-full h-full bg-gradient-to-br from-tint-strong via-blue-100 to-purple-100 flex items-center justify-center">
+                  <div className="text-center text-primary-ink">
                     <ImageIcon className="w-24 h-24 mx-auto mb-4 opacity-50" />
                     <p className="text-sm font-medium">어린이집 사진</p>
                   </div>
@@ -178,12 +174,12 @@ export default async function Home() {
               </div>
               {/* 장식 요소 */}
               <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-yellow-300 rounded-full opacity-20 blur-2xl" />
-              <div className="absolute -top-6 -left-6 w-24 h-24 bg-green-300 rounded-full opacity-20 blur-2xl" />
+              <div className="absolute -top-6 -left-6 w-24 h-24 bg-secondary rounded-full opacity-30 blur-2xl" />
             </div>
 
             {/* 텍스트 */}
             <div>
-              <div className="inline-block px-4 py-2 bg-primary/10 rounded-full text-primary font-semibold text-sm mb-4">
+              <div className="inline-block px-4 py-2 bg-tint-strong rounded-full text-primary-ink font-semibold text-sm mb-4">
                 ABOUT US
               </div>
               <h2 className="text-4xl font-bold text-gray-900 mb-6">
@@ -196,8 +192,8 @@ export default async function Home() {
               </p>
               <div className="space-y-4 mb-8">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm">✓</span>
+                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-on-primary text-sm font-bold">✓</span>
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">자연주의 교육</h3>
@@ -205,8 +201,8 @@ export default async function Home() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm">✓</span>
+                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-on-primary text-sm font-bold">✓</span>
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">전문 교사진</h3>
@@ -214,8 +210,8 @@ export default async function Home() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-white text-sm">✓</span>
+                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-on-primary text-sm font-bold">✓</span>
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">안전한 환경</h3>
@@ -223,11 +219,9 @@ export default async function Home() {
                   </div>
                 </div>
               </div>
-              <Link href="/about/greeting">
-                <Button size="lg" className="gap-2">
-                  자세히 보기 <ArrowRight className="w-5 h-5" />
-                </Button>
-              </Link>
+              <ButtonLink href="/about/greeting" size="lg" className="gap-2">
+                자세히 보기 <ArrowRight className="w-5 h-5" />
+              </ButtonLink>
             </div>
           </div>
         </div>
@@ -247,8 +241,8 @@ export default async function Home() {
 
           <div className="grid md:grid-cols-3 gap-8">
             {/* 특징 1 */}
-            <div className="group p-8 rounded-2xl bg-gradient-to-br from-green-50 to-green-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-              <div className="w-16 h-16 rounded-2xl bg-green-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <div className="group p-8 rounded-card bg-gradient-to-br from-tint to-tint-strong hover:shadow-md transition-all duration-300 hover:-translate-y-2">
+              <div className="w-16 h-16 rounded-card bg-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <span className="text-3xl">🌳</span>
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">숲 유치원</h3>
@@ -258,7 +252,7 @@ export default async function Home() {
             </div>
 
             {/* 특징 2 */}
-            <div className="group p-8 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+            <div className="group p-8 rounded-card bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-md transition-all duration-300 hover:-translate-y-2">
               <div className="w-16 h-16 rounded-2xl bg-blue-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <span className="text-3xl">📚</span>
               </div>
@@ -269,7 +263,7 @@ export default async function Home() {
             </div>
 
             {/* 특징 3 */}
-            <div className="group p-8 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+            <div className="group p-8 rounded-card bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-md transition-all duration-300 hover:-translate-y-2">
               <div className="w-16 h-16 rounded-2xl bg-orange-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <span className="text-3xl">🍎</span>
               </div>
@@ -283,32 +277,28 @@ export default async function Home() {
       </section>
 
       {/* 공지사항 섹션 */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-page">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">공지사항</h2>
-            <Link href="/board/notice">
-              <Button variant="ghost" className="gap-2">
-                더보기 <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
+            <h2 className="typo-h2 text-heading">공지사항</h2>
+            <ButtonLink href="/board/notice" variant="ghost" className="gap-2">
+              더보기 <ArrowRight className="w-4 h-4" />
+            </ButtonLink>
           </div>
 
           <Card>
             <CardContent className="p-0">
-              <div className="divide-y">
+              <div className="divide-y divide-border">
                 {notices && notices.length > 0 ? (
                   notices.map((notice) => (
                     <Link
                       key={notice.id}
                       href={`/board/notice/${notice.id}`}
-                      className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                      className="flex items-center justify-between p-4 hover:bg-tint transition-colors"
                     >
                       <div className="flex items-center gap-3 flex-1">
                         {notice.is_pinned && (
-                          <span className="px-2 py-1 text-xs font-semibold bg-primary text-white rounded">
-                            공지
-                          </span>
+                          <Badge>공지</Badge>
                         )}
                         <span className="text-gray-900 font-medium truncate">
                           {notice.title}
@@ -320,9 +310,7 @@ export default async function Home() {
                     </Link>
                   ))
                 ) : (
-                  <div className="p-8 text-center text-gray-500">
-                    등록된 공지사항이 없습니다.
-                  </div>
+                  <EmptyState icon={Bell} title="등록된 공지사항이 없습니다." description="새 소식이 올라오면 이곳에 표시됩니다." />
                 )}
               </div>
             </CardContent>
@@ -334,19 +322,17 @@ export default async function Home() {
       <section className="py-16 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">최근 앨범</h2>
-            <Link href="/board/album">
-              <Button variant="ghost" className="gap-2">
-                더보기 <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
+            <h2 className="typo-h2 text-heading">최근 앨범</h2>
+            <ButtonLink href="/board/album" variant="ghost" className="gap-2">
+              더보기 <ArrowRight className="w-4 h-4" />
+            </ButtonLink>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {albums && albums.length > 0 ? (
               albums.map((album) => (
                 <Link key={album.id} href={`/board/album/${album.id}`}>
-                  <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <Card className="overflow-hidden hover:shadow-md transition-shadow">
                     <div className="aspect-video bg-gray-200 relative">
                       {album.cover_image_url ? (
                         <Image
@@ -373,9 +359,7 @@ export default async function Home() {
                 </Link>
               ))
             ) : (
-              <div className="col-span-4 p-12 text-center text-gray-500">
-                등록된 앨범이 없습니다.
-              </div>
+              <div className="col-span-full rounded-card border border-border bg-surface"><EmptyState icon={ImageIcon} title="등록된 앨범이 없습니다." description="아이들의 소중한 순간을 곧 만나보실 수 있어요." /></div>
             )}
           </div>
         </div>

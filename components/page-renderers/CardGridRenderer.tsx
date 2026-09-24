@@ -32,10 +32,9 @@ export default function CardGridRenderer({ page, layoutConfig }: RendererProps) 
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">{page.title}</h1>
+    <div className="max-w-6xl mx-auto">
       {items.length === 0 ? (
-        <div className="text-center text-gray-400 py-12">등록된 항목이 없습니다.</div>
+        <div className="py-12 text-center text-muted">등록된 항목이 없습니다.</div>
       ) : (
         <div className={`grid ${cols} gap-6`}>
           {items.map((item, index) => (
@@ -53,7 +52,7 @@ export default function CardGridRenderer({ page, layoutConfig }: RendererProps) 
               <div className="p-4">
                 <h3 className="font-bold text-gray-800">{item.title}</h3>
                 {item.subtitle && (
-                  <p className="text-sm text-primary mt-1">{item.subtitle}</p>
+                  <p className="text-sm text-primary-ink mt-1">{item.subtitle}</p>
                 )}
                 {item.description && (
                   <p className="text-sm text-gray-500 mt-2">{item.description}</p>

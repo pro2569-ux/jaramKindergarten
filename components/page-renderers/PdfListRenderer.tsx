@@ -36,20 +36,19 @@ export default function PdfListRenderer({ page, layoutConfig }: RendererProps) {
   }, [])
 
   if (loading) {
-    return <div className="max-w-4xl mx-auto px-4 py-8 text-center text-gray-500">로딩 중...</div>
+    return <div className="py-8 text-center text-muted">로딩 중...</div>
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">{page.title}</h1>
+    <div className="max-w-4xl mx-auto">
       {items.length === 0 ? (
-        <div className="text-center text-gray-400 py-12">등록된 파일이 없습니다.</div>
+        <div className="py-12 text-center text-muted">등록된 파일이 없습니다.</div>
       ) : (
         <div className="space-y-3">
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex items-center justify-between px-5 py-4 bg-white border rounded-lg hover:shadow-sm transition-shadow"
+              className="flex items-center justify-between px-5 py-4 bg-surface border border-border rounded-control hover:shadow-md transition-shadow"
             >
               <div>
                 <h3 className="font-medium text-gray-800">
@@ -66,7 +65,7 @@ export default function PdfListRenderer({ page, layoutConfig }: RendererProps) {
                       href={item.file_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 px-3 py-1.5 text-sm text-primary border border-primary rounded hover:bg-green-50 transition-colors"
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm text-primary-ink border border-primary-ink rounded-control hover:bg-tint transition-colors"
                     >
                       <Eye className="w-4 h-4" />
                       보기
@@ -75,7 +74,7 @@ export default function PdfListRenderer({ page, layoutConfig }: RendererProps) {
                   <a
                     href={item.file_url}
                     download
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-white bg-primary rounded hover:bg-green-700 transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-on-primary bg-primary rounded-control hover:bg-primary-dark transition-colors"
                   >
                     <Download className="w-4 h-4" />
                     다운로드

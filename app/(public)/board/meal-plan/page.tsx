@@ -1,24 +1,24 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Download, UtensilsCrossed } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import PageShell from '@/components/layout/PageShell'
+import SideNav from '@/components/layout/SideNav'
+import EmptyState from '@/components/ui/EmptyState'
+import { staticSectionNav } from '@/lib/site-nav'
+
+// 클라이언트 컴포넌트라 DB 메뉴 대신 정적 목록 사용 (board 대분류는 DB 에 소분류가 없음)
+const nav = staticSectionNav('board')
 
 export default function MealPlanPage() {
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [mealPlans, setMealPlans] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  // TODO: Supabase에서 식단표 데이터 가져오기 (현재는 빈 목록)
+  const mealPlans: { id: string; title: string; file_url?: string }[] = []
 
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth() + 1
-
-  useEffect(() => {
-    // TODO: Supabase에서 식단표 데이터 가져오기
-    // 현재는 더미 데이터 사용
-    setMealPlans([])
-    setLoading(false)
-  }, [year, month])
 
   const handlePrevMonth = () => {
     setCurrentDate(
@@ -62,142 +62,138 @@ export default function MealPlanPage() {
   const weekDays = ['일', '월', '화', '수', '목', '금', '토']
 
   return (
-    <div className="py-16 bg-gray-50">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">식단표</h1>
-          <p className="text-gray-600">
-            우리 아이들의 건강한 식단을 확인하세요
-          </p>
-        </div>
+    <PageShell
+      eyebrow={nav.label}
+      title="식단표"
+      subtitle="우리 아이들의 건강한 식단을 확인하세요"
+      sidebar={<SideNav title={nav.label} items={nav.items} />}
+      card={false}
+    >
+      {/* 월 선택 */}
+      <Card className="mb-8">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrevMonth}
+              className="gap-1"
+            >
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+              이전
+            </Button>
 
-        {/* 월 선택 */}
-        <Card className="mb-8">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrevMonth}
-                className="gap-1"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                이전
-              </Button>
-
-              <div className="flex items-center gap-4">
-                <CardTitle className="text-2xl">
-                  {year}년 {month}월
-                </CardTitle>
-                <Button variant="ghost" size="sm" onClick={handleToday}>
-                  오늘
-                </Button>
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNextMonth}
-                className="gap-1"
-              >
-                다음
-                <ChevronRight className="w-4 h-4" />
+            <div className="flex items-center gap-4">
+              <CardTitle className="typo-h2">
+                {year}년 {month}월
+              </CardTitle>
+              <Button variant="ghost" size="sm" onClick={handleToday}>
+                오늘
               </Button>
             </div>
-          </CardHeader>
 
-          <CardContent>
-            {/* 캘린더 헤더 */}
-            <div className="grid grid-cols-7 gap-2 mb-2">
-              {weekDays.map((day, index) => (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextMonth}
+              className="gap-1"
+            >
+              다음
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          {/* 캘린더 헤더 */}
+          <div className="mb-2 grid grid-cols-7 gap-2">
+            {weekDays.map((day, index) => (
+              <div
+                key={day}
+                className={`py-2 text-center font-semibold ${
+                  index === 0
+                    ? 'text-red-500'
+                    : index === 6
+                    ? 'text-blue-500'
+                    : 'text-body'
+                }`}
+              >
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* 캘린더 날짜 */}
+          <div className="grid grid-cols-7 gap-2">
+            {days.map((day, index) => {
+              if (day === null) {
+                return <div key={`empty-${index}`} className="aspect-square" />
+              }
+
+              const isToday =
+                day === new Date().getDate() &&
+                month === new Date().getMonth() + 1 &&
+                year === new Date().getFullYear()
+
+              const dayOfWeek = index % 7
+
+              return (
                 <div
                   key={day}
-                  className={`text-center font-semibold py-2 ${
-                    index === 0
-                      ? 'text-red-500'
-                      : index === 6
-                      ? 'text-blue-500'
-                      : 'text-gray-700'
+                  className={`aspect-square rounded-control border p-2 ${
+                    isToday ? 'border-primary bg-tint' : 'border-border bg-surface'
                   }`}
                 >
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* 캘린더 날짜 */}
-            <div className="grid grid-cols-7 gap-2">
-              {days.map((day, index) => {
-                if (day === null) {
-                  return <div key={`empty-${index}`} className="aspect-square" />
-                }
-
-                const isToday =
-                  day === new Date().getDate() &&
-                  month === new Date().getMonth() + 1 &&
-                  year === new Date().getFullYear()
-
-                const dayOfWeek = index % 7
-
-                return (
                   <div
-                    key={day}
-                    className={`aspect-square border rounded-lg p-2 ${
-                      isToday ? 'bg-primary/10 border-primary' : 'bg-white'
+                    className={`mb-1 text-sm font-semibold ${
+                      dayOfWeek === 0
+                        ? 'text-red-500'
+                        : dayOfWeek === 6
+                        ? 'text-blue-500'
+                        : 'text-body'
                     }`}
                   >
-                    <div
-                      className={`text-sm font-semibold mb-1 ${
-                        dayOfWeek === 0
-                          ? 'text-red-500'
-                          : dayOfWeek === 6
-                          ? 'text-blue-500'
-                          : 'text-gray-700'
-                      }`}
-                    >
-                      {day}
-                    </div>
-                    {/* TODO: 식단 정보 표시 */}
-                    <div className="text-xs text-gray-500 line-clamp-3">
-                      {/* 식단 내용이 여기 표시됩니다 */}
-                    </div>
+                    {day}
                   </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                  {/* TODO: 식단 정보 표시 */}
+                  <div className="line-clamp-3 text-xs text-muted">
+                    {/* 식단 내용이 여기 표시됩니다 */}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* 주간 식단표 목록 (선택사항) */}
-        <div className="space-y-4">
-          {mealPlans.length > 0 ? (
-            mealPlans.map((plan) => (
-              <Card key={plan.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>{plan.title}</CardTitle>
-                    {plan.file_url && (
-                      <Button variant="outline" size="sm" className="gap-2">
-                        <Download className="w-4 h-4" />
-                        다운로드
-                      </Button>
-                    )}
-                  </div>
-                </CardHeader>
-              </Card>
-            ))
-          ) : (
-            <Card>
-              <CardContent className="py-16 text-center">
-                <UtensilsCrossed className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">
-                  {year}년 {month}월 식단표가 아직 등록되지 않았습니다.
-                </p>
-              </CardContent>
+      {/* 주간 식단표 목록 (선택사항) */}
+      <div className="space-y-4">
+        {mealPlans.length > 0 ? (
+          mealPlans.map((plan) => (
+            <Card key={plan.id}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>{plan.title}</CardTitle>
+                  {plan.file_url && (
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Download className="h-4 w-4" aria-hidden="true" />
+                      다운로드
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
             </Card>
-          )}
-        </div>
+          ))
+        ) : (
+          <Card>
+            <EmptyState
+              icon={UtensilsCrossed}
+              title={`${year}년 ${month}월 식단표가 아직 등록되지 않았습니다.`}
+              description="식단표가 등록되면 이곳에서 확인하실 수 있어요."
+            />
+          </Card>
+        )}
       </div>
-    </div>
+    </PageShell>
   )
 }

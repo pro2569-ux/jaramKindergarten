@@ -1,11 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { withResolvedMedia } from '@/lib/storage/media'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import Image from 'next/image'
 import { formatDate } from '@/lib/utils'
 import { Calendar, ArrowLeft, Image as ImageIcon } from 'lucide-react'
-import Button from '@/components/ui/Button'
+import PageShell from '@/components/layout/PageShell'
+import SideNav from '@/components/layout/SideNav'
+import ButtonLink from '@/components/ui/ButtonLink'
+import EmptyState from '@/components/ui/EmptyState'
+import { getSectionNav } from '@/lib/site-nav'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -52,82 +55,82 @@ export default async function AlbumDetailPage({ params }: PageProps) {
 
   // 이관 사진(legacy-media 버킷)은 서명 URL 로 해석 (공개 앨범만 여기까지 옴)
   const photos = await withResolvedMedia(photoRows ?? [], 'image_url')
+  const nav = await getSectionNav('board')
 
   return (
-    <div className="py-16 bg-gray-50">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* 목록으로 버튼 */}
-        <div className="mb-6">
-          <Link href="/board/album">
-            <Button variant="ghost" className="gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              목록으로
-            </Button>
-          </Link>
-        </div>
+    <PageShell
+      eyebrow={nav.label}
+      title="앨범"
+      titleAs="p"
+      titleHref="/board/album"
+      sidebar={<SideNav title={nav.label} items={nav.items} />}
+      card={false}
+    >
+      {/* 목록으로 */}
+      <div className="mb-4">
+        <ButtonLink href="/board/album" variant="ghost" size="sm" className="-ml-3 gap-2">
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          목록으로
+        </ButtonLink>
+      </div>
 
-        {/* 앨범 헤더 */}
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            {album.title}
-          </h1>
+      <article className="overflow-hidden rounded-card border border-border bg-surface shadow-sm">
+        {/* 앨범 헤더: 페이지 유일의 h1 */}
+        <header className="border-b border-border px-4 py-5 md:px-6 md:py-6">
+          <h1 className="typo-h1 text-heading">{album.title}</h1>
           {album.description && (
-            <p className="text-lg text-gray-700 mb-4">{album.description}</p>
+            <p className="mt-3 whitespace-pre-line text-base leading-relaxed text-body">{album.description}</p>
           )}
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Calendar className="w-4 h-4" />
+          <div className="mt-3 flex items-center gap-1 text-sm text-muted">
+            <Calendar className="h-4 w-4" aria-hidden="true" />
             <span>
               {album.event_date
                 ? formatDate(album.event_date)
                 : formatDate(album.created_at)}
             </span>
           </div>
-        </div>
+        </header>
 
         {/* 사진 그리드 */}
         {photos && photos.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-3 md:gap-4 md:p-6 lg:grid-cols-4">
             {photos.map((photo) => (
               <div
                 key={photo.id}
-                className="aspect-square bg-gray-200 rounded-lg overflow-hidden relative group cursor-pointer hover:shadow-lg transition-shadow"
+                className="group relative aspect-square overflow-hidden rounded-control bg-gray-100 transition-shadow hover:shadow-md"
               >
                 {photo.image_url ? (
                   <Image
                     src={photo.image_url}
                     alt={photo.caption || album.title}
                     fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    sizes="(min-width: 1024px) 210px, (min-width: 768px) 33vw, 50vw"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <ImageIcon className="w-10 h-10 text-gray-400" />
+                  <div className="flex h-full items-center justify-center">
+                    <ImageIcon className="h-10 w-10 text-disabled" aria-hidden="true" />
                   </div>
                 )}
                 {photo.caption && (
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <p className="text-white text-sm line-clamp-2">
-                      {photo.caption}
-                    </p>
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 transition-opacity group-hover:opacity-100">
+                    <p className="line-clamp-2 text-sm text-white">{photo.caption}</p>
                   </div>
                 )}
               </div>
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm p-16 text-center">
-            <ImageIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">등록된 사진이 없습니다.</p>
-          </div>
+          <EmptyState icon={ImageIcon} title="등록된 사진이 없습니다." />
         )}
+      </article>
 
-        {/* 하단 버튼 */}
-        <div className="mt-8 flex justify-center">
-          <Link href="/board/album">
-            <Button>목록으로</Button>
-          </Link>
-        </div>
+      {/* 하단 버튼 */}
+      <div className="mt-6 flex justify-center">
+        <ButtonLink href="/board/album" variant="outline">
+          목록으로
+        </ButtonLink>
       </div>
-    </div>
+    </PageShell>
   )
 }
