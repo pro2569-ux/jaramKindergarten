@@ -1,0 +1,60 @@
+[
+  { "path": "/" },
+  { "path": "/about" },
+  { "path": "/about/greeting" },
+  { "path": "/about/philosophy" },
+  { "path": "/about/class" },
+  { "path": "/about/environment" },
+  { "path": "/about/facilities" },
+  { "path": "/about/location" },
+  { "path": "/curriculum" },
+  { "path": "/curriculum/standard" },
+  { "path": "/curriculum/nuri" },
+  { "path": "/curriculum/forest" },
+  { "path": "/curriculum/farm" },
+  { "path": "/curriculum/fitness" },
+  { "path": "/curriculum/seasonal-customs" },
+  { "path": "/curriculum/outdoor-walk" },
+  { "path": "/curriculum/reading-coaching" },
+  { "path": "/curriculum/happy-project" },
+  { "path": "/curriculum/nasa-creca" },
+  { "path": "/curriculum/creative-tools" },
+  { "path": "/curriculum/parents-storytelling" },
+  { "path": "/curriculum/special-activities" },
+  { "path": "/curriculum/events" },
+  { "path": "/admission" },
+  { "path": "/admission/adaptation-guide" },
+  { "path": "/board/notice" },
+  { "path": "/board/notice/54e5482d-1835-405a-a35f-629e594918f6" },
+  { "path": "/board/notice/dd6c90cc-764c-4516-9ca9-003abf28a20a" },
+  { "path": "/board/newsletter" },
+  { "path": "/board/newsletter/091efcb4-946b-49ed-881a-9504566bd726" },
+  { "path": "/board/album" },
+  { "path": "/board/meal-plan" },
+  { "path": "/community/inquiry" },
+  { "path": "/login" },
+  { "path": "/this-page-does-not-exist-404", "name": "404" },
+  { "path": "/about/teachers" },
+  {
+    "path": "/",
+    "name": "home_menu-open",
+    "viewports": ["mobile"],
+    "actions": [
+      { "type": "click", "text": "메뉴 열기", "within": "header", "fallback": "header button" },
+      { "type": "wait", "ms": 500 },
+      { "type": "click", "text": "교육프로그램", "within": "header", "requireExpandable": true, "optional": true },
+      { "type": "wait", "ms": 500 }
+    ]
+  },
+  {
+    "path": "/curriculum/standard",
+    "name": "curriculum-standard_menu-open",
+    "viewports": ["mobile"],
+    "actions": [
+      { "type": "click", "text": "메뉴 열기", "within": "header", "fallback": "header button" },
+      { "type": "wait", "ms": 500 },
+      { "type": "click", "text": "교육프로그램", "within": "header", "requireExpandable": true, "optional": true },
+      { "type": "wait", "ms": 500 }
+    ]
+  }
+]
