@@ -1,6 +1,7 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { unstable_cache } from 'next/cache'
 import { menuData } from '@/lib/menu-items'
+import { menuHref, type MenuLinkPage } from '@/lib/menu-links'
 
 export interface SectionNav {
   label: string
@@ -9,7 +10,8 @@ export interface SectionNav {
 
 // 대분류(slug) 아래 소분류 목록을 menus 테이블에서 조회 (사이드바용).
 // 쿠키 없는 anon 클라이언트 + 태그 캐시 → 정적 페이지를 dynamic 으로 만들지 않음.
-// 소분류가 없는 대분류(board, community 등)는 lib/menu-items 의 정적 목록으로 폴백.
+// 소분류가 없는 대분류는 lib/menu-items 의 정적 목록으로 폴백.
+// 게시판 링크 항목(pages.layout_config.redirectTo)은 목적지 경로로 바로 링크한다.
 async function fetchSectionNav(parentSlug: string): Promise<SectionNav | null> {
   try {
     const supabase = createSupabaseClient(
@@ -28,7 +30,7 @@ async function fetchSectionNav(parentSlug: string): Promise<SectionNav | null> {
 
     const { data: children } = await supabase
       .from('menus')
-      .select('label, slug')
+      .select('label, slug, pages(layout_config)')
       .eq('parent_id', parent.id)
       .eq('is_visible', true)
       .order('sort_order', { ascending: true })
@@ -36,14 +38,17 @@ async function fetchSectionNav(parentSlug: string): Promise<SectionNav | null> {
 
     return {
       label: parent.label,
-      items: children.map((c) => ({ label: c.label, href: `/${parentSlug}/${c.slug}` })),
+      items: children.map((c) => ({
+        label: c.label,
+        href: menuHref(parentSlug, c.slug, c.pages as unknown as MenuLinkPage | MenuLinkPage[] | null),
+      })),
     }
   } catch {
     return null
   }
 }
 
-const getCachedSectionNav = unstable_cache(fetchSectionNav, ['section-nav'], {
+const getCachedSectionNav = unstable_cache(fetchSectionNav, ['section-nav-v2'], {
   tags: ['menus'],
   revalidate: 60,
 })

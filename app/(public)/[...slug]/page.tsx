@@ -10,6 +10,8 @@ import SideNav from '@/components/layout/SideNav'
 import ContentCard from '@/components/ui/ContentCard'
 import EmptyState from '@/components/ui/EmptyState'
 import ButtonLink from '@/components/ui/ButtonLink'
+import { getSectionNav } from '@/lib/site-nav'
+import { menuHref, redirectTargetOf, type MenuLinkPage } from '@/lib/menu-links'
 
 export const revalidate = 60
 
@@ -34,11 +36,11 @@ async function fetchMenuAndPage(slugArray: string[]) {
 
   if (!parentMenu) return null
 
-  // 소분류가 없으면 대분류 아래 첫 번째 소분류로 이동할 정보 반환
+  // 소분류가 없으면 대분류 아래 첫 번째 소분류로 이동할 정보 반환 (링크 페이지면 그 목적지로)
   if (!childSlug) {
     const { data: firstChild } = await supabase
       .from('menus')
-      .select('slug')
+      .select('slug, pages(layout_config)')
       .eq('parent_id', parentMenu.id)
       .eq('is_visible', true)
       .order('sort_order', { ascending: true })
@@ -46,7 +48,7 @@ async function fetchMenuAndPage(slugArray: string[]) {
       .single()
 
     return {
-      redirect: firstChild ? `/${parentSlug}/${firstChild.slug}` : null,
+      redirect: firstChild ? menuHref(parentSlug, firstChild.slug, firstChild.pages as unknown as MenuLinkPage | MenuLinkPage[] | null) : null,
       parentMenu,
     }
   }
@@ -72,19 +74,18 @@ async function fetchMenuAndPage(slugArray: string[]) {
 
   if (!page) return null
 
-  // 같은 대분류 아래 소분류 목록 (사이드바용)
-  const { data: siblings } = await supabase
-    .from('menus')
-    .select('id, label, slug')
-    .eq('parent_id', parentMenu.id)
-    .eq('is_visible', true)
-    .order('sort_order', { ascending: true })
+  // 링크 페이지(게시판 등 다른 라우트로 보내는 메뉴)면 목적지로 리디렉트
+  const linkTarget = redirectTargetOf(page as MenuLinkPage)
+  if (linkTarget) return { redirect: linkTarget, parentMenu }
+
+  // 같은 대분류 아래 소분류 목록 (사이드바용, 링크 페이지는 목적지로)
+  const nav = await getSectionNav(parentSlug)
 
   return {
     parentMenu,
     childMenu,
     page,
-    siblings: siblings || [],
+    siblings: nav.items,
   }
 }
 
@@ -133,7 +134,6 @@ export default async function DynamicPage({ params }: PageProps) {
   }
 
   const { parentMenu, page, siblings, childMenu } = result
-  const parentSlug = parentMenu.slug
   // greeting(원장 인사말)만 전용 렌더러로 분기. 그 외는 기존 경로 그대로.
   const isGreeting = childMenu?.slug === 'greeting'
   const Renderer = getRendererByType(page.page_type || 'single')
@@ -205,12 +205,7 @@ export default async function DynamicPage({ params }: PageProps) {
       title={page.title}
       subtitle={page.hero_subtitle}
       heroImageUrl={page.hero_image_url}
-      sidebar={
-        <SideNav
-          title={parentMenu.label}
-          items={(siblings ?? []).map((s) => ({ label: s.label, href: `/${parentSlug}/${s.slug}` }))}
-        />
-      }
+      sidebar={<SideNav title={parentMenu.label} items={siblings ?? []} />}
       card={false}
       style={styleVars as CSSProperties}
     >

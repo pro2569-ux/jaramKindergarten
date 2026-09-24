@@ -154,8 +154,8 @@ export default async function Home() {
       <section className="py-20 bg-gradient-to-b from-white to-tint">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            {/* 이미지 */}
-            <div className="relative">
+            {/* 이미지 (장식 원이 모바일에서 가로 스크롤을 만들지 않게 overflow-hidden) */}
+            <div className="relative overflow-hidden rounded-2xl">
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
                 {/* TODO: public/images/about/kindergarten.jpg 파일을 추가하면 아래 주석을 해제하세요 */}
                 {/* <Image
