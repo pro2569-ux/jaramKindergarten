@@ -9,35 +9,31 @@ import SideNav from '@/components/layout/SideNav'
 import ButtonLink from '@/components/ui/ButtonLink'
 import { getSectionNav } from '@/lib/site-nav'
 
+// 교육자료실 상세 (원본 jaramk.com 커뮤니티 > 교육자료실). 목록은 CMS 페이지(/community/archive, page_type=list)가 맡는다.
+// 글은 posts.board_type='newsletter' 중 이관 글(legacy_source_url 있음)만 해당.
 interface PageProps {
   params: Promise<{ id: string }>
 }
 
+const LIST_HREF = '/community/archive'
+
 export async function generateMetadata({ params }: PageProps) {
   const { id } = await params
   const supabase = await createClient()
-
-  const { data: post } = await supabase
-    .from('posts')
-    .select('title')
-    .eq('id', id)
-    .single()
-
-  return {
-    title: post?.title || '가정통신문',
-  }
+  const { data: post } = await supabase.from('posts').select('title').eq('id', id).single()
+  return { title: post?.title || '교육자료실' }
 }
 
-export default async function NewsletterDetailPage({ params }: PageProps) {
+export default async function ArchiveDetailPage({ params }: PageProps) {
   const { id } = await params
   const supabase = await createClient()
 
-  // 게시글 가져오기
   const { data: post } = await supabase
     .from('posts')
     .select('*')
     .eq('id', id)
     .eq('board_type', 'newsletter')
+    .not('legacy_source_url', 'is', null)
     .eq('is_published', true)
     .single()
 
@@ -51,24 +47,21 @@ export default async function NewsletterDetailPage({ params }: PageProps) {
   return (
     <PageShell
       eyebrow={nav.label}
-      title="가정통신문"
+      title="교육자료실"
       titleAs="p"
-      titleHref="/board/newsletter"
+      titleHref={LIST_HREF}
       sidebar={<SideNav title={nav.label} items={nav.items} />}
       width="reading"
       card={false}
     >
-      {/* 목록으로 */}
       <div className="mb-4">
-        <ButtonLink href="/board/newsletter" variant="ghost" size="sm" className="-ml-3 gap-2">
+        <ButtonLink href={LIST_HREF} variant="ghost" size="sm" className="-ml-3 gap-2">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           목록으로
         </ButtonLink>
       </div>
 
-      {/* 게시글 */}
       <article className="overflow-hidden rounded-card border border-border bg-surface shadow-sm">
-        {/* 헤더: 페이지 유일의 h1 */}
         <header className="border-b border-border px-4 py-5 md:px-6 md:py-6">
           <h1 className="typo-h1 text-heading">{post.title}</h1>
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
@@ -83,15 +76,10 @@ export default async function NewsletterDetailPage({ params }: PageProps) {
           </div>
         </header>
 
-        {/* 내용 */}
         <div className="px-4 py-6 md:px-6 md:py-8">
-          <div
-            className="content"
-            dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content || '') }}
-          />
+          <div className="content" dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content || '') }} />
         </div>
 
-        {/* 첨부파일 */}
         {post.attachment_urls && post.attachment_urls.length > 0 && (
           <div className="border-t border-border bg-page px-4 py-5 md:px-6">
             <h2 className="mb-3 text-sm font-semibold text-heading">첨부파일</h2>
@@ -112,9 +100,8 @@ export default async function NewsletterDetailPage({ params }: PageProps) {
         )}
       </article>
 
-      {/* 하단 버튼 */}
       <div className="mt-6 flex justify-center">
-        <ButtonLink href="/board/newsletter" variant="outline">
+        <ButtonLink href={LIST_HREF} variant="outline">
           목록으로
         </ButtonLink>
       </div>

@@ -3,10 +3,11 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
-import { Menu, X, LogIn, LogOut, Settings } from 'lucide-react'
+import { Menu, X, LogIn, LogOut, Settings, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
+import { cn } from '@/lib/utils'
 
 interface NavItem {
   name: string
@@ -35,8 +36,17 @@ export default function Header() {
     return ''
   })
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  // 모바일 아코디언: 기본은 현재 경로가 속한 대분류만 펼침. 사용자가 누르면 그 경로에서의 선택을 기억한다 (effect 없이 파생)
+  const [sectionChoice, setSectionChoice] = useState<{ path: string; name: string | null } | null>(null)
   const router = useRouter()
+  const pathname = usePathname()
   const supabase = createClient()
+
+  const sectionContains = (item: NavItem) =>
+    (item.children ?? []).some((c) => pathname === c.href || pathname.startsWith(`${c.href}/`))
+  const currentSection = navigation.find(sectionContains)
+  const mobileOpenSection = sectionChoice?.path === pathname ? sectionChoice.name : (currentSection?.name ?? null)
+  const setMobileOpenSection = (name: string | null) => setSectionChoice({ path: pathname, name })
 
   // menus 테이블에서 네비게이션 조회
   useEffect(() => {
@@ -222,10 +232,12 @@ export default function Header() {
           <div className="lg:hidden">
             <button
               type="button"
-              className="inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-primary-ink"
+              className="inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-primary-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-ink"
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              <span className="sr-only">메뉴 열기</span>
+              <span className="sr-only">{mobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}</span>
               {mobileMenuOpen ? (
                 <X className="h-6 w-6" />
               ) : (
@@ -236,35 +248,62 @@ export default function Header() {
         </div>
       </nav>
 
-      {/* 모바일 메뉴 */}
+      {/* 모바일 메뉴: 대분류 아코디언(현재 대분류만 펼침), 헤더 아래 화면 높이 안에서 스크롤 */}
       {mobileMenuOpen && (
-        <div className="lg:hidden">
-          <div className="space-y-1 px-4 pb-3 pt-2 bg-white border-t">
-            {navigation.map((item) => (
-              <div key={item.name} className="space-y-1">
-                <Link
-                  href={item.href}
-                  className="block px-3 py-2 text-base font-medium text-gray-900 hover:bg-tint hover:text-primary-ink rounded-md"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {item.name}
-                </Link>
-                {item.children && (
-                  <div className="pl-4 space-y-1">
-                    {item.children.map((child) => (
-                      <Link
-                        key={child.name}
-                        href={child.href}
-                        className="block px-3 py-2 text-sm text-gray-700 hover:bg-tint hover:text-primary-ink rounded-md"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        {child.name}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+        <div id="mobile-menu" className="max-h-[calc(100dvh-7rem)] overflow-y-auto border-t bg-white lg:hidden">
+          <div className="space-y-1 px-4 pb-3 pt-2">
+            {navigation.map((item) => {
+              const hasChildren = !!item.children && item.children.length > 0
+              const isOpen = mobileOpenSection === item.name
+              const sectionActive = (item.children ?? []).some((c) => pathname === c.href || pathname.startsWith(`${c.href}/`))
+              return (
+                <div key={item.name} className="space-y-1">
+                  {hasChildren ? (
+                    <button
+                      type="button"
+                      aria-expanded={isOpen}
+                      onClick={() => setMobileOpenSection(isOpen ? null : item.name)}
+                      className={cn(
+                        'flex w-full items-center justify-between rounded-md px-3 py-2.5 text-base font-semibold hover:bg-tint hover:text-primary-ink',
+                        sectionActive ? 'text-primary-ink' : 'text-gray-900'
+                      )}
+                    >
+                      {item.name}
+                      <ChevronDown className={cn('h-5 w-5 text-muted transition-transform', isOpen && 'rotate-180')} aria-hidden="true" />
+                    </button>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      className="block rounded-md px-3 py-2.5 text-base font-semibold text-gray-900 hover:bg-tint hover:text-primary-ink"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {item.name}
+                    </Link>
+                  )}
+                  {hasChildren && isOpen && (
+                    <div className="space-y-0.5 pb-1 pl-3">
+                      {item.children!.map((child) => {
+                        const active = pathname === child.href || pathname.startsWith(`${child.href}/`)
+                        return (
+                          <Link
+                            key={child.name}
+                            href={child.href}
+                            aria-current={active ? 'page' : undefined}
+                            className={cn(
+                              'block rounded-md px-3 py-2 text-sm hover:bg-tint hover:text-primary-ink',
+                              active ? 'bg-primary font-medium text-on-primary' : 'text-gray-700'
+                            )}
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            {child.name}
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
 
             {/* 모바일 로그인/로그아웃 버튼 */}
             <div className="border-t border-gray-200 pt-3 mt-3 space-y-2">

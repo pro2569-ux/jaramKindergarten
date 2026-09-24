@@ -9,8 +9,8 @@ import SideNav from '@/components/layout/SideNav'
 import EmptyState from '@/components/ui/EmptyState'
 import { staticSectionNav } from '@/lib/site-nav'
 
-// 클라이언트 컴포넌트라 DB 메뉴 대신 정적 목록 사용 (board 대분류는 DB 에 소분류가 없음)
-const nav = staticSectionNav('board')
+// 클라이언트 컴포넌트라 DB 메뉴 대신 정적 목록 사용 (menus 와 같은 구조로 유지). 식단표는 커뮤니티 소속.
+const nav = staticSectionNav('community')
 
 export default function MealPlanPage() {
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -69,10 +69,10 @@ export default function MealPlanPage() {
       sidebar={<SideNav title={nav.label} items={nav.items} />}
       card={false}
     >
-      {/* 월 선택 */}
+      {/* 월 선택 (모바일에서는 제목 줄과 이전/다음 줄로 나뉨) */}
       <Card className="mb-8">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <Button
               variant="outline"
               size="sm"

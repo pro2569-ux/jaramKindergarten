@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { formatDate } from '@/lib/utils'
 import { Eye, Calendar, ArrowLeft, Download } from 'lucide-react'
 import { sanitizeHtml } from '@/lib/sanitize'
+import { attachmentLabel } from '@/lib/attachments'
 import PageShell from '@/components/layout/PageShell'
 import SideNav from '@/components/layout/SideNav'
 import Badge from '@/components/ui/Badge'
@@ -45,7 +46,8 @@ export default async function NoticeDetailPage({ params }: PageProps) {
     notFound()
   }
 
-  const nav = await getSectionNav('board')
+  const nav = await getSectionNav('community')
+  const legacyMeta = (post.legacy_meta ?? null) as Record<string, unknown> | null
 
   // 조회수 증가 (실제로는 클라이언트에서 처리하는 것이 좋지만 여기서는 간단히)
   // await supabase.rpc('increment_view_count', { post_id: id })
@@ -103,11 +105,10 @@ export default async function NoticeDetailPage({ params }: PageProps) {
                 <li key={index}>
                   <a
                     href={url}
-                    download
                     className="inline-flex items-center gap-2 text-sm font-medium text-primary-ink hover:underline"
                   >
                     <Download className="h-4 w-4" aria-hidden="true" />
-                    첨부파일 {index + 1}
+                    {attachmentLabel(url, index, legacyMeta)}
                   </a>
                 </li>
               ))}

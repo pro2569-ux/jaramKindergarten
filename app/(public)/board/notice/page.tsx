@@ -29,7 +29,7 @@ export default async function NoticePage({
   const pageSize = PAGINATION.DEFAULT_PAGE_SIZE
 
   const supabase = await createClient()
-  const nav = await getSectionNav('board')
+  const nav = await getSectionNav('community')
 
   // 전체 개수 가져오기
   const { count } = await supabase

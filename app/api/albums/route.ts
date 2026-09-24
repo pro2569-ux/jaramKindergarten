@@ -1,20 +1,25 @@
 import { createClient } from '@/lib/supabase/server'
 import { withResolvedMedia } from '@/lib/storage/media'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 // 공개 앨범 목록 (갤러리 렌더러용). 이관 앨범의 커버(legacy-media 버킷)는 서버에서 서명 URL 로 바꿔 내려준다.
-// 서명 URL 만료(1시간)보다 짧게 캐시.
+// ?category=자람반 으로 반별 필터. 서명 URL 만료(1시간)보다 짧게 캐시.
 export const revalidate = 60
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const category = request.nextUrl.searchParams.get('category')?.trim() || null
     const supabase = await createClient()
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('albums')
-      .select('id, title, cover_image_url, event_date, created_at')
+      .select('id, title, cover_image_url, event_date, created_at, category')
       .eq('is_published', true)
-      .order('event_date', { ascending: false })
+      .order('event_date', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
+    if (category) query = query.eq('category', category)
+
+    const { data, error } = await query
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

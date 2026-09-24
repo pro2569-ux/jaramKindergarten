@@ -28,13 +28,14 @@ export default async function NewsletterPage({
   const pageSize = PAGINATION.DEFAULT_PAGE_SIZE
 
   const supabase = await createClient()
-  const nav = await getSectionNav('board')
+  const nav = await getSectionNav('community')
 
-  // 전체 개수 가져오기
+  // 전체 개수 가져오기 (이관 교육자료실 글은 /community/archive 에서 따로 보여주므로 제외)
   const { count } = await supabase
     .from('posts')
     .select('*', { count: 'exact', head: true })
     .eq('board_type', 'newsletter')
+    .is('legacy_source_url', null)
     .eq('is_published', true)
 
   const totalPages = Math.ceil((count || 0) / pageSize)
@@ -44,6 +45,7 @@ export default async function NewsletterPage({
     .from('posts')
     .select('*')
     .eq('board_type', 'newsletter')
+    .is('legacy_source_url', null)
     .eq('is_published', true)
     .order('created_at', { ascending: false })
     .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)

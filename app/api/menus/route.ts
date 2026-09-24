@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { menuHref, type MenuLinkPage } from '@/lib/menu-links'
 import { NextResponse } from 'next/server'
 
 export const revalidate = 60
@@ -10,13 +11,24 @@ const DEDICATED_LANDING: Record<string, string> = {
   community: '/community/inquiry',
 }
 
+interface MenuRow {
+  id: string
+  parent_id: string | null
+  label: string
+  slug: string
+  depth: number
+  sort_order: number
+  is_visible: boolean
+  pages: MenuLinkPage | MenuLinkPage[] | null
+}
+
 export async function GET() {
   try {
     const supabase = await createClient()
 
     const { data, error } = await supabase
       .from('menus')
-      .select('id, parent_id, label, slug, depth, sort_order, is_visible')
+      .select('id, parent_id, label, slug, depth, sort_order, is_visible, pages(layout_config)')
       .eq('is_visible', true)
       .order('sort_order', { ascending: true })
 
@@ -24,31 +36,26 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // 트리 구조로 변환
-    const parents = (data || [])
+    const rows = (data ?? []) as unknown as MenuRow[]
+
+    // 트리 구조로 변환. 게시판 링크 항목(pages.layout_config.redirectTo)은 목적지 경로로 바로 링크.
+    const parents = rows
       .filter((m) => m.depth === 0)
+      .sort((a, b) => a.sort_order - b.sort_order)
       .map((parent) => {
-        const children = (data || [])
+        const children = rows
           .filter((c) => c.parent_id === parent.id)
           .sort((a, b) => a.sort_order - b.sort_order)
           .map((child) => ({
             name: child.label,
-            href: `/${parent.slug}/${child.slug}`,
+            href: menuHref(parent.slug, child.slug, child.pages),
           }))
 
-        // 자식이 있으면 /{slug} (catch-all이 첫 소분류로 리디렉트),
+        // 자식이 있으면 첫 자식으로 (대분류 클릭 = 첫 소분류),
         // 자식이 없고 전용 라우트가 있으면 그쪽으로, 둘 다 없으면 /{slug}(준비중 안내).
-        const href =
-          children.length > 0
-            ? `/${parent.slug}`
-            : DEDICATED_LANDING[parent.slug] ?? `/${parent.slug}`
+        const href = children.length > 0 ? children[0]!.href : (DEDICATED_LANDING[parent.slug] ?? `/${parent.slug}`)
 
         return { name: parent.label, href, children }
-      })
-      .sort((a, b) => {
-        const aParent = (data || []).find((m) => `/${m.slug}` === a.href)
-        const bParent = (data || []).find((m) => `/${m.slug}` === b.href)
-        return (aParent?.sort_order || 0) - (bParent?.sort_order || 0)
       })
 
     return NextResponse.json(parents)

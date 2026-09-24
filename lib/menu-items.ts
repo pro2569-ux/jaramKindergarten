@@ -26,18 +26,28 @@ export const menuData = {
       { name: '모집요강', href: '/admission/recruitment' },
     ],
   },
+  // 원본(jaramk.com) 구조: 교육활동이야기 = 반별 앨범 게시판. DB(menus)와 같은 순서·이름. DB 조회 실패 시 폴백.
   board: {
     title: '교육활동이야기',
     items: [
-      { name: '공지사항', href: '/board/notice' },
-      { name: '가정통신문', href: '/board/newsletter' },
-      { name: '식단표', href: '/board/meal-plan' },
-      { name: '앨범', href: '/board/album' },
+      { name: '자람반', href: '/board/jaram' },
+      { name: '산새반', href: '/board/sansae' },
+      { name: '라온반', href: '/board/raon' },
+      { name: '맑은반', href: '/board/malgeun' },
+      { name: '햇살반', href: '/board/haetsal' },
+      { name: '샘물반', href: '/board/saemmul' },
+      { name: '숲속반', href: '/board/supsok' },
+      { name: '자람이야기', href: '/board/story' },
     ],
   },
+  // 커뮤니티: 원본 항목(교육자료실) 뒤에 우리 사이트 전용 게시판
   community: {
     title: '커뮤니티',
     items: [
+      { name: '교육자료실', href: '/community/archive' },
+      { name: '공지사항', href: '/board/notice' },
+      { name: '가정통신문', href: '/board/newsletter' },
+      { name: '식단표', href: '/board/meal-plan' },
       { name: '문의하기', href: '/community/inquiry' },
     ],
   },
