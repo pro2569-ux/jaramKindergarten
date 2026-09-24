@@ -32,8 +32,10 @@ export default function ImageSlider({ images, interval = 3000 }: ImageSliderProp
             src={image}
             alt={`슬라이드 ${index + 1}`}
             fill
-            // 슬라이더는 PC 에서 화면 절반 폭 → 절반 크기 이미지만 받는다 (sizes 없으면 100vw 기준으로 큰 파일을 받음)
+            // 슬라이더는 PC 에서 화면 절반 폭. 레티나에서도 원본 해상도(640px)를 그대로 받는다 — 원본보다 크게 늘리지 않음.
+            // 화질은 90 (기본 75 보다 재압축 손실이 적음)
             sizes="(min-width: 768px) 50vw, 100vw"
+            quality={90}
             className="object-contain"
             priority={index === 0}
           />

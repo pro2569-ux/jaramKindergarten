@@ -26,6 +26,9 @@ const nextConfig: NextConfig = {
     ]
   },
   images: {
+    // 화면용 사본 화질: 기본 75 + 사진(히어로·앨범)은 90. Next 16 은 여기 적힌 값만 허용한다.
+    // 원본 파일은 건드리지 않고, 사본만 화면 크기에 맞춰 만든다.
+    qualities: [75, 90],
     remotePatterns: supabaseHostname
       ? [
           {

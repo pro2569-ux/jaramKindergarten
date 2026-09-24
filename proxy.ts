@@ -9,7 +9,7 @@ function hasSupabaseSession(request: NextRequest): boolean {
   return request.cookies.getAll().some((c) => c.name.startsWith('sb-') && c.name.includes('auth-token'))
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // 비로그인 방문자의 공개 페이지: 세션 확인을 생략해 요청마다 Supabase 클라이언트를 만들지 않는다.
   // (/admin 은 아래 updateSession 이 예전처럼 /login 으로 보낸다 — 보호 동작은 그대로)
   if (!AUTH_PATH_RE.test(request.nextUrl.pathname) && !hasSupabaseSession(request)) {
