@@ -5,6 +5,7 @@ import PageShell from '@/components/layout/PageShell'
 import SideNav from '@/components/layout/SideNav'
 import EmptyState from '@/components/ui/EmptyState'
 import { getSectionNav } from '@/lib/site-nav'
+import { sanitizeHtml } from '@/lib/sanitize'
 
 export const metadata = {
   title: '교원 및 반편성',
@@ -14,11 +15,12 @@ export default async function TeachersPage() {
   const supabase = await createClient()
   const nav = await getSectionNav('about')
 
-  const { data: teachers } = await supabase
-    .from('teachers')
-    .select('*')
-    .eq('is_active', true)
-    .order('sort_order')
+  const [{ data: teachers }, { data: cmsPage }] = await Promise.all([
+    supabase.from('teachers').select('*').eq('is_active', true).order('sort_order'),
+    // 이관 CMS 행(교원/반편성, slug=teachers)의 글 버전 — 조직도 이미지의 접근성·검색용 텍스트
+    supabase.from('pages').select('content').eq('slug', 'teachers').eq('is_published', true).maybeSingle(),
+  ])
+  const cmsHtml = typeof cmsPage?.content === 'string' && cmsPage.content.trim() ? sanitizeHtml(cmsPage.content) : ''
 
   return (
     <PageShell
@@ -28,7 +30,7 @@ export default async function TeachersPage() {
       sidebar={<SideNav title={nav.label} items={nav.items} />}
     >
       {/* 조직도·반편성 이미지 */}
-      <div className="mb-10 flex justify-center">
+      <div className="mb-6 flex justify-center">
         <Image
           src="/images/teacher.png"
           alt="교원 및 반편성 조직도"
@@ -39,6 +41,14 @@ export default async function TeachersPage() {
           priority
         />
       </div>
+
+      {/* 조직도 내용을 글로 (화면 낭독기·검색용). CMS pages 의 teachers 행 본문 */}
+      {cmsHtml && (
+        <details className="mb-10 rounded-card border border-border bg-surface px-4 py-3 md:px-5">
+          <summary className="cursor-pointer text-base font-semibold text-heading">교직원·학급 현황 글로 보기</summary>
+          <div className="content mt-4" dangerouslySetInnerHTML={{ __html: cmsHtml }} />
+        </details>
+      )}
 
       <h2 className="typo-h2 mb-6 text-heading">교직원 소개</h2>
 
