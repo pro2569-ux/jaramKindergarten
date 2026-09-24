@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
+import { withResolvedMedia } from '@/lib/storage/media'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import ImageSlider from '@/components/ui/ImageSlider'
@@ -37,12 +38,15 @@ export default async function Home() {
     .limit(5)
 
   // 최근 앨범 가져오기
-  const { data: albums } = await supabase
+  const { data: albumRows } = await supabase
     .from('albums')
     .select('*')
     .eq('is_published', true)
     .order('created_at', { ascending: false })
     .limit(4)
+
+  // 이관 앨범(legacy-media 버킷) 커버는 서명 URL 로 해석한다. 실패하면 null → 플레이스홀더
+  const albums = await withResolvedMedia(albumRows ?? [], 'cover_image_url')
 
   return (
     <div className="flex flex-col">

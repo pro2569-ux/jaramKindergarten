@@ -48,6 +48,12 @@ export interface Album {
   author_id: string | null
   is_published: boolean
   event_date: string | null
+  /** 반(교육활동이야기 게시판) 이름. 이관 앨범은 원본 게시판명, 새 앨범은 ALBUM_CATEGORIES 중 하나 */
+  category: string | null
+  /** 이관 앨범의 원본 URL (jaramk.com). 새 앨범은 null */
+  legacy_source_url: string | null
+  /** 이관 메타(원본 게시판 ID·글 번호·본문 HTML 등). 새 앨범은 null */
+  legacy_meta: Record<string, unknown> | null
   created_at: string
   author?: Profile
   photos?: AlbumPhoto[]
@@ -59,6 +65,8 @@ export interface AlbumPhoto {
   image_url: string
   caption: string | null
   sort_order: number
+  /** 이관 사진의 원본 URL. 새 사진은 null */
+  legacy_source_url: string | null
   created_at: string
 }
 
