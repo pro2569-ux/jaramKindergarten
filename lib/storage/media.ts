@@ -1,4 +1,5 @@
 import 'server-only'
+import { unstable_cache } from 'next/cache'
 import { createAdminClient, hasAdminCredentials } from '@/lib/supabase/admin'
 import { LEGACY_MEDIA_BUCKET, LEGACY_MEDIA_PREFIX } from '@/lib/constants'
 
@@ -14,7 +15,15 @@ import { LEGACY_MEDIA_BUCKET, LEGACY_MEDIA_PREFIX } from '@/lib/constants'
  *
  * 실패는 null 로 내려가 플레이스홀더가 뜨지만, 원인은 반드시 서버 로그(console.error)에 남긴다. 키 값은 절대 기록하지 않는다.
  */
-export const SIGNED_URL_TTL_SECONDS = 60 * 60
+/**
+ * 서명 URL 유효 시간(6시간)과 서명 결과 캐시(2시간).
+ * 페이지 캐시(ISR 60초)마다 새 서명을 만들면 URL 이 매번 달라져 next/image 최적화 캐시가 매번 빗나가고
+ * (= Storage 전송량 증가), 브라우저에 오래 열어 둔 페이지의 사진이 1시간 뒤 깨졌다.
+ * → 같은 경로 묶음은 2시간 동안 같은 서명 URL 을 돌려주고(데이터 캐시), 그 URL 은 만든 시점부터 6시간 유효하므로
+ *   캐시된 URL 도 최소 4시간은 살아 있다. 페이지 캐시(60초) < 서명 캐시(2시간) < 서명 유효(6시간).
+ */
+export const SIGNED_URL_TTL_SECONDS = 6 * 60 * 60
+const SIGNED_URL_CACHE_SECONDS = 2 * 60 * 60
 /** Storage 일괄 서명 요청을 나누는 단위 (요청 본문 크기·API 제한 여유) */
 const SIGN_BATCH_SIZE = 100
 
@@ -52,31 +61,50 @@ export async function resolveMediaUrls(
   for (let start = 0; start < legacyIdx.length; start += SIGN_BATCH_SIZE) {
     const batch = legacyIdx.slice(start, start + SIGN_BATCH_SIZE)
     const paths = batch.map((i) => legacyMediaPath(refs[i] as string))
-    try {
-      const { data, error } = await createAdminClient().storage.from(LEGACY_MEDIA_BUCKET).createSignedUrls(paths, ttlSeconds)
-      if (error || !data) {
-        logMediaError(`createSignedUrls 실패 (${paths.length}개)`, error ?? 'no data')
-        for (const i of batch) out[i] = null
-        continue
-      }
-      let itemErrors = 0
-      batch.forEach((refIndex, k) => {
-        const item = data[k]
-        if (item && !item.error && item.signedUrl) out[refIndex] = item.signedUrl
-        else {
-          out[refIndex] = null
-          itemErrors += 1
-          if (itemErrors <= 3) logMediaError(`서명 항목 실패 ${paths[k]}`, item?.error ?? 'no signedUrl')
-        }
-      })
-      if (itemErrors > 3) logMediaError('서명 항목 실패', `외 ${itemErrors - 3}건`)
-    } catch (err) {
-      logMediaError(`createSignedUrls 예외 (${paths.length}개)`, err)
-      for (const i of batch) out[i] = null
-    }
+    // 기본 TTL 이면 캐시된 서명을, 다른 TTL 이면 바로 서명
+    const signed = ttlSeconds === SIGNED_URL_TTL_SECONDS ? await signBatchCached(paths) : await signBatch(paths, ttlSeconds)
+    batch.forEach((refIndex, k) => {
+      out[refIndex] = signed[k] ?? null
+    })
   }
   return out
 }
+
+/** 경로 묶음 하나를 서명한다 (실패한 항목은 null). 로그만 남기고 예외는 삼킨다 */
+async function signBatch(paths: string[], ttlSeconds: number): Promise<Array<string | null>> {
+  try {
+    const { data, error } = await createAdminClient().storage.from(LEGACY_MEDIA_BUCKET).createSignedUrls(paths, ttlSeconds)
+    if (error || !data) {
+      logMediaError(`createSignedUrls 실패 (${paths.length}개)`, error ?? 'no data')
+      return paths.map(() => null)
+    }
+    let itemErrors = 0
+    const out = paths.map((p, k) => {
+      const item = data[k]
+      if (item && !item.error && item.signedUrl) return item.signedUrl
+      itemErrors += 1
+      if (itemErrors <= 3) logMediaError(`서명 항목 실패 ${p}`, item?.error ?? 'no signedUrl')
+      return null
+    })
+    if (itemErrors > 3) logMediaError('서명 항목 실패', `외 ${itemErrors - 3}건`)
+    return out
+  } catch (err) {
+    logMediaError(`createSignedUrls 예외 (${paths.length}개)`, err)
+    return paths.map(() => null)
+  }
+}
+
+/** 같은 경로 묶음은 2시간 동안 같은 서명 URL (데이터 캐시, 태그 legacy-media). 전부 실패한 결과는 캐시하지 않는다 */
+const signBatchCached = unstable_cache(
+  async (paths: string[]) => {
+    const out = await signBatch(paths, SIGNED_URL_TTL_SECONDS)
+    if (out.every((u) => u === null)) throw new Error('서명 전부 실패 — 캐시하지 않음')
+    return out
+  },
+  ['legacy-media-sign-v1'],
+  { revalidate: SIGNED_URL_CACHE_SECONDS, tags: ['legacy-media'] }
+)
+
 
 export async function resolveMediaUrl(ref: string | null | undefined, ttlSeconds?: number): Promise<string | null> {
   const [url] = await resolveMediaUrls([ref], ttlSeconds)
