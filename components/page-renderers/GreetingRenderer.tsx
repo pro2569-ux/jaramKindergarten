@@ -66,6 +66,12 @@ export default function GreetingRenderer({ page }: { page: PageData }) {
     >
       <PatternBg />
 
+      {/* 편지지 장식: 오른쪽 위 꽃 (그림만, 클릭·읽기 방해 없음) */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute right-2 top-2 z-0 h-14 w-14 bg-[url('/deco/corner-flowers.svg')] bg-contain bg-right-top bg-no-repeat md:right-4 md:top-4 md:h-24 md:w-24"
+      />
+
       <div className="relative z-10">
         {/* 상단 배지 */}
         <div className="flex justify-center">
@@ -109,6 +115,12 @@ export default function GreetingRenderer({ page }: { page: PageData }) {
           <p className="text-sm">원장 드림</p>
         </div>
       </div>
+
+      {/* 편지지 장식: 아래쪽 꽃과 편지 풍경 (카드 가장자리까지) */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none relative -mx-6 -mb-12 mt-10 h-[68px] bg-[url('/deco/scene-letter.svg')] bg-cover bg-bottom bg-no-repeat md:-mx-12 md:-mb-16 md:mt-12 md:h-[150px]"
+      />
     </section>
   )
 }

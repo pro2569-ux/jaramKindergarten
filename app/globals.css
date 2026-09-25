@@ -355,3 +355,123 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+
+/* ------------------------------------------------------------
+   편지지 장식 (PR R) — public/deco/*.svg (직접 그린 평면 파스텔 그림)
+   본문(.content)에서 쓰는 클래스: 관리자 편집기 "디자인 블록 도움말"에 예시가 있다.
+   모두 그림일 뿐이라 클릭을 막지 않고(pointer-events: none), HTML 에는 aria-hidden="true" 로 넣는다.
+   ------------------------------------------------------------ */
+@layer components {
+  .content { position: relative; }
+
+  /* 하단 풍경: 본문 카드 맨 아래를 가장자리까지 채운다. 모바일은 가운데 부분만 보인다 */
+  .content .deco-scene {
+    display: block;
+    height: clamp(64px, 17vw, 150px);
+    margin: 2rem -1rem -1rem;
+    background: transparent center bottom / cover no-repeat;
+    border-radius: 0 0 var(--radius-card) var(--radius-card);
+    pointer-events: none;
+  }
+  @media (min-width: 768px) { .content .deco-scene { margin: 2.5rem -1.5rem -1.5rem; } }
+  .content .deco-scene--meadow { background-image: url('/deco/scene-meadow.svg'); }
+  .content .deco-scene--letter { background-image: url('/deco/scene-letter.svg'); }
+  .content .deco-scene--house { background-image: url('/deco/scene-house.svg'); }
+  .content .deco-scene--road { background-image: url('/deco/scene-road.svg'); }
+  .content .deco-scene--books { background-image: url('/deco/scene-books.svg'); }
+  .content .deco-scene--rainbow { background-image: url('/deco/scene-rainbow.svg'); }
+  .content .deco-scene--forest { background-image: url('/deco/scene-forest.svg'); }
+  .content .deco-scene--garden { background-image: url('/deco/scene-garden.svg'); }
+  .content .deco-scene--play { background-image: url('/deco/scene-play.svg'); }
+  .content .deco-scene--festival { background-image: url('/deco/scene-festival.svg'); }
+  .content .deco-scene--breeze { background-image: url('/deco/scene-breeze.svg'); }
+  .content .deco-scene--village { background-image: url('/deco/scene-village.svg'); }
+
+  /* 모서리 장식: 본문 오른쪽 위. 바로 다음 요소는 오른쪽을 비워 글을 가리지 않는다 */
+  .content .deco-corner {
+    position: absolute;
+    top: -0.5rem;
+    right: -0.5rem;
+    width: 56px;
+    height: 56px;
+    background: transparent right top / contain no-repeat;
+    pointer-events: none;
+  }
+  .content .deco-corner + * { margin-top: 0; padding-right: 48px; }
+  @media (min-width: 768px) {
+    .content .deco-corner { top: -0.75rem; right: -0.75rem; width: 92px; height: 92px; }
+    .content .deco-corner + * { padding-right: 80px; }
+  }
+  .content .deco-corner--leaves { background-image: url('/deco/corner-leaves.svg'); }
+  .content .deco-corner--flowers { background-image: url('/deco/corner-flowers.svg'); }
+  .content .deco-corner--stars { background-image: url('/deco/corner-stars.svg'); }
+  .content .deco-corner--hearts { background-image: url('/deco/corner-hearts.svg'); }
+  .content .deco-corner--butterfly { background-image: url('/deco/corner-butterfly.svg'); }
+  .content .deco-corner--clouds { background-image: url('/deco/corner-clouds.svg'); }
+
+  /* 제목 아이콘: <h2 class="t-sprout"> — 노란 막대 대신 작은 그림 */
+  .content h2:is(.t-sprout, .t-leaf, .t-flower, .t-sun, .t-book, .t-pencil, .t-tree, .t-heart, .t-star, .t-house, .t-bus, .t-ball, .t-kite, .t-butterfly, .t-letter, .t-mushroom, .t-carrot, .t-cloud)::before {
+    width: 1.35em;
+    height: 1.35em;
+    border-radius: 0;
+    margin-right: 0.35rem;
+    vertical-align: -0.3em;
+    background: transparent center / contain no-repeat;
+  }
+  .content h2.t-sprout::before { background-image: url('/deco/icon-sprout.svg'); }
+  .content h2.t-leaf::before { background-image: url('/deco/icon-leaf.svg'); }
+  .content h2.t-flower::before { background-image: url('/deco/icon-flower.svg'); }
+  .content h2.t-sun::before { background-image: url('/deco/icon-sun.svg'); }
+  .content h2.t-book::before { background-image: url('/deco/icon-book.svg'); }
+  .content h2.t-pencil::before { background-image: url('/deco/icon-pencil.svg'); }
+  .content h2.t-tree::before { background-image: url('/deco/icon-tree.svg'); }
+  .content h2.t-heart::before { background-image: url('/deco/icon-heart.svg'); }
+  .content h2.t-star::before { background-image: url('/deco/icon-star.svg'); }
+  .content h2.t-house::before { background-image: url('/deco/icon-house.svg'); }
+  .content h2.t-bus::before { background-image: url('/deco/icon-bus.svg'); }
+  .content h2.t-ball::before { background-image: url('/deco/icon-ball.svg'); }
+  .content h2.t-kite::before { background-image: url('/deco/icon-kite.svg'); }
+  .content h2.t-butterfly::before { background-image: url('/deco/icon-butterfly.svg'); }
+  .content h2.t-letter::before { background-image: url('/deco/icon-letter.svg'); }
+  .content h2.t-mushroom::before { background-image: url('/deco/icon-mushroom.svg'); }
+  .content h2.t-carrot::before { background-image: url('/deco/icon-carrot.svg'); }
+  .content h2.t-cloud::before { background-image: url('/deco/icon-cloud.svg'); }
+
+  /* 구분선: <hr class="deco-divider deco-divider--vine"> */
+  .content hr.deco-divider { border: 0; height: 28px; max-width: 600px; margin: 1.75em auto; background: transparent center / contain no-repeat; }
+  .content hr.deco-divider--vine { background-image: url('/deco/divider-vine.svg'); }
+  .content hr.deco-divider--dots { background-image: url('/deco/divider-dots.svg'); }
+  .content hr.deco-divider--clouds { background-image: url('/deco/divider-clouds.svg'); }
+  .content hr.deco-divider--flowers { background-image: url('/deco/divider-flowers.svg'); }
+
+  /* 손글씨 글꼴 (환영 띠·사이드바 제목) — Google Fonts Gaegu, 없으면 기본 글꼴 */
+  .font-hand { font-family: 'Gaegu', 'Pretendard', cursive; font-weight: 700; letter-spacing: 0.01em; }
+
+  /* 서브 페이지 환영 띠: 이어지는 띠(좌우 반복) + 해·구름·새(한 번) */
+  .sub-banner {
+    --banner-band: url('/deco/banner-band-green.svg');
+    --banner-ink: #3F7A2E;
+    height: 96px;
+    background-image: var(--banner-band);
+    background-repeat: repeat-x;
+    background-position: left bottom;
+    background-size: 200px 96px;
+  }
+  .sub-banner__inner { background: url('/deco/banner-deco.svg') left top / auto 100% no-repeat; }
+  .sub-banner__text {
+    color: var(--banner-ink);
+    font-size: 1.1875rem;
+    line-height: 1.2;
+    text-shadow: 0 0 6px #fff, 0 0 2px #fff;
+  }
+  @media (min-width: 768px) {
+    .sub-banner { height: 190px; background-size: 380px 190px; }
+    .sub-banner__text { font-size: 2.125rem; line-height: 1.25; }
+  }
+  .sub-banner--yellow { --banner-band: url('/deco/banner-band-yellow.svg'); --banner-ink: #8A6710; }
+  .sub-banner--green { --banner-band: url('/deco/banner-band-green.svg'); --banner-ink: #3F7A2E; }
+  .sub-banner--pink { --banner-band: url('/deco/banner-band-pink.svg'); --banner-ink: #A8446D; }
+  .sub-banner--sky { --banner-band: url('/deco/banner-band-sky.svg'); --banner-ink: #2E6C9C; }
+  .sub-banner--mint { --banner-band: url('/deco/banner-band-mint.svg'); --banner-ink: #2B7A5F; }
+}

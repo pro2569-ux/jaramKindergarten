@@ -25,7 +25,7 @@ const ALLOWED_TAGS = [
 
 // 모든 태그에 허용할 속성 (style 포함 — sanitize-html은 기본적으로 style을 막으므로 명시)
 const ALLOWED_ATTR = [
-  'style', 'class', 'id',
+  'style', 'class', 'id', 'aria-hidden',
   'href', 'target', 'rel',
   'src', 'alt', 'title', 'width', 'height', 'loading', 'decoding',
   // 표 속성

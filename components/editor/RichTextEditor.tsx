@@ -39,6 +39,10 @@ const DESIGN_BLOCK_SNIPPETS: { name: string; desc: string; html: string }[] = [
   { name: '라벨-값 .kv', desc: '주소·연락처 등', html: '<div class="kv"><div class="kv-row"><span class="kv-key">주소</span><span class="kv-val">고양시 …</span></div></div>' },
   { name: '정돈된 표 .table-neat', desc: '첫 열 강조 + 줄무늬', html: '<table class="table-neat"><thead><tr><th>구분</th><th>내용</th></tr></thead><tbody><tr><td>항목</td><td>내용</td></tr></tbody></table>' },
   { name: '주석 .note', desc: '작은 회색 글', html: '<p class="note">☞ 원아의 흥미에 따라 변경 될 수 있습니다.</p>' },
+  { name: '편지지 · 하단 풍경 .deco-scene', desc: '본문 맨 끝에 넣으면 카드 아래를 그림 풍경으로 채움. 테마: meadow(들판) letter(꽃·편지) house(집·놀이터) road(길·버스) books(책·연필·무지개) rainbow(무지개·바람개비) forest(나무·버섯) garden(텃밭) play(공·줄넘기) festival(연·복주머니) breeze(구름·바람·나비) village(작은 마을)', html: '<div class="deco-scene deco-scene--meadow" aria-hidden="true"></div>' },
+  { name: '편지지 · 모서리 장식 .deco-corner', desc: '본문 맨 앞에 넣으면 오른쪽 위에 작은 그림. 종류: leaves flowers stars hearts butterfly clouds (다음 문단은 오른쪽을 비워 글을 가리지 않음)', html: '<div class="deco-corner deco-corner--flowers" aria-hidden="true"></div>' },
+  { name: '편지지 · 제목 아이콘 h2.t-*', desc: '큰 제목 앞 노란 막대를 작은 그림으로. sprout leaf flower sun book pencil tree heart star house bus ball kite butterfly letter mushroom carrot cloud', html: '<h2 class="t-sprout">제목</h2>' },
+  { name: '편지지 · 구분선 hr.deco-divider', desc: '문단 사이 그림 구분선. 종류: vine(덩굴) dots(색 점) clouds(구름) flowers(꽃)', html: '<hr class="deco-divider deco-divider--vine">' },
   { name: '버튼 링크 .btn', desc: '다운로드·바로가기 버튼 (btn-outline 은 테두리형). 파일은 주소 뒤에 ?download=파일명 을 붙이면 그 이름으로 내려받음', html: '<p><a class="btn" href="https://…/파일.hwp?download=입소신청서.hwp">📄 입소신청서 양식 다운로드</a></p>' },
 ]
 
