@@ -38,6 +38,10 @@ export default async function RootLayout({
       <head>
         {/* Pretendard: 글자 단위 동적 서브셋 — 화면에 쓰인 글자 묶음만 내려받는다 (전체 굵기 파일 3MB → 수백 KB) */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        {/* 손글씨 글꼴 Gaegu (환영 띠·사이드바 제목) — 한글은 쓰인 글자 묶음만 내려받는다 */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&display=swap" />
         <link
           rel="stylesheet"
           as="style"

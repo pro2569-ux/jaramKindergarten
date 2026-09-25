@@ -50,7 +50,7 @@ ${s.transit_subway ? `<div class="entry"><div class="entry-head">지하철</div>
   if (s.transit_car) {
     transit.push(`<div class="card"><span class="card-icon">🚗</span><h3>자가용 이용시</h3><p>${esc(s.transit_car)}</p></div>`)
   }
-  const transitHtml = transit.length ? `<h2>오시는 길</h2><div class="cards cards-2">${transit.join('')}</div>` : ''
+  const transitHtml = transit.length ? `<h2 class="t-bus">오시는 길</h2><div class="cards cards-2">${transit.join('')}</div>` : ''
 
   return (
     <PageShell
@@ -60,12 +60,12 @@ ${s.transit_subway ? `<div class="entry"><div class="entry-head">지하철</div>
       sidebar={<SideNav title={nav.label} items={nav.items} />}
     >
       <div className="content">
-        <h2>약도</h2>
+        <h2 className="t-sun">약도</h2>
       </div>
       <div className="mb-6">
         <LocationMap address={address || name} name={name} lat={num(s.kakao_map_lat)} lng={num(s.kakao_map_lng)} />
       </div>
-      <div className="content" dangerouslySetInnerHTML={{ __html: sanitizeHtml(`<h2>주소</h2>${addressCard}${transitHtml}`) }} />
+      <div className="content" dangerouslySetInnerHTML={{ __html: sanitizeHtml(`<h2 class="t-house">주소</h2>${addressCard}${transitHtml}<div class="deco-scene deco-scene--road" aria-hidden="true"></div>`) }} />
     </PageShell>
   )
 }

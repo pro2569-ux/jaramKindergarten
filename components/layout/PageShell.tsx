@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import PageHeader, { type PageHeaderProps } from './PageHeader'
+import SubBanner from './SubBanner'
 import ContentCard from '@/components/ui/ContentCard'
 
 interface PageShellProps extends PageHeaderProps {
@@ -34,6 +35,7 @@ export default function PageShell({
 }: PageShellProps) {
   return (
     <div className={cn('bg-pattern', className)} style={style}>
+      {band && <SubBanner section={header.eyebrow} />}
       {band && <PageHeader {...header} />}
 
       <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 md:py-10 lg:px-8">

@@ -55,7 +55,15 @@ export default function SideNav({ title, items }: SideNavProps) {
 
   return (
     <nav aria-label={title} className="overflow-hidden rounded-card border border-border bg-surface shadow-sm">
-      <h2 className="typo-h3 hidden border-b border-border bg-tint px-5 py-4 text-heading lg:block">{title}</h2>
+      {/* 제목: 작은 해 + 손글씨 "자람동산" / 대분류 이름 */}
+      <div className="hidden items-center gap-3 border-b border-border bg-tint px-5 py-4 lg:flex">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/deco/sun.svg" alt="" aria-hidden="true" width={44} height={44} className="h-11 w-11 shrink-0" />
+        <h2 className="min-w-0 text-heading">
+          <span className="font-hand block text-base leading-none text-muted">자람동산</span>
+          <span className="font-hand block text-[1.75rem] leading-tight">{title}</span>
+        </h2>
+      </div>
 
       {/* 모바일: 현재 위치 토글 */}
       <button
@@ -65,8 +73,10 @@ export default function SideNav({ title, items }: SideNavProps) {
         aria-controls={listId}
         onClick={() => setOpen(!open)}
       >
-        <span className="min-w-0">
-          <span className="block text-xs font-medium text-muted">{title}</span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/deco/sun.svg" alt="" aria-hidden="true" width={30} height={30} className="h-[30px] w-[30px] shrink-0" />
+        <span className="min-w-0 flex-1">
+          <span className="font-hand block text-sm leading-tight text-muted">자람동산 · {title}</span>
           <span className="block truncate text-base font-semibold text-heading">{currentLabel ?? '메뉴 선택'}</span>
         </span>
         <ChevronDown className={cn('h-5 w-5 shrink-0 text-muted transition-transform', open && 'rotate-180')} aria-hidden="true" />
